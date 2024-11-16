@@ -41,3 +41,24 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Dart/Pub
+.packages
+build/
+.vscode/
+
+# Flutter specific
+.flutter-version
+Generated.xcconfig
+
+# iOS
+ios/Flutter/.last_build_id
+ios/Flutter/Generated.xcconfig
+ios/Flutter/App.framework
+
+# Android
+android/app/*.keystore
+android/local.properties
+
+# macOS
+macos/Flutter/ephemeral/

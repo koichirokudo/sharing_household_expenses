@@ -1,3 +1,4 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:sharing_household_expenses/src/pages/user_page.dart';
 
@@ -35,129 +36,254 @@ class HomePageState extends State<HomePage> {
         ],
       ),
       body: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        // 今月の支出
-        Card(
-          child: Column(
+        const Text(
+          '今月の収支',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              Container(
-                alignment: Alignment.topLeft,
-                padding: const EdgeInsets.all(16.0),
-                child: const Text(
-                  '今月の支出',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
+              SizedBox(
+                width: 150,
+                height: 150,
+                child: PieChart(
+                  PieChartData(
+                    sections: [
+                      PieChartSectionData(
+                        color: Colors.green,
+                        value: 0.3,
+                        title: '収入',
+                        radius: 50,
+                      ),
+                      PieChartSectionData(
+                        color: Colors.red,
+                        value: 0.7,
+                        title: '支出',
+                        radius: 50,
+                      ),
+                    ],
                   ),
                 ),
               ),
-              const Divider(height: 1, color: Colors.black12),
-              Container(
-                alignment: Alignment.center,
-                padding: const EdgeInsets.all(16.0),
-                child: const Text(
-                  '¥100,000',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
+              SizedBox(
+                width: 150,
+                height: 150,
+                child: PieChart(
+                  PieChartData(
+                    sections: [
+                      PieChartSectionData(
+                        color: Colors.green,
+                        value: 0.3,
+                        title: 'グループの収入',
+                        radius: 50,
+                      ),
+                      PieChartSectionData(
+                        color: Colors.red,
+                        value: 0.7,
+                        title: 'グループの支出',
+                        radius: 50,
+                      ),
+                    ],
                   ),
                 ),
               ),
             ],
           ),
         ),
-        // 今月の収入
+        // 個人の収支
         Card(
           child: Column(
             children: [
-              Container(
-                alignment: Alignment.topLeft,
+              Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: const Text(
-                  '今月の収入',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                child:
+                    Row(mainAxisAlignment: MainAxisAlignment.start, children: [
+                  const Icon(
+                    Icons.account_circle,
+                    color: Colors.blue,
+                    size: 32,
                   ),
-                ),
+                  const SizedBox(width: 16),
+                  const Text(
+                    '個人',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                ]),
               ),
               const Divider(height: 1, color: Colors.black12),
-              Container(
-                alignment: Alignment.center,
+              Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: const Text(
-                  '¥100,000',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.trending_up,
+                          color: Colors.green,
+                          size: 32,
+                        ),
+                        const SizedBox(width: 16),
+                        const Text(
+                          '収入',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Text(
+                      '¥100,000',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.trending_down,
+                          color: Colors.red,
+                          size: 32,
+                        ),
+                        const SizedBox(width: 16),
+                        const Text(
+                          '支出',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Text(
+                      '¥100,000',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
         ),
-        // 今月グループの支出
+        const SizedBox(height: 8),
+        // グループの収支
         Card(
           child: Column(
             children: [
-              Container(
-                alignment: Alignment.topLeft,
+              Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: const Text(
-                  '今月のグループの支出',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                child:
+                    Row(mainAxisAlignment: MainAxisAlignment.start, children: [
+                  const Icon(
+                    Icons.group,
+                    color: Colors.blue,
+                    size: 32,
                   ),
-                ),
+                  const SizedBox(width: 16),
+                  const Text(
+                    'グループ',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                ]),
               ),
               const Divider(height: 1, color: Colors.black12),
-              Container(
-                alignment: Alignment.center,
+              Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: const Text(
-                  '¥100,000',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.trending_up,
+                          color: Colors.green,
+                          size: 32,
+                        ),
+                        const SizedBox(width: 16),
+                        const Text(
+                          '収入',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Text(
+                      '¥100,000',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ),
-        // 今月グループの収入
-        Card(
-          child: Column(
-            children: [
-              Container(
-                alignment: Alignment.topLeft,
+              Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: const Text(
-                  '今月のグループの収入',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-              ),
-              const Divider(height: 1, color: Colors.black12),
-              Container(
-                alignment: Alignment.center,
-                padding: const EdgeInsets.all(16.0),
-                child: const Text(
-                  '¥100,000',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.trending_down,
+                          color: Colors.red,
+                          size: 32,
+                        ),
+                        const SizedBox(width: 16),
+                        const Text(
+                          '支出',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Text(
+                      '¥100,000',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],

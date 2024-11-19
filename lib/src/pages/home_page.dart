@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:sharing_household_expenses/src/pages/user_page.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'login_page.dart';
 
@@ -12,6 +13,30 @@ class HomePage extends StatefulWidget {
 }
 
 class HomePageState extends State<HomePage> {
+  // TODO: バックエンドで招待コードの生成
+  final String inviteCode = 'ABCDEFG';
+  final String inviteLink =
+      'https://https://yrlckprhukvnyirjifaa.supabase.co/invite?code=ABCDEFG';
+
+  // LINE用のDeep Link生成
+  String generateLineShareUrl(String code, String link) {
+    final message =
+        'シェア家計簿のグループ招待です。グループに参加してね！\n招待コード: $code\nこちらのリンクから参加: $link';
+    return 'https://line.me/R/share?text=${Uri.encodeComponent(message)}';
+  }
+
+  // Deep Linkを開く
+  Future<void> openLink(String url) async {
+    // URLをUri型に変換
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      // 外部アプリでURLを開く
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      throw 'Could not launch $url';
+    }
+  }
+
   // TODO: サーバーからデータを取得する
   @override
   Widget build(BuildContext context) {
@@ -21,12 +46,52 @@ class HomePageState extends State<HomePage> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text('シェア家計簿'),
         actions: [
+          // 招待ボタン
+          IconButton(
+            icon: const Icon(Icons.group_add),
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                builder: (BuildContext context) {
+                  return Container(
+                    height: 200,
+                    width: double.infinity,
+                    color: Colors.white,
+                    child: Column(
+                      children: <Widget>[
+                        const SizedBox(height: 16),
+                        const Text(
+                          'グループに招待する',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () {
+                            final lineShareUrl =
+                                generateLineShareUrl(inviteCode, inviteLink);
+                            openLink(lineShareUrl);
+                          },
+                          child: const Text('招待コードを送る'),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+          // TODO: ログイン状態によって表示を変える
           IconButton(
               icon: const Icon(Icons.account_circle),
               onPressed: () {
                 Navigator.of(context).push(
                     MaterialPageRoute(builder: (context) => const UserPage()));
               }),
+          // TODO: ログイン状態によって表示を変える
           IconButton(
               icon: const Icon(Icons.login),
               onPressed: () {

@@ -61,7 +61,9 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.transactionData == null ? '収支の登録' : '収支の編集'),
       ),
-      body: Center(
+      body:
+          SingleChildScrollView(
+        child: Center(
         child: Card(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12.0),
@@ -166,25 +168,23 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
                 ),
                 const SizedBox(height: 24),
                 // カテゴリー選択
-                DropdownMenu<String>(
-                  label: const Text('カテゴリ'),
-                  width: 350,
-                  leadingIcon: const Icon(Icons.category),
-                  initialSelection: selectedCategory,
-                  dropdownMenuEntries: categories.map((String category) {
-                    return DropdownMenuEntry<String>(
+                DropdownButtonFormField<String>(
+                  value: selectedCategory,
+                  decoration: const InputDecoration(
+                    labelText: 'カテゴリ',
+                    prefixIcon: Icon(Icons.category),
+                  ),
+                  items: categories.map((String category) {
+                    return DropdownMenuItem<String>(
                       value: category,
-                      label: category,
+                      child: Text(category),
                     );
                   }).toList(),
-                  onSelected: (String? newValue) {
+                  onChanged: (String? newValue) {
                     setState(() {
                       selectedCategory = newValue!;
                     });
                   },
-                  inputDecorationTheme: const InputDecorationTheme(
-                    border: UnderlineInputBorder(),
-                  ),
                 ),
                 const SizedBox(height: 24),
                 // 金額
@@ -237,6 +237,7 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
           ),
         ),
       ),
+          )
     );
   }
 }

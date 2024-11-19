@@ -16,7 +16,7 @@ class HomePageState extends State<HomePage> {
   // TODO: バックエンドで招待コードの生成
   final String inviteCode = 'ABCDEFG';
   final String inviteLink =
-      'https://https://yrlckprhukvnyirjifaa.supabase.co/invite?code=ABCDEFG';
+      'https://yrlckprhukvnyirjifaa.supabase.co/invite?code=ABCDEFG';
 
   // LINE用のDeep Link生成
   String generateLineShareUrl(String code, String link) {

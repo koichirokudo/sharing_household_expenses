@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sharing_household_expenses/src/pages/user_register_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -21,10 +22,7 @@ class LoginPageState extends State<LoginPage> {
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        backgroundColor: Theme
-            .of(context)
-            .colorScheme
-            .inversePrimary,
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text('ログイン'),
       ),
       body: Center(
@@ -52,37 +50,34 @@ class LoginPageState extends State<LoginPage> {
                       labelText: 'パスワード',
                       prefixIcon: const Icon(Icons.lock),
                       suffixIcon: IconButton(
-                        icon: Icon(
-                            _isObscure ? Icons.visibility : Icons.visibility_off
-                        ),
+                        icon: Icon(_isObscure
+                            ? Icons.visibility
+                            : Icons.visibility_off),
                         onPressed: _toggleObscure,
-                      )
-                  ),
+                      )),
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
-                  label: const Text('ログイン'),
-                  icon: const Icon(Icons.login),
-                  onPressed: () {
-                    // TODO: ログイン処理
-                    Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    fixedSize: const Size(300, double.infinity),
-                  )
-                ),
+                    label: const Text('ログイン'),
+                    icon: const Icon(Icons.login),
+                    onPressed: () {
+                      // TODO: ログイン処理
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      fixedSize: const Size(300, double.infinity),
+                    )),
                 const SizedBox(height: 16),
                 ElevatedButton.icon(
                   label: const Text('新規登録'),
                   icon: const Icon(Icons.person_add),
                   iconAlignment: IconAlignment.start,
                   onPressed: () {
-                    // TODO: 新規登録処理
-                    Navigator.pop(context);
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (context) => const UserRegisterPage()));
                   },
                   style: ElevatedButton.styleFrom(
                     fixedSize: const Size(300, double.infinity),
-                    // padding: const EdgeInsets.symmetric(horizontal: 16), // ボタン内の余白調整
                   ),
                 ),
               ],

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:sharing_household_expenses/src/pages/user_register_page.dart';
+import 'package:sharing_household_expenses/utils/constants.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import 'home_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -10,6 +14,51 @@ class LoginPage extends StatefulWidget {
 
 class LoginPageState extends State<LoginPage> {
   bool _isObscure = true;
+  bool _isLoading = false;
+
+  final _formKey = GlobalKey<FormState>();
+
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+
+  Future<void> _signIn() async {
+    final isValid = _formKey.currentState!.validate();
+    if (!isValid) {
+      return;
+    }
+    setState(() {
+      _isLoading = true;
+    });
+    final email = _emailController.text;
+    final password = _passwordController.text;
+    try {
+      // ログイン処理
+      await supabase.auth.signInWithPassword(email: email, password: password);
+
+      if (mounted) {
+        context.showSnackBar(message: 'ログインしました');
+        // ホーム画面に遷移
+        Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => HomePage(),
+            ));
+      }
+    } on AuthException catch (error) {
+      if (mounted) {
+        context.showSnackBarError(message: error.message);
+      }
+    } catch (error) {
+      if (mounted) {
+        context.showSnackBarError(message: unexpectedErrorMessage);
+      }
+    }
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   void _toggleObscure() {
     setState(() {
@@ -20,67 +69,91 @@ class LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         centerTitle: true,
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text('ログイン'),
       ),
-      body: Center(
-        child: Card(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.0),
-          ),
-          margin: const EdgeInsets.all(16.0),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 32),
-                TextFormField(
-                  decoration: const InputDecoration(
-                    labelText: 'メールアドレス',
-                    prefixIcon: Icon(Icons.mail),
+      body: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          child: Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.0),
+            ),
+            margin: const EdgeInsets.all(16.0),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  TextFormField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: const InputDecoration(
+                      labelText: 'メールアドレス',
+                      prefixIcon: Icon(Icons.mail),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'メールアドレスを入力してください';
+                      }
+                      final isValid = RegExp(
+                              r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+                          .hasMatch(value);
+                      if (!isValid) {
+                        return '正しいメールアドレスを入力してください';
+                      }
+                      return null;
+                    },
                   ),
-                ),
-                const SizedBox(height: 32),
-                TextFormField(
-                  obscureText: _isObscure,
-                  decoration: InputDecoration(
-                      labelText: 'パスワード',
-                      prefixIcon: const Icon(Icons.lock),
-                      suffixIcon: IconButton(
-                        icon: Icon(_isObscure
-                            ? Icons.visibility
-                            : Icons.visibility_off),
-                        onPressed: _toggleObscure,
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _passwordController,
+                    obscureText: _isObscure,
+                    decoration: InputDecoration(
+                        labelText: 'パスワード',
+                        prefixIcon: const Icon(Icons.lock),
+                        suffixIcon: IconButton(
+                          icon: Icon(_isObscure
+                              ? Icons.visibility
+                              : Icons.visibility_off),
+                          onPressed: _toggleObscure,
+                        )),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'パスワードを入力してください';
+                      }
+                      final isValid = RegExp(r'^.{8,24}$').hasMatch(value);
+                      if (!isValid) {
+                        return 'パスワードは8~24文字で入力してください';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 32),
+                  ElevatedButton.icon(
+                      onPressed: _isLoading ? null : _signIn,
+                      label: const Text('ログイン'),
+                      icon: const Icon(Icons.login),
+                      style: ElevatedButton.styleFrom(
+                        fixedSize: const Size(400, double.infinity),
                       )),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton.icon(
-                    label: const Text('ログイン'),
-                    icon: const Icon(Icons.login),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    label: const Text('新規登録'),
+                    icon: const Icon(Icons.person_add),
+                    iconAlignment: IconAlignment.start,
                     onPressed: () {
-                      // TODO: ログイン処理
-                      Navigator.pop(context);
+                      Navigator.of(context).push(MaterialPageRoute(
+                          builder: (context) => const UserRegisterPage()));
                     },
                     style: ElevatedButton.styleFrom(
-                      fixedSize: const Size(300, double.infinity),
-                    )),
-                const SizedBox(height: 16),
-                ElevatedButton.icon(
-                  label: const Text('新規登録'),
-                  icon: const Icon(Icons.person_add),
-                  iconAlignment: IconAlignment.start,
-                  onPressed: () {
-                    Navigator.of(context).push(MaterialPageRoute(
-                        builder: (context) => const UserRegisterPage()));
-                  },
-                  style: ElevatedButton.styleFrom(
-                    fixedSize: const Size(300, double.infinity),
+                      fixedSize: const Size(400, double.infinity),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

@@ -1,8 +1,10 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:sharing_household_expenses/src/pages/user_page.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../utils/constants.dart';
 import 'login_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -13,6 +15,7 @@ class HomePage extends StatefulWidget {
 }
 
 class HomePageState extends State<HomePage> {
+  final Session? session = supabase.auth.currentSession;
   // TODO: バックエンドで招待コードの生成
   final String inviteCode = 'ABCDEFG';
   final String inviteLink =
@@ -46,58 +49,61 @@ class HomePageState extends State<HomePage> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text('シェア家計簿'),
         actions: [
-          // 招待ボタン
-          IconButton(
-            icon: const Icon(Icons.group_add),
-            onPressed: () {
-              showModalBottomSheet(
-                context: context,
-                builder: (BuildContext context) {
-                  return Container(
-                    height: 200,
-                    width: double.infinity,
-                    color: Colors.white,
-                    child: Column(
-                      children: <Widget>[
-                        const SizedBox(height: 16),
-                        const Text(
-                          'グループに招待する',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () {
-                            final lineShareUrl =
-                                generateLineShareUrl(inviteCode, inviteLink);
-                            openLink(lineShareUrl);
-                          },
-                          child: const Text('招待コードを送る'),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              );
-            },
-          ),
-          // TODO: ログイン状態によって表示を変える
-          IconButton(
-              icon: const Icon(Icons.account_circle),
+          // 招待ボタン（ログイン状態によって表示）
+          if (session != null)
+            IconButton(
+              icon: const Icon(Icons.group_add),
               onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return Container(
+                      height: 200,
+                      width: double.infinity,
+                      color: Colors.white,
+                      child: Column(
+                        children: <Widget>[
+                          const SizedBox(height: 16),
+                          const Text(
+                            'グループに招待する',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: () {
+                              final lineShareUrl =
+                                  generateLineShareUrl(inviteCode, inviteLink);
+                              openLink(lineShareUrl);
+                            },
+                            child: const Text('招待コードを送る'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+
+          // ログイン状態によって表示を変えるアカウントボタンまたはログインボタン
+          IconButton(
+            icon: session != null
+                ? const Icon(Icons.account_circle)
+                : const Icon(Icons.login),
+            onPressed: () {
+              if (session != null) {
                 Navigator.of(context).push(
                     MaterialPageRoute(builder: (context) => const UserPage()));
-              }),
-          // TODO: ログイン状態によって表示を変える
-          IconButton(
-              icon: const Icon(Icons.login),
-              onPressed: () {
+              } else {
                 Navigator.of(context).push(
                     MaterialPageRoute(builder: (context) => const LoginPage()));
-              })
+              }
+            },
+          ),
         ],
       ),
       body: Column(mainAxisAlignment: MainAxisAlignment.center, children: [

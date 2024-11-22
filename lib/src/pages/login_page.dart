@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:sharing_household_expenses/src/app.dart';
 import 'package:sharing_household_expenses/src/pages/user_register_page.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
-import 'home_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -26,23 +25,21 @@ class LoginPageState extends State<LoginPage> {
     if (!isValid) {
       return;
     }
-    setState(() {
-      _isLoading = true;
-    });
-    final email = _emailController.text;
-    final password = _passwordController.text;
     try {
+      setState(() {
+        _isLoading = true;
+      });
       // ログイン処理
-      await supabase.auth.signInWithPassword(email: email, password: password);
+      await supabase.auth.signInWithPassword(
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim());
 
       if (mounted) {
-        context.showSnackBar(message: 'ログインしました');
+        context.showSnackBar(
+            message: 'ログインしました', backgroundColor: Colors.green);
         // ホーム画面に遷移
         Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => HomePage(),
-            ));
+            context, MaterialPageRoute(builder: (context) => const App()));
       }
     } on AuthException catch (error) {
       if (mounted) {
@@ -52,12 +49,20 @@ class LoginPageState extends State<LoginPage> {
       if (mounted) {
         context.showSnackBarError(message: unexpectedErrorMessage);
       }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
-    }
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 
   void _toggleObscure() {
@@ -141,7 +146,7 @@ class LoginPageState extends State<LoginPage> {
                       )),
                   const SizedBox(height: 16),
                   ElevatedButton.icon(
-                    label: const Text('新規登録'),
+                    label: const Text('アカウントをお持ちでない方はこちら'),
                     icon: const Icon(Icons.person_add),
                     iconAlignment: IconAlignment.start,
                     onPressed: () {

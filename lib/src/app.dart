@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:sharing_household_expenses/src/pages/home_page.dart';
+import 'package:sharing_household_expenses/src/pages/login_page.dart';
 import 'package:sharing_household_expenses/src/pages/settlement_list_page.dart';
-import 'package:sharing_household_expenses/src/pages/share_transaction_list_page.dart';
 import 'package:sharing_household_expenses/src/pages/transaction_list_page.dart';
 import 'package:sharing_household_expenses/src/pages/transaction_register_page.dart';
+import 'package:sharing_household_expenses/utils/constants.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -18,7 +19,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         fontFamily: 'MPLUS1p',
       ),
-      home: const App(),
+      home: supabase.auth.currentUser == null ? const LoginPage() : const App(),
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
@@ -58,18 +59,18 @@ class _App extends State<App> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _screens[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'ホーム'),
-          BottomNavigationBarItem(icon: Icon(Icons.edit), label: '収支の登録'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.list), label: '明細一覧'),
-          BottomNavigationBarItem(icon: Icon(Icons.fact_check), label: '清算一覧'),
-        ],
-        type: BottomNavigationBarType.fixed,
-      ));
+        body: _screens[_selectedIndex],
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: _selectedIndex,
+          onTap: _onItemTapped,
+          items: const <BottomNavigationBarItem>[
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'ホーム'),
+            BottomNavigationBarItem(icon: Icon(Icons.edit), label: '収支の登録'),
+            BottomNavigationBarItem(icon: Icon(Icons.list), label: '明細一覧'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.fact_check), label: '清算一覧'),
+          ],
+          type: BottomNavigationBarType.fixed,
+        ));
   }
 }

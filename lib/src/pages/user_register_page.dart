@@ -56,11 +56,12 @@ class UserRegisterPageState extends State<UserRegisterPage> {
       if (mounted) {
         context.showSnackBarError(message: unexpectedErrorMessage);
       }
-    }
-    if (mounted) {
-      setState(() {
-        _isLoading = false;
-      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 

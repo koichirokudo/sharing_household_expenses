@@ -104,6 +104,14 @@ class HomePageState extends State<HomePage> {
               }
             },
           ),
+          if (session != null)
+            IconButton(
+                onPressed: () {
+                  supabase.auth.signOut();
+                  Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) => const LoginPage()));
+                },
+                icon: const Icon(Icons.logout)),
         ],
       ),
       body: Column(mainAxisAlignment: MainAxisAlignment.center, children: [

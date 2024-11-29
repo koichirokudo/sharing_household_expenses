@@ -14,7 +14,7 @@ class TransactionRegisterPage extends StatefulWidget {
 
 class TransactionRegisterPageState extends State<TransactionRegisterPage> {
   // 引数に取引(明細)データがあるときは、編集画面として動作
-  String? _selectedValue = 'expenses';
+  String? _selectedValue = 'expense';
   List<Map<String, dynamic>> allCategories = [];
   List<Map<String, dynamic>> filteredCategories = [];
 
@@ -65,7 +65,7 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
         if (_selectedValue == 'income') {
           return categories['type'] == 'income';
         } else {
-          return categories['type'] == 'expenses';
+          return categories['type'] == 'expense';
         }
       }).toList();
 
@@ -126,7 +126,7 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
       });
 
       final data = await supabase.from('transactions').upsert({
-        'user_id': supabase.auth.currentUser!.id,
+        'profile_id': supabase.auth.currentUser!.id,
         'group_id': profile['group_id'],
         'category_id': int.tryParse(selectedCategory),
         'amount': int.tryParse(_amountController.text.trim()),
@@ -170,7 +170,7 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
     // 編集データがある場合の初期値設定
     if (widget.transactionData != null) {
       _id = widget.transactionData!['id'];
-      _selectedValue = widget.transactionData!['type'] ?? 'expenses';
+      _selectedValue = widget.transactionData!['type'] ?? 'expense';
       _isShare = widget.transactionData!['isShare'] ?? false;
       _dateController.text = widget.transactionData!['date'] ??
           DateFormat('yyyy-MM-dd').format(DateTime.now());
@@ -267,7 +267,7 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
                           Expanded(
                             child: RadioListTile<String>(
                               title: const Text('支出'),
-                              value: 'expenses',
+                              value: 'expense',
                               groupValue: _selectedValue,
                               onChanged: (String? value) {
                                 setState(() {

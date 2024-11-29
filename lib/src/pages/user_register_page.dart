@@ -103,8 +103,9 @@ class UserRegisterPageState extends State<UserRegisterPage> {
                       if (value == null || value.isEmpty) {
                         return 'ユーザー名を入力してください';
                       }
-                      final isValid =
-                          RegExp(r'^[a-zA-Z0-9_]{3,24}$').hasMatch(value);
+                      final isValid = RegExp(
+                              r'^[a-zA-Z0-9_]|[\u3040-\u309F]|\u3000|[\u30A1-\u30FC]|[\u4E00-\u9FFF]{3,24}$')
+                          .hasMatch(value);
                       if (!isValid) {
                         return 'ユーザー名はアルファベットか文字で3~24文字以下で入力してください';
                       }

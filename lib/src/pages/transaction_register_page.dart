@@ -137,10 +137,9 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
         'note': _noteController.text.trim(),
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       }).select();
-      debugPrint('data: $data');
 
       if (mounted) {
-        context.showSnackBar(message: '登録しました');
+        context.showSnackBar(message: '登録しました', backgroundColor: Colors.green);
       }
     } on AuthException catch (error) {
       if (mounted) {

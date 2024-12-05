@@ -12,16 +12,6 @@ class TransactionListPage extends StatefulWidget {
 }
 
 class TransactionListPageState extends State<TransactionListPage> {
-  /* TODO: 仕様
-      現在の月から過去の１年分確認ができる（1年以上経過したデータは残す）
-      未来の月は表示できないようにする
-      スワイプして月の画面を遷移できる
-      データが取得できない場合はデータがないということを表示する
-      データ取得時は、今月の分のみを取得して、一度取得したデータは、更新されない限りキャッシュを使う
-      キャッシュの有効期限機能をつける
-      データ更新はリストを下に引っ張って更新できるようにする？
-      収入と支出の合計を表示させる
-   */
   bool _isLoading = false;
   List<String> months = [];
   List<Map<String, dynamic>> transactions = [];

@@ -1,10 +1,11 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:sharing_household_expenses/src/pages/user_page.dart';
+import 'package:sharing_household_expenses/utils/cache.dart';
+import 'package:sharing_household_expenses/utils/constants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../utils/constants.dart';
 import 'login_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -107,6 +108,7 @@ class HomePageState extends State<HomePage> {
           if (session != null)
             IconButton(
                 onPressed: () {
+                  clearAllCache();
                   supabase.auth.signOut();
                   Navigator.of(context).push(MaterialPageRoute(
                       builder: (context) => const LoginPage()));

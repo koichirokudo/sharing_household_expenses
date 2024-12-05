@@ -1,7 +1,6 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:fl_chart/fl_chart.dart';
-import 'package:sharing_household_expenses/src/pages/transaction_detail_page.dart';
 
 class SettlementDetailPage extends StatefulWidget {
   const SettlementDetailPage({super.key, required List<String> settlement});
@@ -224,14 +223,14 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
 
                       return InkWell(
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => TransactionDetailPage(
-                                transaction: transactions[index],
-                              ),
-                            ),
-                          );
+                          // Navigator.push(
+                          //   context,
+                          //   MaterialPageRoute(
+                          //     builder: (context) => TransactionDetailPage(
+                          //       transaction: transactions[index],
+                          //     ),
+                          //   ),
+                          // );
                         },
                         child: Container(
                           height: 80,

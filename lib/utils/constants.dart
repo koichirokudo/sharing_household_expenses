@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 final supabase = Supabase.instance.client;
@@ -26,5 +27,9 @@ extension ShowSnackBar on BuildContext {
       message: message,
       backgroundColor: Theme.of(this).colorScheme.error,
     );
+  }
+
+  String convertToYenFormat({required int amount}) {
+    return NumberFormat.currency(locale: 'ja_JP', symbol: '¥').format(amount);
   }
 }

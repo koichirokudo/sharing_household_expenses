@@ -33,19 +33,36 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
 
   Future<List<Map<String, dynamic>>?> _getCategories() async {
     try {
-      final List<Map<String, dynamic>> data =
-          await supabase.from('categories').select('id, name, type');
-      return data;
+      // Supabaseからデータを取得
+      final data = await supabase.from('categories').select('*');
+
+      // 型キャスト
+      final List<Map<String, dynamic>> categories =
+          data.cast<Map<String, dynamic>>();
+
+      // データが空の場合の処理
+      if (categories.isEmpty) {
+        if (mounted) {
+          context.showSnackBarError(message: 'カテゴリーが見つかりません');
+        }
+        return [];
+      }
+
+      return categories;
     } on AuthException catch (error) {
+      // 認証エラーをキャッチ
       if (mounted) {
         context.showSnackBarError(message: error.message);
       }
     } catch (error) {
+      // その他のエラーをキャッチ
       if (mounted) {
+        print('Error fetching categories: $error');
         context.showSnackBarError(message: unexpectedErrorMessage);
       }
     }
-    return null;
+
+    return null; // エラー時にnullを返す
   }
 
   Future<void> _loadCategories() async {
@@ -92,7 +109,7 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
           .from('profiles')
           .select('*')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
 
       return data;
     } on AuthException catch (error) {
@@ -180,7 +197,7 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
       selectedCategory = widget.transactionData!['category'] ?? '4001';
     } else {
       // 編集データがない場合の初期設定
-      _selectedValue = 'expenses';
+      _selectedValue = 'expense';
       _isShare = false;
       // 本日の日付を初期値として設定
       _dateController.text = DateFormat('yyyy-MM-dd').format(DateTime.now());
@@ -359,6 +376,7 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
                       const SizedBox(height: 24),
                       // 金額
                       TextFormField(
+                        keyboardType: TextInputType.number,
                         controller: _amountController,
                         decoration: const InputDecoration(
                           labelText: '金額',

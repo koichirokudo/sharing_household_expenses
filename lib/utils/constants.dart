@@ -9,6 +9,13 @@ final circularIndicator = const Center(
   child: CircularProgressIndicator(),
 );
 
+// String型からDateTime型に変換する
+DateTime convertToDateTime(String monthString) {
+  // DateFormat で yyyy/MM 形式を指定
+  DateFormat format = DateFormat('yyyy/MM');
+  return format.parse(monthString);
+}
+
 extension ShowSnackBar on BuildContext {
   void showSnackBar({
     required String message,

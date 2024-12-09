@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:sharing_household_expenses/services/transaction_service.dart';
 import 'package:sharing_household_expenses/src/pages/transaction_detail_page.dart';
-import 'package:sharing_household_expenses/utils/cache.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
 
 class TransactionListPage extends StatefulWidget {
@@ -13,6 +13,7 @@ class TransactionListPage extends StatefulWidget {
 
 class TransactionListPageState extends State<TransactionListPage> {
   bool _isLoading = false;
+  late TransactionService transactionService;
   List<String> months = [];
   List<Map<String, dynamic>> transactions = [];
   late DateTime _currentMonth;
@@ -23,6 +24,7 @@ class TransactionListPageState extends State<TransactionListPage> {
   @override
   void initState() {
     super.initState();
+    transactionService = TransactionService(supabase);
     _initializeData();
   }
 
@@ -42,7 +44,7 @@ class TransactionListPageState extends State<TransactionListPage> {
       });
 
       // キャッシュチェック（有効期限を考慮）
-      final cachedData = getCachedTransactions(month);
+      final cachedData = transactionService.loadCache(month);
       if (cachedData != null) {
         setState(() {
           transactions = cachedData;
@@ -54,10 +56,10 @@ class TransactionListPageState extends State<TransactionListPage> {
 
       // データ取得
       final List<Map<String, dynamic>>? data =
-          await _getTransactions(_convertToDateTime(month));
+          await transactionService.fetchMonthlyData(convertToDateTime(month));
 
       // キャッシュに保存（データがなくても空リストを保存）
-      cacheTransactions(month, data ?? []);
+      transactionService.storeCache(month, data ?? []);
 
       // トランザクションデータを設定
       setState(() {
@@ -74,27 +76,6 @@ class TransactionListPageState extends State<TransactionListPage> {
     }
   }
 
-  void cacheTransactions(String month, List<Map<String, dynamic>> data) {
-    cachedData[month] = {
-      'data': data,
-      'timestamp': DateTime.now(),
-    };
-  }
-
-  // キャッシュの有効期限をチェック 15分
-  List<Map<String, dynamic>>? getCachedTransactions(String month,
-      {Duration expiry = const Duration(minutes: 15)}) {
-    final cache = cachedData[month];
-    if (cache != null) {
-      final timestamp = cache['timestamp'] as DateTime;
-      // 有効期限内の場合のみデータを返す
-      if (DateTime.now().difference(timestamp) <= expiry) {
-        return cache['data'] as List<Map<String, dynamic>>;
-      }
-    }
-    return null;
-  }
-
   // 現在の月から過去１年分の月を取得する
   void _generateMonths(currentMonth) {
     months = List.generate(12, (index) {
@@ -104,42 +85,13 @@ class TransactionListPageState extends State<TransactionListPage> {
     months = months.reversed.toList();
   }
 
-  // String型からDateTime型に変換する
-  DateTime _convertToDateTime(String monthString) {
-    // DateFormat で yyyy/MM 形式を指定
-    DateFormat format = DateFormat('yyyy/MM');
-    return format.parse(monthString);
-  }
-
   // 明細データから収支の合計を計算する
-  String calculateTotal(String type) {
+  String _calculateTotal(String type) {
     double total = transactions
         .where((transactions) => transactions['type'] == type)
         .fold(0.0, (sum, transaction) => sum + transaction['amount']);
 
     return total.ceil().toString();
-  }
-
-  // 明細データを取得する
-  Future<List<Map<String, dynamic>>?> _getTransactions(DateTime month) async {
-    try {
-      final startOfMonth = DateTime(month.year, month.month);
-      final endOfMonth = DateTime(month.year, month.month + 1)
-          .subtract(const Duration(seconds: 1));
-      final data = await supabase
-          .from('transactions')
-          .select('*, categories(name)')
-          .gte('date', startOfMonth.toIso8601String())
-          .lt('date', endOfMonth.toIso8601String())
-          .order('date', ascending: false);
-
-      return data as List<Map<String, dynamic>>?;
-    } catch (error) {
-      if (mounted) {
-        context.showSnackBarError(message: '$error');
-      }
-      return null;
-    }
   }
 
   // リフレッシュデータ
@@ -156,11 +108,11 @@ class TransactionListPageState extends State<TransactionListPage> {
 
       // refresh data
       final List<Map<String, dynamic>>? freshData =
-          await _getTransactions(_convertToDateTime(month));
+          await transactionService.fetchMonthlyData(convertToDateTime(month));
 
       // update new cache data
       if (freshData != null) {
-        cacheTransactions(month, freshData);
+        transactionService.storeCache(month, freshData);
       }
 
       // set transaction data
@@ -246,22 +198,11 @@ class TransactionListPageState extends State<TransactionListPage> {
                     child: CircularProgressIndicator(),
                   );
                 }
-                // データが無い
-                // if (transactions.isEmpty) {
-                //   return Center(
-                //     child: Text(
-                //       'データがありません。\nリストを下に引っ張って更新してください。',
-                //       textAlign: TextAlign.center,
-                //       style: const TextStyle(
-                //           fontSize: 18, fontWeight: FontWeight.bold),
-                //     ),
-                //   );
-                // }
 
                 final incomeTotal = context.convertToYenFormat(
-                    amount: int.parse(calculateTotal('income')));
+                    amount: int.parse(_calculateTotal('income')));
                 final expenseTotal = context.convertToYenFormat(
-                    amount: int.parse(calculateTotal('expense')));
+                    amount: int.parse(_calculateTotal('expense')));
 
                 return Column(
                   children: [
@@ -366,13 +307,14 @@ class TransactionListPageState extends State<TransactionListPage> {
                                       context.convertToYenFormat(
                                           amount: amount.round());
                                   final date = DateTime.parse(
-                                      transactions[index]['date']);
+                                          transactions[index]['date'])
+                                      .toLocal();
                                   final transactionDate =
                                       DateFormat('yyyy/MM/dd').format(date);
 
                                   return InkWell(
-                                    onTap: () {
-                                      Navigator.push(
+                                    onTap: () async {
+                                      final response = await Navigator.push(
                                         context,
                                         MaterialPageRoute(
                                           builder: (context) =>
@@ -381,6 +323,15 @@ class TransactionListPageState extends State<TransactionListPage> {
                                           ),
                                         ),
                                       );
+
+                                      if (response == true) {
+                                        String stringMonth =
+                                            DateFormat('yyyy/MM')
+                                                .format(_currentMonth);
+                                        transactionService
+                                            .clearCache(stringMonth);
+                                        _fetchDataForMonth(stringMonth);
+                                      }
                                     },
                                     child: Container(
                                       height: 80,

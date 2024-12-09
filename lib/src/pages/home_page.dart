@@ -1,7 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:sharing_household_expenses/services/transaction_service.dart';
 import 'package:sharing_household_expenses/src/pages/user_page.dart';
-import 'package:sharing_household_expenses/utils/cache.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -21,6 +21,13 @@ class HomePageState extends State<HomePage> {
   final String inviteCode = 'ABCDEFG';
   final String inviteLink =
       'https://yrlckprhukvnyirjifaa.supabase.co/invite?code=ABCDEFG';
+  late TransactionService transactionService;
+
+  @override
+  void initState() {
+    super.initState();
+    transactionService = TransactionService(supabase);
+  }
 
   // LINE用のDeep Link生成
   String generateLineShareUrl(String code, String link) {
@@ -108,7 +115,7 @@ class HomePageState extends State<HomePage> {
           if (session != null)
             IconButton(
                 onPressed: () {
-                  clearAllCache();
+                  transactionService.clearAllCache();
                   supabase.auth.signOut();
                   Navigator.of(context).push(MaterialPageRoute(
                       builder: (context) => const LoginPage()));

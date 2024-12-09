@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:sharing_household_expenses/src/app.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
-import 'home_page.dart';
 
 class UserRegisterPage extends StatefulWidget {
   const UserRegisterPage({super.key});
@@ -45,7 +44,7 @@ class UserRegisterPageState extends State<UserRegisterPage> {
         Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => HomePage(),
+              builder: (context) => const App(),
             ));
       }
     } on AuthException catch (error) {

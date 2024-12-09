@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:sharing_household_expenses/services/transaction_service.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class TransactionRegisterPage extends StatefulWidget {
   // 画面遷移時に渡されるデータ
-  final Map<String, dynamic>? transactionData;
-  const TransactionRegisterPage({super.key, this.transactionData});
+  final Map<String, dynamic>? transaction;
+  const TransactionRegisterPage({super.key, this.transaction});
 
   @override
   TransactionRegisterPageState createState() => TransactionRegisterPageState();
@@ -14,9 +15,10 @@ class TransactionRegisterPage extends StatefulWidget {
 
 class TransactionRegisterPageState extends State<TransactionRegisterPage> {
   // 引数に取引(明細)データがあるときは、編集画面として動作
-  String? _selectedValue = 'expense';
+  String? _selectedValue;
   List<Map<String, dynamic>> allCategories = [];
   List<Map<String, dynamic>> filteredCategories = [];
+  late TransactionService transactionService;
 
   bool _isShare = false;
   bool _isLoading = false;
@@ -25,7 +27,7 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
 
   final _formKey = GlobalKey<FormState>();
   // 選択されたカテゴリー
-  String selectedCategory = '4001';
+  String? selectedCategory;
   final TextEditingController _dateController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
@@ -34,7 +36,10 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
   Future<List<Map<String, dynamic>>?> _getCategories() async {
     try {
       // Supabaseからデータを取得
-      final data = await supabase.from('categories').select('*');
+      final data = await supabase
+          .from('categories')
+          .select('*')
+          .order('id', ascending: true);
 
       // 型キャスト
       final List<Map<String, dynamic>> categories =
@@ -131,6 +136,28 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
     return null;
   }
 
+  // リフレッシュデータ
+  Future<void> _refreshData(String month) async {
+    try {
+      transactionService.clearCache(month);
+
+      await Future.delayed(Duration(milliseconds: 700));
+
+      // refresh data
+      final List<Map<String, dynamic>>? freshData =
+          await transactionService.fetchMonthlyData(convertToDateTime(month));
+
+      // update new cache data
+      if (freshData != null) {
+        transactionService.storeCache(month, freshData);
+      }
+    } catch (error) {
+      if (mounted) {
+        context.showSnackBarError(message: '$error');
+      }
+    }
+  }
+
   Future<void> _register() async {
     final isValid = _formKey.currentState!.validate();
     if (!isValid) {
@@ -142,10 +169,11 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
         _isLoading = true;
       });
 
-      final data = await supabase.from('transactions').upsert({
+      final data = {
+        if (_id != null) 'id': _id,
         'profile_id': supabase.auth.currentUser!.id,
         'group_id': profile['group_id'],
-        'category_id': int.tryParse(selectedCategory),
+        'category_id': int.tryParse(selectedCategory!),
         'amount': int.tryParse(_amountController.text.trim()),
         'share': _isShare,
         'type': _selectedValue,
@@ -153,10 +181,31 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
         'name': _nameController.text.trim(),
         'note': _noteController.text.trim(),
         'updated_at': DateTime.now().toUtc().toIso8601String(),
-      }).select();
+      };
+
+      await Future.delayed(Duration(milliseconds: 700));
+
+      final response = await transactionService.upsertData(data);
+
+      if (_id == null) {
+        _formKey.currentState!.reset();
+        _dateController.text = DateFormat('yyyy-MM-dd').format(DateTime.now());
+        _nameController.clear();
+        _noteController.clear();
+        _amountController.clear();
+        _selectedValue = 'expense';
+        _isShare = false;
+        selectedCategory = null;
+      } else {
+        if (mounted) {
+          Navigator.pop(context, response);
+        }
+      }
 
       if (mounted) {
-        context.showSnackBar(message: '登録しました', backgroundColor: Colors.green);
+        context.showSnackBar(
+            message: _id != null ? '更新しました' : '登録しました',
+            backgroundColor: Colors.green);
       }
     } on AuthException catch (error) {
       if (mounted) {
@@ -182,19 +231,25 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
         profile = fetchedProfile;
       });
     }
-    await _loadCategories();
     // 編集データがある場合の初期値設定
-    if (widget.transactionData != null) {
-      _id = widget.transactionData!['id'];
-      _selectedValue = widget.transactionData!['type'] ?? 'expense';
-      _isShare = widget.transactionData!['isShare'] ?? false;
-      _dateController.text = widget.transactionData!['date'] ??
-          DateFormat('yyyy-MM-dd').format(DateTime.now());
-      _nameController.text = widget.transactionData!['name'] ?? '';
-      _amountController.text =
-          widget.transactionData!['amount'].toString() ?? '';
-      _noteController.text = widget.transactionData!['note'] ?? '';
-      selectedCategory = widget.transactionData!['category'] ?? '4001';
+    if (widget.transaction != null) {
+      String amount = widget.transaction!['amount'].round().toString();
+      DateTime dateString =
+          DateTime.parse(widget.transaction!['date']).toLocal();
+      final transactionDate = DateFormat('yyyy-MM-dd').format(dateString);
+      final categories = widget.transaction!['categories'];
+      selectedCategory = categories != null && categories['id'] != null
+          ? categories['id'].toString()
+          : filteredCategories.isNotEmpty
+              ? filteredCategories.first['id'].toString()
+              : '4001';
+      _id = widget.transaction!['id'];
+      _selectedValue = widget.transaction!['type'] ?? 'expense';
+      _isShare = widget.transaction!['share'] ?? false;
+      _dateController.text = transactionDate;
+      _nameController.text = widget.transaction!['name'] ?? '';
+      _amountController.text = amount;
+      _noteController.text = widget.transaction!['note'] ?? '';
     } else {
       // 編集データがない場合の初期設定
       _selectedValue = 'expense';
@@ -202,12 +257,23 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
       // 本日の日付を初期値として設定
       _dateController.text = DateFormat('yyyy-MM-dd').format(DateTime.now());
     }
+    await _loadCategories();
   }
 
   @override
   void initState() {
     super.initState();
+    transactionService = TransactionService(supabase);
     _initializeData();
+  }
+
+  @override
+  void dispose() {
+    _dateController.dispose();
+    _nameController.dispose();
+    _amountController.dispose();
+    _noteController.dispose();
+    super.dispose();
   }
 
   @override
@@ -216,7 +282,7 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
         appBar: AppBar(
           centerTitle: true,
           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-          title: Text(widget.transactionData == null ? '収支の登録' : '収支の編集'),
+          title: Text(widget.transaction == null ? '収支の登録' : '収支の編集'),
         ),
         body: Form(
           key: _formKey,
@@ -382,6 +448,16 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
                           labelText: '金額',
                           prefixIcon: Icon(Icons.currency_yen),
                         ),
+                        validator: (value) {
+                          if (value != null) {
+                            final isValid =
+                                RegExp(r'^\d{1,8}$').hasMatch(value);
+                            if (!isValid) {
+                              return '最大8桁までの数値を入力してください';
+                            }
+                          }
+                          return null;
+                        },
                       ),
                       const SizedBox(height: 24),
                       // メモ
@@ -392,7 +468,7 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
                           prefixIcon: Icon(Icons.note),
                         ),
                         validator: (value) {
-                          if (value != null && value.length > 100) {
+                          if (value != null && value.length > 30) {
                             return 'メモは30文字以下で入力してください';
                           }
                           return null;
@@ -400,9 +476,8 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
                       ),
                       const SizedBox(height: 32),
                       ElevatedButton.icon(
-                        label:
-                            Text(widget.transactionData == null ? '登録' : '更新'),
-                        icon: Icon(widget.transactionData == null
+                        label: Text(widget.transaction == null ? '登録' : '更新'),
+                        icon: Icon(widget.transaction == null
                             ? Icons.edit
                             : Icons.update),
                         iconAlignment: IconAlignment.start,

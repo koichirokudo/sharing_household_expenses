@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:sharing_household_expenses/src/pages/account_delete_page.dart';
+import 'package:sharing_household_expenses/src/pages/email_edit_page.dart';
+import 'package:sharing_household_expenses/src/pages/password_change_page.dart';
+import 'package:sharing_household_expenses/src/pages/profile_edit_page.dart';
 
 class UserPage extends StatefulWidget {
   const UserPage({super.key});
@@ -8,14 +12,6 @@ class UserPage extends StatefulWidget {
 }
 
 class UserPageState extends State<UserPage> {
-  bool _isObscure = true;
-
-  void _toggleObscure() {
-    setState(() {
-      _isObscure = !_isObscure;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -25,72 +21,71 @@ class UserPageState extends State<UserPage> {
         title: const Text('ユーザー情報'),
       ),
       body: Center(
-        child: Container(
-          height: 420,
-          width: 400,
-          decoration: const BoxDecoration(
-            color: Color(0x00FFE7D4),
+        child: Padding(
+          padding: const EdgeInsets.only(top: 80),
+          child: Column(
+            children: [
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  fixedSize: const Size(400, double.infinity),
+                  minimumSize: Size(400, 50),
+                ),
+                onPressed: () {
+                  Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) => const ProfileEditPage()));
+                },
+                child: const Text('プロフィール変更'),
+              ),
+              const SizedBox(height: 16.0),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  fixedSize: const Size(400, double.infinity),
+                  minimumSize: Size(400, 50),
+                ),
+                onPressed: () {
+                  Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) => const EmailEditPage()));
+                },
+                child: const Text('メールアドレス変更'),
+              ),
+              const SizedBox(height: 16.0),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  fixedSize: const Size(400, double.infinity),
+                  minimumSize: Size(400, 50),
+                ),
+                onPressed: () {
+                  Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) => const PasswordChangePage()));
+                },
+                child: const Text('パスワード変更'),
+              ),
+              const SizedBox(height: 16.0),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  fixedSize: const Size(400, double.infinity),
+                  minimumSize: Size(400, 50),
+                ),
+                onPressed: () {
+                  Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) => const AccountDeletePage()));
+                },
+                child: const Text('アカウント削除'),
+              ),
+            ],
           ),
-          child:
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const SizedBox(height: 16.0),
-            TextFormField(
-              decoration: const InputDecoration(
-                labelText: 'ユーザー名',
-                prefixIcon: Icon(Icons.account_circle),
-              ),
-            ),
-            const SizedBox(height: 16.0),
-            TextFormField(
-              decoration: const InputDecoration(
-                labelText: 'メールアドレス',
-                prefixIcon: Icon(Icons.mail),
-              ),
-            ),
-            const SizedBox(height: 16.0),
-            TextFormField(
-              obscureText: _isObscure,
-              decoration: InputDecoration(
-                  labelText: 'パスワード',
-                  prefixIcon: const Icon(Icons.lock),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                        _isObscure ? Icons.visibility : Icons.visibility_off),
-                    onPressed: _toggleObscure,
-                  )),
-            ),
-            const SizedBox(height: 16.0),
-            TextFormField(
-              obscureText: _isObscure,
-              decoration: InputDecoration(
-                  labelText: '再度パスワード',
-                  prefixIcon: const Icon(Icons.lock),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                        _isObscure ? Icons.visibility : Icons.visibility_off),
-                    onPressed: _toggleObscure,
-                  )),
-            ),
-            const SizedBox(height: 32.0),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton(
-                  child: const Text('保存'),
-                  onPressed: () {
-                    // TODO: 保存処理
-                    Navigator.pop(context, 'テスト');
-                  },
-                ),
-                ElevatedButton(
-                  child: const Text('戻る'),
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                ),
-              ],
-            ),
-          ]),
         ),
       ),
     );

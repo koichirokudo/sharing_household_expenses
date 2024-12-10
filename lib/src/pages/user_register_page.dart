@@ -40,6 +40,7 @@ class UserRegisterPageState extends State<UserRegisterPage> {
         },
       );
       if (mounted) {
+        context.showSnackBar(message: '登録が完了しました！');
         // ホーム画面に遷移
         Navigator.pushReplacement(
             context,

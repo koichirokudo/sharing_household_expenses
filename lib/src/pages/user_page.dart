@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:sharing_household_expenses/src/pages/account_delete_page.dart';
 import 'package:sharing_household_expenses/src/pages/email_edit_page.dart';
+import 'package:sharing_household_expenses/src/pages/group_invite_code_page.dart';
 import 'package:sharing_household_expenses/src/pages/password_change_page.dart';
+import 'package:sharing_household_expenses/src/pages/privacy_policy_page.dart';
 import 'package:sharing_household_expenses/src/pages/profile_edit_page.dart';
+import 'package:sharing_household_expenses/src/pages/terms_of_service_page.dart';
 
 class UserPage extends StatefulWidget {
   const UserPage({super.key});
@@ -68,6 +71,51 @@ class UserPageState extends State<UserPage> {
                       builder: (context) => const PasswordChangePage()));
                 },
                 child: const Text('パスワード変更'),
+              ),
+              const SizedBox(height: 16.0),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  fixedSize: const Size(400, double.infinity),
+                  minimumSize: Size(400, 50),
+                ),
+                onPressed: () {
+                  Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) => const GroupInviteCodePage()));
+                },
+                child: const Text('グループ招待コード入力'),
+              ),
+              const SizedBox(height: 16.0),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  fixedSize: const Size(400, double.infinity),
+                  minimumSize: Size(400, 50),
+                ),
+                onPressed: () {
+                  Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) => const TermsOfServicePage()));
+                },
+                child: const Text('利用規約'),
+              ),
+              const SizedBox(height: 16.0),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  fixedSize: const Size(400, double.infinity),
+                  minimumSize: Size(400, 50),
+                ),
+                onPressed: () {
+                  Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) => const PrivacyPolicyPage()));
+                },
+                child: const Text('プライバシーポリシー'),
               ),
               const SizedBox(height: 16.0),
               ElevatedButton(

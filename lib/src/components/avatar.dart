@@ -42,7 +42,7 @@ class _AvatarState extends State<Avatar> {
           ),
         ElevatedButton(
           onPressed: _isLoading ? null : _upload,
-          child: const Text('Upload'),
+          child: const Text('アップロード'),
         ),
       ],
     );
@@ -61,14 +61,16 @@ class _AvatarState extends State<Avatar> {
     setState(() => _isLoading = true);
 
     try {
+      final userId = supabase.auth.currentUser!.id;
       final bytes = await imageFile.readAsBytes();
       final fileExt = imageFile.path.split('.').last;
-      final fileName = '${DateTime.now().toIso8601String()}.$fileExt';
+      final fileName = '$userId._profile.$fileExt';
       final filePath = fileName;
       await supabase.storage.from('avatars').uploadBinary(
             filePath,
             bytes,
-            fileOptions: FileOptions(contentType: imageFile.mimeType),
+            fileOptions:
+                FileOptions(contentType: imageFile.mimeType, upsert: true),
           );
       final imageUrlResponse = await supabase.storage
           .from('avatars')

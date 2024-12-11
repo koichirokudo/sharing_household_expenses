@@ -10,4 +10,8 @@ class ProfileService {
         await supabase.from('profiles').select().eq('id', userId).single();
     return response;
   }
+
+  Future<void> updateProfile(String userId, Map<String, dynamic> data) async {
+    await supabase.from('profiles').update(data).eq('id', userId);
+  }
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sharing_household_expenses/src/pages/account_delete_page.dart';
 import 'package:sharing_household_expenses/src/pages/email_edit_page.dart';
 import 'package:sharing_household_expenses/src/pages/group_invite_code_page.dart';
-import 'package:sharing_household_expenses/src/pages/password_change_page.dart';
+import 'package:sharing_household_expenses/src/pages/password_reset_page.dart';
 import 'package:sharing_household_expenses/src/pages/privacy_policy_page.dart';
 import 'package:sharing_household_expenses/src/pages/profile_edit_page.dart';
 import 'package:sharing_household_expenses/src/pages/terms_of_service_page.dart';
@@ -68,7 +68,7 @@ class UserPageState extends State<UserPage> {
                 ),
                 onPressed: () {
                   Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => const PasswordChangePage()));
+                      builder: (context) => const PasswordResetPage()));
                 },
                 child: const Text('パスワード変更'),
               ),

@@ -151,9 +151,13 @@ class UserRegisterPageState extends State<UserRegisterPage> {
                       if (value == null || value.isEmpty) {
                         return 'パスワードを入力してください';
                       }
-                      final isValid = RegExp(r'^.{8,24}$').hasMatch(value);
-                      if (!isValid) {
+                      if (!RegExp(r'^.{8,24}$').hasMatch(value)) {
                         return 'パスワードは8~24文字で入力してください';
+                      }
+                      if (!RegExp(
+                              r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,24}$')
+                          .hasMatch(value)) {
+                        return 'パスワードには大文字、小文字、数字、記号を含めてください';
                       }
                       return null;
                     },

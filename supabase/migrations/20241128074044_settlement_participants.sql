@@ -1,3 +1,4 @@
+DROP SEQUENCE IF EXISTS participants_id_seq;
 CREATE SEQUENCE participants_id_seq;
 CREATE TABLE settlement_participants (
     id integer PRIMARY KEY DEFAULT nextval('participants_id_seq'::regclass),

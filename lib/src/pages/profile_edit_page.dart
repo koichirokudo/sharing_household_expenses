@@ -74,11 +74,12 @@ class ProfileEditPageState extends State<ProfileEditPage> {
     }
   }
 
-  Future<void> _onUpload(String imageUrl) async {
+  Future<void> _onUpload(String imageUrl, String avatarFileName) async {
     try {
       final userId = supabase.auth.currentUser!.id;
       final updates = {
         'avatar_url': imageUrl,
+        'avatar_filename': avatarFileName,
       };
 
       await profileService.updateProfile(userId, updates);

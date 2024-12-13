@@ -1,3 +1,4 @@
+DROP SEQUENCE IF EXISTS subscriptions_id_seq;
 CREATE SEQUENCE subscriptions_id_seq;
 CREATE TABLE subscriptions (
     id integer PRIMARY KEY DEFAULT nextval('subscriptions_id_seq'::regclass),

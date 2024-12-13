@@ -207,7 +207,7 @@ class PasswordResetPageState extends State<PasswordResetPage> {
                             label: Text(_isLoading ? '' : 'パスワードを設定する'),
                             icon: _isLoading
                                 ? CircularProgressIndicator()
-                                : Icon(Icons.update),
+                                : Icon(Icons.mail),
                             style: ElevatedButton.styleFrom(
                               fixedSize: const Size(400, double.infinity),
                             )),

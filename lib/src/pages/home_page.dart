@@ -117,8 +117,10 @@ class HomePageState extends State<HomePage> {
                 onPressed: () {
                   transactionService.clearAllCache();
                   supabase.auth.signOut();
-                  Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => const LoginPage()));
+                  Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                          builder: (context) => const LoginPage()),
+                      (route) => false);
                 },
                 icon: const Icon(Icons.logout)),
         ],

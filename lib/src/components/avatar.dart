@@ -11,7 +11,7 @@ class Avatar extends StatefulWidget {
   });
 
   final String? imageUrl;
-  final void Function(String) onUpload;
+  final void Function(String, String) onUpload;
 
   @override
   State<Avatar> createState() => _AvatarState();
@@ -64,7 +64,7 @@ class _AvatarState extends State<Avatar> {
       final userId = supabase.auth.currentUser!.id;
       final bytes = await imageFile.readAsBytes();
       final fileExt = imageFile.path.split('.').last;
-      final fileName = '$userId._profile.$fileExt';
+      final fileName = '${userId}_avatar.$fileExt';
       final filePath = fileName;
       await supabase.storage.from('avatars').uploadBinary(
             filePath,
@@ -75,7 +75,7 @@ class _AvatarState extends State<Avatar> {
       final imageUrlResponse = await supabase.storage
           .from('avatars')
           .createSignedUrl(filePath, 60 * 60 * 24 * 365 * 10);
-      widget.onUpload(imageUrlResponse);
+      widget.onUpload(imageUrlResponse, fileName);
     } on StorageException catch (error) {
       if (mounted) {
         context.showSnackBarError(message: error.message);

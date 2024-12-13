@@ -18,4 +18,6 @@ USING (
 
 CREATE INDEX "user_groups_id_index" ON "public"."user_groups" ("id");
 
+DROP SEQUENCE IF EXISTS group_name_seq;
+
 CREATE SEQUENCE group_name_seq START 1 INCREMENT BY 1;

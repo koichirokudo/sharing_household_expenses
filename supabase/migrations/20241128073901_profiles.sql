@@ -3,6 +3,7 @@ CREATE TABLE profiles (
     group_id uuid NOT NULL REFERENCES user_groups(id),
     username TEXT NOT NULL,
     avatar_url TEXT,
+    avatar_filename TEXT,
     invite_status TEXT CHECK (invite_status IN ('pending', 'accepted', 'rejected')),
     invited_at TIMESTAMP WITH TIME ZONE,
     cancel BOOLEAN DEFAULT FALSE,
@@ -20,17 +21,15 @@ CREATE TABLE profiles (
     canceled_at TIMESTAMP WITH TIME ZONE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL
-
-    constraint username length check (char_length(username) >= 3)
 );
 
-create policy 'Users can viewable their own profile' on profiles
-    for select with check ((select auth.uid()) = id);
+create policy "Users can viewable their own profile" on profiles
+    for select using ((auth.uid()) = id);
 
-create policy 'Users can insert their own profile.' on profiles
+create policy "Users can insert their own profile." on profiles
     for insert with check ((select auth.uid()) = id);
 
-create policy 'Users can update own profile.' on profiles
+create policy "Users can update own profile." on profiles
     for update using ((select auth.uid()) = id);
 
 create or replace function public.handle_new_user()
@@ -67,9 +66,6 @@ create trigger on_auth_user_created
 after insert on auth.users for each row
 execute function handle_new_user ();
 
--- set up storage
-INSERT INTO storage.buckets (id, name) value ('avatars', 'avatars');
-
 create policy "Avatar images are publicly accessible." on storage.objects
   for select using (bucket_id = 'avatars');
 
@@ -78,3 +74,6 @@ create policy "Anyone can upload an avatar." on storage.objects
 
 create policy "Anyone can update their own avatar." on storage.objects
   for update using ((select auth.uid()) = owner) with check (bucket_id = 'avatars');
+
+create policy "Anyone can delete an avatar." on storage.objects
+  for delete using (auth.uid() = owner AND bucket_id = 'avatars');

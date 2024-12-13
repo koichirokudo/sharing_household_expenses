@@ -1,3 +1,4 @@
+DROP SEQUENCE IF EXISTS payments_id_seq;
 CREATE SEQUENCE payments_id_seq;
 CREATE TABLE payments (
     id integer PRIMARY KEY DEFAULT nextval('payments_id_seq'::regclass),

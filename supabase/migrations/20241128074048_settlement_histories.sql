@@ -1,3 +1,4 @@
+DROP SEQUENCE IF EXISTS settlement_histories_id_seq;
 CREATE SEQUENCE settlement_histories_id_seq;
 CREATE TABLE settlement_histories (
     id integer PRIMARY KEY DEFAULT nextval('settlement_histories_id_seq'::regclass),

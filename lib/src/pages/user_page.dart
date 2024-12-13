@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sharing_household_expenses/src/pages/account_delete_page.dart';
-import 'package:sharing_household_expenses/src/pages/email_edit_page.dart';
+import 'package:sharing_household_expenses/src/pages/email_change_page.dart';
 import 'package:sharing_household_expenses/src/pages/group_invite_code_page.dart';
 import 'package:sharing_household_expenses/src/pages/password_reset_page.dart';
 import 'package:sharing_household_expenses/src/pages/privacy_policy_page.dart';
@@ -53,7 +53,7 @@ class UserPageState extends State<UserPage> {
                 ),
                 onPressed: () {
                   Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => const EmailEditPage()));
+                      builder: (context) => const EmailChangePage()));
                 },
                 child: const Text('メールアドレス変更'),
               ),

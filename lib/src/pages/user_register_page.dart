@@ -40,13 +40,12 @@ class UserRegisterPageState extends State<UserRegisterPage> {
         },
       );
       if (mounted) {
-        context.showSnackBar(message: '登録が完了しました！');
+        context.showSnackBar(
+            message: '登録が完了しました！', backgroundColor: Colors.green);
         // ホーム画面に遷移
-        Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const App(),
-            ));
+        Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const App()),
+            (route) => false);
       }
     } on AuthException catch (error) {
       if (mounted) {

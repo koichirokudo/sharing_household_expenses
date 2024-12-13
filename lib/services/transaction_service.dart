@@ -50,6 +50,10 @@ class TransactionService {
     await supabase.from('transactions').delete().eq('id', id);
   }
 
+  Future<void> deleteAllData(String id) async {
+    await supabase.from('transactions').delete().eq('profile_id', id);
+  }
+
   void storeCache(String month, List<Map<String, dynamic>> data) {
     transactionCache[month] = {
       'data': data,

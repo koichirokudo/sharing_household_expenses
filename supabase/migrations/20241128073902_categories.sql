@@ -1,3 +1,4 @@
+DROP SEQUENCE IF EXISTS categories_id_seq;
 CREATE SEQUENCE categories_id_seq;
 CREATE TABLE categories (
     id integer PRIMARY KEY DEFAULT nextval('categories_id_seq'::regclass),

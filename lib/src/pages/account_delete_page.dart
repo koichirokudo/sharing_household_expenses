@@ -42,16 +42,7 @@ class AccountDeletePageState extends State<AccountDeletePage> {
 
   Future<void> _accountDelete() async {
     try {
-      final userId = supabase.auth.currentUser!.id;
       transactionService.clearAllCache();
-      await transactionService.deleteAllData(userId);
-      // TODO: transactions histories, settlements,
-      // TODO: 最後の一人だったら user_group, subscription, payments
-      if (profile['avatar_filename'] != null) {
-        await supabase.storage
-            .from('avatars')
-            .remove([profile['avatar_filename']]);
-      }
       final response = await supabase.functions.invoke("delete-user");
       if (response.data['success'] == true) {
         await supabase.auth.signOut();

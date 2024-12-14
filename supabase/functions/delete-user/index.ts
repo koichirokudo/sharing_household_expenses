@@ -5,48 +5,80 @@ import { corsHeaders } from '../_shared/cors.ts';
 console.log("Delete user account function");
 
 serve(async (request) => {
-
   // This is needed if you're planning to invoke your function from a browser.
   if (request.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    //Create instance of SupabaseClient
+    // Create instance of SupabaseClient
     const supabaseClient = createClient(
         Deno.env.get('SUPABASE_URL') ?? '',
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
         { global: { headers: { Authorization: request.headers.get('Authorization')! } } }
     );
 
-    // Create a user object which contains the data we need to identify the user.id
-    const {
-      data: { user },
-    } = await supabaseClient.auth.getUser()
+    // Get current user
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    if (userError || !user) throw new Error('No user found for JWT!');
 
-    // Throw an error if there are any issues with identifying the users from the token
-    if (!user) throw new Error('No user found for JWT!');
+    // Get user profile (for avatar filename)
+    const { data: profile, error: profileError } = await supabaseClient
+        .from('profiles')  // Assuming profile information is stored in 'profiles' table
+        .select('group_id, avatar_filename')
+        .eq('id', user.id)
+        .single();
 
-    // Create supabaseAdmin client which specifically uses the Service Role
-    // Key in order to perform elevated administration actins
+    if (profileError) throw new Error('Error fetching user profile.');
+
+    // 1. Delete avatar file if it exists
+    if (profile?.avatar_filename) {
+      const { error: avatarError } = await supabaseClient.storage
+          .from('avatars')
+          .remove([profile.avatar_filename]);
+
+      if (avatarError) throw new Error('Error deleting avatar file.');
+    }
+
+    // 2. Delete user-related data (e.g., transaction history, settlements)
+    await supabaseClient
+        .from('transactions') // Assuming transactions are stored in 'transactions' table
+        .delete()
+        .eq('user_id', user.id);
+
+    // 3. Optionally, delete other data such as payments, subscriptions, user group if last member
+    // TODO: Add additional cleanup logic here
+    const { data: userGroup, error: userGroupError } = await supabaseClient.from('user_groups').select('*', {count: 'exact'}).match({ id: profile?.group_id });
+    if (userGroupError) throw new Error('Error fetching user group.');
+
+    if (userGroup?.[0]?.exact === 1) {
+      await supabaseClient.from('user_groups').delete().eq('id', profile?.group_id);
+    }
+
+    // 4. Delete user from authentication system
     const supabaseAdmin = createClient(
         Deno.env.get('SUPABASE_URL') ?? '',
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    );
+    await supabaseAdmin.auth.admin.deleteUser(user.id);
 
-    // Call the deleteUser method on the supabaseAdmin client and pass the user.id
-    await supabaseAdmin.auth.admin.deleteUser(user.id)
-
-    // Return a response of the user which has been deleted
-    return new Response(JSON.stringify({success: true}), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
-    });
+    // 5. Return success response
+    return new Response(
+        JSON.stringify({ success: true }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        }
+    );
   } catch (error) {
-    // Return an error with the error message should it run in to any issues
-    return new Response(JSON.stringify({ error: error}), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 400,
-    })
+    // Log error and return failure response
+    console.error(error);
+    return new Response(
+        JSON.stringify({ error: error.message }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+    );
   }
 });

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sharing_household_expenses/src/app.dart';
+import 'package:sharing_household_expenses/src/pages/first_group_invite_page.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -19,7 +19,6 @@ class UserRegisterPageState extends State<UserRegisterPage> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _inviteCodeController = TextEditingController();
 
   Future<void> _register() async {
     final isValid = _formKey.currentState!.validate();
@@ -29,22 +28,21 @@ class UserRegisterPageState extends State<UserRegisterPage> {
     final userName = _nameController.text;
     final email = _emailController.text;
     final password = _passwordController.text;
-    final inviteCode = _inviteCodeController.text;
     try {
       await supabase.auth.signUp(
         email: email,
         password: password,
         data: {
           'username': userName,
-          'invite_code': inviteCode,
         },
       );
       if (mounted) {
         context.showSnackBar(
-            message: '登録が完了しました！', backgroundColor: Colors.green);
+            message: '登録が完了しました', backgroundColor: Colors.green);
         // ホーム画面に遷移
         Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const App()),
+            MaterialPageRoute(
+                builder: (context) => const FirstGroupInvitePage()),
             (route) => false);
       }
     } on AuthException catch (error) {
@@ -68,6 +66,14 @@ class UserRegisterPageState extends State<UserRegisterPage> {
     setState(() {
       _isObscure = !_isObscure;
     });
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _nameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 
   @override
@@ -157,25 +163,6 @@ class UserRegisterPageState extends State<UserRegisterPage> {
                               r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,24}$')
                           .hasMatch(value)) {
                         return 'パスワードには大文字、小文字、数字、記号を含めてください';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16.0),
-                  TextFormField(
-                    controller: _inviteCodeController,
-                    decoration: const InputDecoration(
-                      labelText: '招待コード（オプション）',
-                      prefixIcon: Icon(Icons.group_add),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return null;
-                      }
-                      final isValid =
-                          RegExp(r'^[a-zA-Z0-9]{8}$').hasMatch(value);
-                      if (!isValid) {
-                        return '招待コードは半角英数字8文字で入力してください';
                       }
                       return null;
                     },

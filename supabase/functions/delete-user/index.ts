@@ -1,6 +1,6 @@
-import { serve } from 'https://deno.land/std@0.182.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.14.0';
-import { corsHeaders } from '../_shared/cors.ts';
+import {serve} from 'https://deno.land/std@0.182.0/http/server.ts';
+import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.14.0';
+import {corsHeaders} from '../_shared/cors.ts';
 
 console.log("Delete user account function");
 
@@ -73,12 +73,22 @@ serve(async (request) => {
   } catch (error) {
     // Log error and return failure response
     console.error(error);
-    return new Response(
-        JSON.stringify({ error: error.message }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400,
-        }
-    );
+    if (error instanceof Error) {
+      return new Response(
+          JSON.stringify({success: false, error: error.message}),
+          {
+            headers: {...corsHeaders, "Content-Type": "application/json"},
+            status: 200
+          }
+      );
+    } else {
+      return new Response(
+          JSON.stringify({success: false, error: 'Unknown error occurred'}),
+          {
+            headers: {...corsHeaders, "Content-Type": "application/json"},
+            status: 200
+          }
+      );
+    }
   }
 });

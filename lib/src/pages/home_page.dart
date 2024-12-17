@@ -1,10 +1,10 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:sharing_household_expenses/services/transaction_service.dart';
+import 'package:sharing_household_expenses/src/pages/first_group_invite_page.dart';
 import 'package:sharing_household_expenses/src/pages/user_page.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import 'login_page.dart';
 
@@ -17,35 +17,34 @@ class HomePage extends StatefulWidget {
 
 class HomePageState extends State<HomePage> {
   final Session? session = supabase.auth.currentSession;
-  // TODO: バックエンドで招待コードの生成
-  final String inviteCode = 'ABCDEFG';
-  final String inviteLink =
-      'https://yrlckprhukvnyirjifaa.supabase.co/invite?code=ABCDEFG';
   late TransactionService transactionService;
+
+  Future<void> _checkUserGroupStatus() async {
+    final userId = supabase.auth.currentUser!.id;
+    try {
+      final profile =
+          await supabase.from('profiles').select('*').eq('id', userId).single();
+
+      if (profile['group_id'] == null) {
+        if (mounted) {
+          Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const FirstGroupInvitePage()));
+        }
+      }
+    } on PostgrestException catch (error) {
+      if (mounted) {
+        context.showSnackBarError(message: '$error');
+      }
+    }
+  }
 
   @override
   void initState() {
-    super.initState();
+    super.initState;
     transactionService = TransactionService(supabase);
-  }
-
-  // LINE用のDeep Link生成
-  String generateLineShareUrl(String code, String link) {
-    final message =
-        'シェア家計簿のグループ招待です。グループに参加してね！\n招待コード: $code\nこちらのリンクから参加: $link';
-    return 'https://line.me/R/share?text=${Uri.encodeComponent(message)}';
-  }
-
-  // Deep Linkを開く
-  Future<void> openLink(String url) async {
-    // URLをUri型に変換
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      // 外部アプリでURLを開く
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      throw 'Could not launch $url';
-    }
+    _checkUserGroupStatus();
   }
 
   // TODO: サーバーからデータを取得する
@@ -57,46 +56,6 @@ class HomePageState extends State<HomePage> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text('シェア家計簿'),
         actions: [
-          // 招待ボタン（ログイン状態によって表示）
-          if (session != null)
-            IconButton(
-              icon: const Icon(Icons.group_add),
-              onPressed: () {
-                showModalBottomSheet(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return Container(
-                      height: 200,
-                      width: double.infinity,
-                      color: Colors.white,
-                      child: Column(
-                        children: <Widget>[
-                          const SizedBox(height: 16),
-                          const Text(
-                            'グループに招待する',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: () {
-                              final lineShareUrl =
-                                  generateLineShareUrl(inviteCode, inviteLink);
-                              openLink(lineShareUrl);
-                            },
-                            child: const Text('招待コードを送る'),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-
           // ログイン状態によって表示を変えるアカウントボタンまたはログインボタン
           IconButton(
             icon: session != null
@@ -112,17 +71,6 @@ class HomePageState extends State<HomePage> {
               }
             },
           ),
-          if (session != null)
-            IconButton(
-                onPressed: () {
-                  transactionService.clearAllCache();
-                  supabase.auth.signOut();
-                  Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(
-                          builder: (context) => const LoginPage()),
-                      (route) => false);
-                },
-                icon: const Icon(Icons.logout)),
         ],
       ),
       body: Column(mainAxisAlignment: MainAxisAlignment.center, children: [

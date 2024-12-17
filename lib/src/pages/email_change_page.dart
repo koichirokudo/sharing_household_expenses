@@ -1,4 +1,5 @@
 import 'package:app_links/app_links.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -34,12 +35,15 @@ class EmailChangePageState extends State<EmailChangePage> {
 
     try {
       final UserResponse res = await supabase.auth.updateUser(
-        UserAttributes(
-          email: _emailController.text.trim(),
-        ),
-      );
+          UserAttributes(
+            email: _emailController.text.trim(),
+          ),
+          emailRedirectTo: kIsWeb
+              ? null
+              : 'io.supabase.sharinghouseholdexpenses://change-email/');
       if (mounted) {
-        context.showSnackBar(message: '指定したメールアドレスにメールを送信しました');
+        context.showSnackBar(
+            message: '指定したメールアドレスにメールを送信しました', backgroundColor: Colors.green);
       }
     } on AuthException catch (error) {
       if (mounted) {
@@ -60,7 +64,9 @@ class EmailChangePageState extends State<EmailChangePage> {
           _isAuthEmail = true;
         });
         if (mounted) {
-          context.showSnackBar(message: 'メールアドレスを変更しました');
+          context.showSnackBar(
+              message: 'メールアドレスを変更しました', backgroundColor: Colors.green);
+          Navigator.pop(context);
         }
       }
     });

@@ -1,6 +1,6 @@
 CREATE TABLE profiles (
     id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    group_id uuid NOT NULL REFERENCES user_groups(id),
+    group_id uuid REFERENCES user_groups (id),
     username TEXT NOT NULL,
     avatar_url TEXT,
     avatar_filename TEXT,
@@ -23,8 +23,10 @@ CREATE TABLE profiles (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
-create policy "Users can viewable their own profile" on profiles
-    for select using ((auth.uid()) = id);
+create
+policy "Users can view their own profile and group profiles" on profiles
+for
+select using (true);
 
 create policy "Users can insert their own profile." on profiles
     for insert with check ((select auth.uid()) = id);
@@ -35,28 +37,10 @@ create policy "Users can update own profile." on profiles
 create or replace function public.handle_new_user()
 returns trigger as $$
 declare
-    group_id UUID;
-    group_name text;
-    slug text;
-    init_invite_code text;
     begin
-        -- 招待コードがない場合は、ユーザーグループを自動作成して、ユーザーをそのグループに属させる
-        if (new.raw_user_meta_data->>'invite_code' IS NULL OR new.raw_user_meta_data->>'invite_code' = '') then
-            -- group_name と slug を group_ + シーケンス値として設定
-            group_name := 'group_' || LPAD(nextval('public.group_name_seq')::text, 6, '0');
-            slug := group_name;
-            -- invite_code を生成して設定
-            init_invite_code := substring(replace(gen_random_uuid()::text, '-', ''), 1, 8);
-            insert into public.user_groups(group_name, slug, invite_code, updated_at) values(group_name, slug, init_invite_code, now()) returning id into group_id;
-            -- public.profiles にコピーする
-            insert into public.profiles(id, username, group_id, invite_status, invited_at, updated_at) values(new.id, new.raw_user_meta_data->>'username', group_id, 'accepted', now(), now());
-        else
-            -- 招待コードがある場合、既存ユーザーグループの invite_code にマッチした user_group.id を取得
-            select id into group_id from public.user_groups where public.user_groups.invite_code = new.raw_user_meta_data->>'invite_code' limit 1;
-            -- public.profiles にコピーする
-            insert into public.profiles(id, username, group_id, invite_status, invited_at, updated_at) values(new.id, new.raw_user_meta_data->>'username', group_id, 'accepted', now(), now());
-        end if;
-
+        -- public.profiles にコピーする
+insert into public.profiles(id, username, invite_status, invited_at, updated_at)
+values (new.id, new.raw_user_meta_data ->>'username', 'pending', now(), now());
         return new;
     end;
 $$ language plpgsql security definer;

@@ -18,6 +18,7 @@ dependencies:
   supabase_flutter: ^2.8.1
   image_picker: ^1.0.5
   app_links: ^6.3.2
+  flutter_dotenv: ^5.2.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -28,6 +29,7 @@ flutter:
   assets:
     - assets/icons/share_icon.png
     - assets/icons/user_icon.png
+    - lib/.env.production
   fonts:
     - family: MPLUS1p
       fonts:

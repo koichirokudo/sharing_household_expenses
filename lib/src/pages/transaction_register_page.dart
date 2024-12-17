@@ -35,6 +35,7 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
 
   Future<List<Map<String, dynamic>>?> _getCategories() async {
     try {
+      // TODO: キャッシュに入れる
       // Supabaseからデータを取得
       final data = await supabase
           .from('categories')

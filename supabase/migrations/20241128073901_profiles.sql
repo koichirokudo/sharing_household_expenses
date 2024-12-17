@@ -23,6 +23,8 @@ CREATE TABLE profiles (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+
 create
 policy "Users can view their own profile and group profiles" on profiles
 for

@@ -9,6 +9,8 @@ CREATE TABLE categories (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
+ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
+
 CREATE POLICY "Enable access to authenticated users only"
 ON "public"."categories"
 TO public

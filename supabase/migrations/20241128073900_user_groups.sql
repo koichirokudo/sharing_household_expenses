@@ -9,6 +9,8 @@ CREATE TABLE user_groups (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
+ALTER TABLE user_groups ENABLE ROW LEVEL SECURITY;
+
 CREATE POLICY "Enable access to authenticated users only"
 ON "public"."user_groups"
 TO public

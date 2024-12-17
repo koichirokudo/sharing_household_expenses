@@ -13,6 +13,8 @@ CREATE TABLE subscriptions (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
+ALTER TABLE subscriptions ENABLE ROW LEVEL SECURITY;
+
 CREATE POLICY "Enable access to authenticated users only"
 ON "public"."subscriptions"
 TO public

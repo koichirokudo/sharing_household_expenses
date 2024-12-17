@@ -1,11 +1,3 @@
--- user groups
-INSERT INTO "public"."user_groups" ("id", "group_name", "slug", "invite_code", "invite_limit", "start_day", "created_at", "updated_at") VALUES ('37bff8e6-2355-43df-8a56-4049d9594220', 'group_000001', 'group_000001', '10a0563d', '2024-11-22 20:07:31.505773+09', '1', '2024-11-22 20:07:31.505773+09', '2024-11-22 20:07:31.505773+09');
-
--- profiles
-INSERT INTO "public"."profiles" ("id", "group_id", "username", "invite_status", "cancel", "cancel_reason", "canceled_at", "invited_at", "created_at", "updated_at", "avatar_url") VALUES
-('b3e37857-ae97-4397-934a-f238e7144e0c', '37bff8e6-2355-43df-8a56-4049d9594220', 'user1', 'accepted', 'false', null, null, '2024-11-22 20:07:31.505773+09', '2024-11-22 20:07:31.505773+09', '2024-11-22 20:07:31.505773+09', null),
-('b3e37857-ae97-4397-934a-f238e7144e0d', '37bff8e6-2355-43df-8a56-4049d9594220', 'user2', 'accepted', 'false', null, null, '2024-11-22 20:07:31.505773+09', '2024-11-22 20:07:31.505773+09', '2024-11-22 20:07:31.505773+09', null);
-
 -- categories
 INSERT INTO "public"."categories" ("id", "type", "name", "created_at", "updated_at") VALUES
 ('4001', 'expense', '食費', '2024-11-22 20:07:31.505773+09', '2024-11-22 20:07:31.505773+09'),
@@ -34,15 +26,6 @@ INSERT INTO "public"."categories" ("id", "type", "name", "created_at", "updated_
 ('4024', 'income', '配当', '2024-11-22 20:07:31.505773+09', '2024-11-22 20:07:31.505773+09'),
 ('4025', 'income', '臨時収入', '2024-11-22 20:07:31.505773+09', '2024-11-22 20:07:31.505773+09'),
 ('4026', 'income', 'その他', '2024-11-22 20:07:31.505773+09', '2024-11-22 20:07:31.505773+09');
-
--- transactions
-INSERT INTO "public"."transactions" ("id", "profile_id", "group_id", "settlement_id", "category_id", "date", "type", "amount", "share", "note", "created_at", "updated_at", "name") VALUES
-('1', 'b3e37857-ae97-4397-934a-f238e7144e0c', '37bff8e6-2355-43df-8a56-4049d9594220', null, '4001', '2024-11-27', 'expense', '100', 'true', 'te', '2024-11-27 21:17:13.808083+09', '2024-11-27 12:17:10.373152', 'aaa'),
-('2', 'b3e37857-ae97-4397-934a-f238e7144e0c', '37bff8e6-2355-43df-8a56-4049d9594220', null, '4002', '2024-11-27', 'expense', '200', 'true', 'te', '2024-11-27 21:25:36.989053+09', '2024-11-27 12:25:31.888929', 'aa00'),
-('3', 'b3e37857-ae97-4397-934a-f238e7144e0c', '37bff8e6-2355-43df-8a56-4049d9594220', null, '4003', '2024-11-28', 'expense', '300', 'false', 'note', '2024-11-28 15:33:55.189261+09', '2024-11-28 06:33:51.557077', 'test'),
-('4', 'b3e37857-ae97-4397-934a-f238e7144e0c', '37bff8e6-2355-43df-8a56-4049d9594220', null, '4021', '2024-11-27', 'expense', '100', 'true', 'te', '2024-11-27 21:17:13.808083+09', '2024-11-27 12:17:10.373152', 'aaa'),
-('5', 'b3e37857-ae97-4397-934a-f238e7144e0c', '37bff8e6-2355-43df-8a56-4049d9594220', null, '4022', '2024-11-27', 'expense', '200', 'true', 'te', '2024-11-27 21:25:36.989053+09', '2024-11-27 12:25:31.888929', 'aa00'),
-('6', 'b3e37857-ae97-4397-934a-f238e7144e0c', '37bff8e6-2355-43df-8a56-4049d9594220', null, '4023', '2024-11-28', 'expense', '300', 'false', 'note', '2024-11-28 15:33:55.189261+09', '2024-11-28 06:33:51.557077', 'test');
 
 -- set up storage
 INSERT INTO storage.buckets (id, name) values ('avatars', 'avatars');

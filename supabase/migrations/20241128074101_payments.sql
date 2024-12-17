@@ -12,6 +12,8 @@ CREATE TABLE payments (
     updated_at TIMESTAMP WITH TIME ZONE
 );
 
+ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
+
 CREATE POLICY "Enable access to authenticated users only"
 ON "public"."payments"
 TO public

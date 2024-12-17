@@ -13,6 +13,8 @@ CREATE TABLE transaction_histories (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
+ALTER TABLE transaction_histories ENABLE ROW LEVEL SECURITY;
+
 CREATE POLICY "Enable access to authenticated users only"
 ON "public"."transaction_histories"
 TO public

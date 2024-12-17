@@ -13,6 +13,8 @@ CREATE TABLE settlement_histories (
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
+ALTER TABLE settlement_histories ENABLE ROW LEVEL SECURITY;
+
 CREATE POLICY "Enable access to authenticated users only"
 ON "public"."settlement_histories"
 TO public

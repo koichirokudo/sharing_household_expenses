@@ -137,28 +137,6 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
     return null;
   }
 
-  // リフレッシュデータ
-  Future<void> _refreshData(String month) async {
-    try {
-      transactionService.clearCache(month);
-
-      await Future.delayed(Duration(milliseconds: 700));
-
-      // refresh data
-      final List<Map<String, dynamic>>? freshData =
-          await transactionService.fetchMonthlyData(convertToDateTime(month));
-
-      // update new cache data
-      if (freshData != null) {
-        transactionService.storeCache(month, freshData);
-      }
-    } catch (error) {
-      if (mounted) {
-        context.showSnackBarError(message: '$error');
-      }
-    }
-  }
-
   Future<void> _register() async {
     final isValid = _formKey.currentState!.validate();
     if (!isValid) {

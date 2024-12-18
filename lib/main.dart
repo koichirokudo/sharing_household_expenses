@@ -5,7 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'src/app.dart';
 
 Future<void> main() async {
-  await dotenv.load(fileName: '.env.production');
+  await dotenv.load(fileName: 'lib/.env.production');
   await Supabase.initialize(
       url: dotenv.get('PROJECT_URL'),
       anonKey:

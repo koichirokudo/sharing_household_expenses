@@ -1,9 +1,9 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-Map<String, Map<String, dynamic>> transactionCache = {};
-
 class TransactionService {
   late final SupabaseClient supabase;
+  final Map<String, Map<String, dynamic>> _transactionCache = {};
+
   TransactionService(this.supabase);
 
   // get all transaction data
@@ -13,15 +13,17 @@ class TransactionService {
   }
 
   // get monthly transaction data
-  Future<List<Map<String, dynamic>>?> fetchMonthlyData(DateTime month) async {
+  Future<List<Map<String, dynamic>>?> fetchMonthlyData(
+      String groupId, DateTime month) async {
     final startOfMonth = DateTime(month.year, month.month);
     final endOfMonth = DateTime(month.year, month.month + 1)
         .subtract(const Duration(seconds: 1));
     final data = await supabase
         .from('transactions')
-        .select('*, categories(id, name)')
+        .select('*, categories(id, name), profiles(username)')
         .gte('date', startOfMonth.toIso8601String())
         .lt('date', endOfMonth.toIso8601String())
+        .eq('group_id', groupId)
         .order('date', ascending: false);
     return data as List<Map<String, dynamic>>?;
   }
@@ -54,31 +56,32 @@ class TransactionService {
     await supabase.from('transactions').delete().eq('profile_id', id);
   }
 
-  void storeCache(String month, List<Map<String, dynamic>> data) {
-    transactionCache[month] = {
+  void storeCache(String month, String type, List<Map<String, dynamic>> data) {
+    _transactionCache[month] ??= {};
+    _transactionCache[month]![type] = {
       'data': data,
       'timestamp': DateTime.now(),
     };
   }
 
-  List<Map<String, dynamic>>? loadCache(String month,
+  List<Map<String, dynamic>>? loadCache(String month, String type,
       {Duration expiry = const Duration(minutes: 15)}) {
-    final cache = transactionCache[month];
+    final cache = _transactionCache[month];
     if (cache != null) {
-      final timestamp = cache['timestamp'] as DateTime;
+      final timestamp = cache[type]['timestamp'] as DateTime?;
       // 有効期限内の場合のみデータを返す
-      if (DateTime.now().difference(timestamp) <= expiry) {
-        return cache['data'] as List<Map<String, dynamic>>;
+      if (timestamp != null && DateTime.now().difference(timestamp) <= expiry) {
+        return cache[type]['data'] as List<Map<String, dynamic>>;
       }
     }
     return null;
   }
 
   void clearCache(String key) {
-    transactionCache.remove(key);
+    _transactionCache.remove(key);
   }
 
   void clearAllCache() {
-    transactionCache.clear();
+    _transactionCache.clear();
   }
 }

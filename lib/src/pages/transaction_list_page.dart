@@ -20,6 +20,7 @@ class TransactionListPageState extends State<TransactionListPage> {
   late int selectedIndex = months.length - 1;
   late final PageController _pageController =
       PageController(initialPage: months.length - 1, viewportFraction: 1);
+  late String _selectedFilter = 'share';
 
   @override
   void initState() {
@@ -34,17 +35,28 @@ class TransactionListPageState extends State<TransactionListPage> {
     // 現在の月から過去１年分の月を取得する
     _generateMonths(_currentMonth);
     // 今月のデータを取得する
-    _fetchDataForMonth(DateFormat('yyyy/MM').format(_currentMonth));
+    _fetchDataForMonth(
+        DateFormat('yyyy/MM').format(_currentMonth), _selectedFilter);
   }
 
-  Future<void> _fetchDataForMonth(String month) async {
+  void _loadCache(selectedValue) {
+    final cachedData =
+        transactionService.loadCache(months[selectedIndex], selectedValue);
+    if (cachedData != null) {
+      setState(() {
+        transactions = cachedData;
+      });
+    }
+  }
+
+  Future<void> _fetchDataForMonth(String month, String type) async {
     try {
       setState(() {
         _isLoading = true;
       });
 
       // キャッシュチェック（有効期限を考慮）
-      final cachedData = transactionService.loadCache(month);
+      final cachedData = transactionService.loadCache(month, type);
       if (cachedData != null) {
         setState(() {
           transactions = cachedData;
@@ -52,18 +64,39 @@ class TransactionListPageState extends State<TransactionListPage> {
         return;
       }
 
+      final userId = supabase.auth.currentUser!.id;
+      final profile =
+          await supabase.from('profiles').select().eq('id', userId).single();
+
       await Future.delayed(Duration(milliseconds: 700));
 
       // データ取得
-      final List<Map<String, dynamic>>? data =
-          await transactionService.fetchMonthlyData(convertToDateTime(month));
+      final List<Map<String, dynamic>>? data = await transactionService
+          .fetchMonthlyData(profile['group_id'], convertToDateTime(month));
+
+      // 自分が共有したデータ
+      // 相手が共有したデータ
+      final shareData = data?.where((item) {
+        if (item['share'] == true) {
+          return true;
+        }
+        return false;
+      }).toList();
+
+      final privateData = data?.where((item) {
+        if (item['profile_id'] == userId) {
+          return true;
+        }
+        return false;
+      }).toList();
 
       // キャッシュに保存（データがなくても空リストを保存）
-      transactionService.storeCache(month, data ?? []);
+      transactionService.storeCache(month, 'share', shareData ?? []);
+      transactionService.storeCache(month, 'private', privateData ?? []);
 
       // トランザクションデータを設定
       setState(() {
-        transactions = data ?? [];
+        transactions = shareData ?? [];
       });
     } catch (error) {
       if (mounted) {
@@ -101,23 +134,44 @@ class TransactionListPageState extends State<TransactionListPage> {
         _isLoading = true;
       });
 
+      final userId = supabase.auth.currentUser!.id;
+      final profile =
+          await supabase.from('profiles').select().eq('id', userId).single();
       // selected month
-      String month = months[selectedIndex];
 
       await Future.delayed(Duration(milliseconds: 700));
 
       // refresh data
       final List<Map<String, dynamic>>? freshData =
-          await transactionService.fetchMonthlyData(convertToDateTime(month));
+          await transactionService.fetchMonthlyData(
+              profile['group_id'], convertToDateTime(months[selectedIndex]));
 
-      // update new cache data
+      final shareData = freshData?.where((item) {
+        if (item['share'] == true) {
+          return true;
+        }
+        return false;
+      }).toList();
+
+      final privateData = freshData?.where((item) {
+        if (item['profile_id'] == userId) {
+          return true;
+        }
+        return false;
+      }).toList();
+
+      // キャッシュに保存（データがなくても空リストを保存）
       if (freshData != null) {
-        transactionService.storeCache(month, freshData);
+        transactionService.storeCache(
+            months[selectedIndex], 'share', shareData ?? []);
+        transactionService.storeCache(
+            months[selectedIndex], 'private', privateData ?? []);
       }
 
       // set transaction data
       setState(() {
-        transactions = freshData ?? [];
+        transactions =
+            _selectedFilter == 'share' ? shareData ?? [] : privateData ?? [];
       });
     } catch (error) {
       if (mounted) {
@@ -188,7 +242,7 @@ class TransactionListPageState extends State<TransactionListPage> {
                   selectedIndex = index;
                 });
                 // 選択された月のデータを取得する
-                _fetchDataForMonth(months[selectedIndex]);
+                _fetchDataForMonth(months[selectedIndex], _selectedFilter);
               },
               itemCount: months.length,
               itemBuilder: (context, index) {
@@ -277,6 +331,34 @@ class TransactionListPageState extends State<TransactionListPage> {
                         ),
                       ],
                     ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // filter
+                          Icon(Icons.filter),
+                          const SizedBox(width: 8),
+                          DropdownButton<String>(
+                            value: _selectedFilter,
+                            items: [
+                              DropdownMenuItem(
+                                value: 'share',
+                                child: Text('共有データ'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'private',
+                                child: Text('マイデータ'),
+                              ),
+                            ],
+                            onChanged: (value) {
+                              _loadCache(value);
+                              _selectedFilter = value!;
+                            },
+                          )
+                        ],
+                      ),
+                    ),
                     Expanded(
                       child: RefreshIndicator(
                         onRefresh: _refreshData,
@@ -286,7 +368,7 @@ class TransactionListPageState extends State<TransactionListPage> {
                                 physics: AlwaysScrollableScrollPhysics(),
                                 children: [
                                   Padding(
-                                    padding: const EdgeInsets.all(32.0),
+                                    padding: const EdgeInsets.all(16.0),
                                     child: Center(
                                       child: Text(
                                           'データがありません。\n下に引っ張って更新してください。',
@@ -330,7 +412,8 @@ class TransactionListPageState extends State<TransactionListPage> {
                                                 .format(_currentMonth);
                                         transactionService
                                             .clearCache(stringMonth);
-                                        _fetchDataForMonth(stringMonth);
+                                        _fetchDataForMonth(
+                                            stringMonth, _selectedFilter);
                                       }
                                     },
                                     child: Container(
@@ -353,14 +436,29 @@ class TransactionListPageState extends State<TransactionListPage> {
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
                                             children: [
-                                              Text(
-                                                transactions[index]['name'],
-                                                style: const TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.black,
-                                                ),
-                                                overflow: TextOverflow.ellipsis,
+                                              Row(
+                                                children: [
+                                                  Text(
+                                                    transactions[index]['name'],
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: Colors.black,
+                                                    ),
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  Text(
+                                                      '- ${transactions[index]['profiles']['username']}',
+                                                      style: const TextStyle(
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: Colors.black,
+                                                      )),
+                                                ],
                                               ),
                                               Row(
                                                 children: [

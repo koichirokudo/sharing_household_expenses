@@ -113,6 +113,20 @@ class TransactionDetailPageState extends State<TransactionDetailPage> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
+                            const Text('支払人'),
+                            Text(transaction['profiles']['username']),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        decoration: const BoxDecoration(
+                            border: Border(
+                          bottom: BorderSide(color: Colors.black, width: 0.25),
+                        )),
+                        padding: const EdgeInsets.all(8.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
                             const Text('共有設定'),
                             Text(transaction['share'] ? '共有する' : '共有しない'),
                           ],

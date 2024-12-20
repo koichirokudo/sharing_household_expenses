@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sharing_household_expenses/services/transaction_service.dart';
+import 'package:sharing_household_expenses/src/pages/settlement_page.dart';
 import 'package:sharing_household_expenses/src/pages/transaction_detail_page.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
 
@@ -72,7 +73,7 @@ class TransactionListPageState extends State<TransactionListPage> {
 
       // データ取得
       final List<Map<String, dynamic>>? data = await transactionService
-          .fetchMonthlyData(profile['group_id'], convertToDateTime(month));
+          .fetchMonthlyData(profile['group_id'], convertMonthToDateTime(month));
 
       // 自分が共有したデータ
       // 相手が共有したデータ
@@ -143,8 +144,8 @@ class TransactionListPageState extends State<TransactionListPage> {
 
       // refresh data
       final List<Map<String, dynamic>>? freshData =
-          await transactionService.fetchMonthlyData(
-              profile['group_id'], convertToDateTime(months[selectedIndex]));
+          await transactionService.fetchMonthlyData(profile['group_id'],
+              convertMonthToDateTime(months[selectedIndex]));
 
       final shareData = freshData?.where((item) {
         if (item['share'] == true) {
@@ -334,10 +335,9 @@ class TransactionListPageState extends State<TransactionListPage> {
                     Padding(
                       padding: const EdgeInsets.only(top: 16),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           // filter
-                          Icon(Icons.filter),
                           const SizedBox(width: 8),
                           DropdownButton<String>(
                             value: _selectedFilter,
@@ -355,6 +355,18 @@ class TransactionListPageState extends State<TransactionListPage> {
                               _loadCache(value);
                               _selectedFilter = value!;
                             },
+                          ),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.of(context).push(MaterialPageRoute(
+                                  builder: (context) => SettlementPage(
+                                        month: months[selectedIndex],
+                                        transactions: transactions,
+                                      )));
+                            },
+                            label: Text('清算する'),
+                            icon: const Icon(Icons.check_circle),
+                            iconAlignment: IconAlignment.start,
                           )
                         ],
                       ),

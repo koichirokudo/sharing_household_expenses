@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:sharing_household_expenses/services/settlement_service.dart';
+import 'package:sharing_household_expenses/services/transaction_service.dart';
 import 'package:sharing_household_expenses/src/pages/settlement_detail_page.dart';
+import 'package:sharing_household_expenses/utils/constants.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SettlementListPage extends StatefulWidget {
   const SettlementListPage({super.key});
@@ -10,80 +14,79 @@ class SettlementListPage extends StatefulWidget {
 }
 
 class SettlementListPageState extends State<SettlementListPage> {
-  // TODO: サーバーからデータを取得して表示する
-  final List<String> years = [
-    '2020',
-    '2021',
-    '2022',
-    '2023',
-    '2024',
-    '2025',
-  ];
-  final List<List<String>> settlements = [
-    [
-      '2024年1月',
-      'テスト太郎',
-      'テスト花子',
-      '110000',
-    ],
-    [
-      '2024年2月',
-      'テスト太郎',
-      'テスト花子',
-      '110000',
-    ],
-    [
-      '2024年3月',
-      'テスト太郎',
-      'テスト花子',
-      '110000',
-    ],
-    [
-      '2024年4月',
-      'テスト太郎',
-      'テスト花子',
-      '110000',
-    ],
-    [
-      '2024年5月',
-      'テスト太郎',
-      'テスト花子',
-      '110000',
-    ],
-    [
-      '2024年6月',
-      'テスト太郎',
-      'テスト花子',
-      '110000',
-    ],
-    [
-      '2024年7月',
-      'テスト太郎',
-      'テスト花子',
-      '110000',
-    ],
-    [
-      '2024年8月',
-      'テスト太郎',
-      'テスト花子',
-      '110000',
-    ],
-    [
-      '2024年9月',
-      'テスト太郎',
-      'テスト花子',
-      '110000',
-    ],
-    [
-      '2024年10月',
-      'テスト太郎',
-      'テスト花子',
-      '110000',
-    ],
-  ];
-  int selectedIndex = 2; // デフォルトで2024/11が選択された状態
-  final PageController _pageController =
-      PageController(initialPage: 2, viewportFraction: 1);
+  bool _isLoading = false;
+  late DateTime _now;
+  List<String> years = [];
+  late TransactionService transactionService;
+  late SettlementService settlementService;
+  late int selectedIndex = years.length - 1;
+  List<Map<String, dynamic>> settlements = [];
+  late final PageController _pageController =
+      PageController(initialPage: years.length - 1, viewportFraction: 1);
+
+  @override
+  void initState() {
+    super.initState();
+    transactionService = TransactionService(supabase);
+    settlementService = SettlementService(supabase);
+    _initializeDate();
+  }
+
+  Future<void> _initializeDate() async {
+    // 現在日時を取得する
+    _now = DateTime.now();
+    // 現在の年から過去2年分の年を取得する
+    _generateYears(_now);
+    // 今年のデータを取得する
+    _fetchDataForYear(years[selectedIndex]);
+  }
+
+  Future<void> _fetchDataForYear(String year) async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final cacheData = settlementService.loadCache(years[selectedIndex]);
+      if (cacheData != null) {
+        setState(() {
+          settlements = cacheData;
+        });
+        return;
+      }
+
+      final userId = supabase.auth.currentUser!.id;
+      final profile =
+          await supabase.from('profiles').select().eq('id', userId).single();
+
+      await Future.delayed(Duration(milliseconds: 700));
+
+      // 選択された年の清算情報一覧を取得する
+      final List<Map<String, dynamic>>? data = await settlementService
+          .fetchYearlyData(profile['group_id'], convertYearToDateTime(year));
+
+      settlementService.storeCache(year, data ?? []);
+      setState(() {
+        settlements = data ?? [];
+      });
+    } on PostgrestException catch (error) {
+      if (mounted) {
+        context.showSnackBarError(message: "$error");
+      }
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _generateYears(DateTime now) {
+    years = List.generate(2, (index) {
+      final year = DateTime(now.year - index, now.month, 1);
+      return DateFormat('yyyy').format(year);
+    });
+    years = years.reversed.toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -148,11 +151,12 @@ class SettlementListPageState extends State<SettlementListPage> {
                     padding: const EdgeInsets.all(16.0),
                     itemCount: settlements.length,
                     itemBuilder: (context, index) {
-                      final amount = int.parse(settlements[index][3]);
-                      final formattedAmount =
-                          NumberFormat('#,###').format(amount);
-                      final displayAmount = '¥$formattedAmount';
-
+                      double amount = settlements[index]['total_amount'];
+                      final displayAmount =
+                          context.convertToYenFormat(amount: amount.round());
+                      final settlementDate = DateFormat('yyyy年MM月').format(
+                          DateTime.parse(
+                              settlements[index]['settlement_date']));
                       return InkWell(
                         onTap: () {
                           // TODO: 清算画面に遷移
@@ -180,7 +184,7 @@ class SettlementListPageState extends State<SettlementListPage> {
                             children: [
                               // 年月
                               Text(
-                                settlements[index][0],
+                                settlementDate,
                                 style: const TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
@@ -210,7 +214,8 @@ class SettlementListPageState extends State<SettlementListPage> {
                                       const SizedBox(height: 4),
                                       // ユーザー名
                                       Text(
-                                        settlements[index][1],
+                                        settlements[index]['settlement_items']
+                                            [0]['profiles']['username'],
                                         style: const TextStyle(
                                           fontSize: 10,
                                           color: Colors.black,
@@ -257,7 +262,8 @@ class SettlementListPageState extends State<SettlementListPage> {
                                       const SizedBox(height: 4),
                                       // ユーザー名
                                       Text(
-                                        settlements[index][2],
+                                        settlements[index]['settlement_items']
+                                            [1]['profiles']['username'],
                                         style: const TextStyle(
                                           fontSize: 10,
                                           color: Colors.black,

@@ -10,10 +10,17 @@ final circularIndicator = const Center(
 );
 
 // String型からDateTime型に変換する
-DateTime convertToDateTime(String monthString) {
+DateTime convertMonthToDateTime(String monthString) {
   // DateFormat で yyyy/MM 形式を指定
   DateFormat format = DateFormat('yyyy/MM');
   return format.parse(monthString);
+}
+
+// String型からDateTime型に変換する
+DateTime convertYearToDateTime(String yearString) {
+  // DateFormat で yyyy/MM 形式を指定
+  DateFormat format = DateFormat('yyyy');
+  return format.parse(yearString);
 }
 
 extension ShowSnackBar on BuildContext {

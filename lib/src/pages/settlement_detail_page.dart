@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class SettlementDetailPage extends StatefulWidget {
-  const SettlementDetailPage({super.key, required List<String> settlement});
+  const SettlementDetailPage(
+      {super.key, required Map<String, dynamic> settlement});
 
   @override
   SettlementDetailPageState createState() => SettlementDetailPageState();

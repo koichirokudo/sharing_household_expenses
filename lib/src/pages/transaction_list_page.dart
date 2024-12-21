@@ -14,9 +14,12 @@ class TransactionListPage extends StatefulWidget {
 
 class TransactionListPageState extends State<TransactionListPage> {
   bool _isLoading = false;
+  bool _isSettlementLoading = false;
+  bool _isSettlement = false;
   late TransactionService transactionService;
   List<String> months = [];
   List<Map<String, dynamic>> transactions = [];
+  List<Map<String, dynamic>> settlements = [];
   late DateTime _currentMonth;
   late int selectedIndex = months.length - 1;
   late final PageController _pageController =
@@ -38,6 +41,48 @@ class TransactionListPageState extends State<TransactionListPage> {
     // 今月のデータを取得する
     _fetchDataForMonth(
         DateFormat('yyyy/MM').format(_currentMonth), _selectedFilter);
+    _checkSettlement();
+  }
+
+  Future<void> _checkSettlement() async {
+    try {
+      setState(() {
+        _isSettlementLoading = true;
+      });
+
+      final userId = supabase.auth.currentUser!.id;
+      final profile =
+          await supabase.from('profiles').select().eq('id', userId).single();
+
+      await Future.delayed(Duration(milliseconds: 700));
+
+      // データ取得
+      final List<Map<String, dynamic>> data = await supabase
+          .from('settlements')
+          .select('settlement_date')
+          .eq('group_id', profile['group_id']);
+
+      DateTime now = DateTime.now().toLocal();
+      String nowString = DateFormat('yyyy/MM').format(now);
+      for (var item in data) {
+        DateTime date = DateTime.parse(item['settlement_date']).toLocal();
+        String settlementDate = DateFormat('yyyy/MM').format(date);
+        if (settlementDate == nowString) {
+          // 清算済み
+          setState(() {
+            _isSettlement = true;
+          });
+        }
+      }
+    } catch (error) {
+      if (mounted) {
+        context.showSnackBarError(message: "$error");
+      }
+    } finally {
+      setState(() {
+        _isSettlementLoading = false;
+      });
+    }
   }
 
   void _loadCache(selectedValue) {
@@ -357,14 +402,19 @@ class TransactionListPageState extends State<TransactionListPage> {
                             },
                           ),
                           ElevatedButton.icon(
-                            onPressed: () {
-                              Navigator.of(context).push(MaterialPageRoute(
-                                  builder: (context) => SettlementPage(
-                                        month: months[selectedIndex],
-                                        transactions: transactions,
-                                      )));
-                            },
-                            label: Text('清算する'),
+                            onPressed: _isSettlement
+                                ? null
+                                : () {
+                                    Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                SettlementPage(
+                                                    month:
+                                                        months[selectedIndex],
+                                                    transactions:
+                                                        transactions)));
+                                  },
+                            label: Text(_isSettlement ? '清算済み' : '清算する'),
                             icon: const Icon(Icons.check_circle),
                             iconAlignment: IconAlignment.start,
                           )
@@ -414,6 +464,7 @@ class TransactionListPageState extends State<TransactionListPage> {
                                           builder: (context) =>
                                               TransactionDetailPage(
                                             transaction: transactions[index],
+                                            isSettlement: _isSettlement,
                                           ),
                                         ),
                                       );

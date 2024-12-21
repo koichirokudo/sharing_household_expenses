@@ -386,6 +386,7 @@ class SettlementPageState extends State<SettlementPage> {
                             MaterialPageRoute(
                               builder: (context) => TransactionDetailPage(
                                 transaction: transactions[index],
+                                isSettlement: false,
                               ),
                             ),
                           );

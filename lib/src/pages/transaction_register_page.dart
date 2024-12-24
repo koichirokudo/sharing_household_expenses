@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class TransactionRegisterPage extends StatefulWidget {
   // 画面遷移時に渡されるデータ
   final Map<String, dynamic>? transaction;
+
   const TransactionRegisterPage({super.key, this.transaction});
 
   @override
@@ -22,10 +23,12 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
 
   bool _isShare = false;
   bool _isLoading = false;
+  bool _isSettlementLoading = false;
   var profile;
   int? _id;
 
   final _formKey = GlobalKey<FormState>();
+
   // 選択されたカテゴリー
   String? selectedCategory;
   final TextEditingController _dateController = TextEditingController();
@@ -148,6 +151,16 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
         _isLoading = true;
       });
 
+      final bool isSettlement =
+          await _checkSettlement(_dateController.text.substring(0, 7));
+      if (isSettlement) {
+        // 清算済みの場合は登録することができない
+        if (mounted) {
+          context.showSnackBarError(message: '選択した月はすでに清算済みのため登録できません');
+        }
+        return;
+      }
+
       final data = {
         if (_id != null) 'id': _id,
         'profile_id': supabase.auth.currentUser!.id,
@@ -244,6 +257,46 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
     super.initState();
     transactionService = TransactionService(supabase);
     _initializeData();
+  }
+
+  Future<bool> _checkSettlement(String month) async {
+    try {
+      setState(() {
+        _isSettlementLoading = true;
+      });
+
+      final userId = supabase.auth.currentUser!.id;
+      final profile =
+          await supabase.from('profiles').select().eq('id', userId).single();
+
+      await Future.delayed(Duration(milliseconds: 700));
+
+      // データ取得
+      final List<Map<String, dynamic>> data = await supabase
+          .from('settlements')
+          .select('settlement_date')
+          .eq('group_id', profile['group_id']);
+
+      for (var item in data) {
+        DateTime date = DateTime.parse(item['settlement_date']).toLocal();
+        String settlementDate = DateFormat('yyyy-MM').format(date);
+        if (settlementDate == month) {
+          // 清算済み
+          return true;
+        } else {
+          return false;
+        }
+      }
+    } catch (error) {
+      if (mounted) {
+        context.showSnackBarError(message: "$error");
+      }
+    } finally {
+      setState(() {
+        _isSettlementLoading = false;
+      });
+    }
+    return false;
   }
 
   @override
@@ -362,11 +415,12 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
                       TextFormField(
                         controller: _dateController,
                         decoration: const InputDecoration(
-                          prefixIcon: Icon(Icons
-                              .calendar_today), // Optional: adds a calendar icon
+                          prefixIcon: Icon(Icons.calendar_today),
+                          // Optional: adds a calendar icon
                           labelText: "利用日",
                         ),
-                        readOnly: true, // Prevents manual input
+                        readOnly: true,
+                        // Prevents manual input
                         onTap: () async {
                           DateTime? pickedDate = await showDatePicker(
                             context: context,

@@ -7,11 +7,13 @@ import 'package:sharing_household_expenses/utils/constants.dart';
 class SettlementPage extends StatefulWidget {
   final List<Map<String, dynamic>> transactions;
   final String month;
+  final bool isSettlement;
 
   const SettlementPage({
     super.key,
     required this.month,
     required this.transactions,
+    required this.isSettlement,
   });
 
   @override
@@ -26,6 +28,7 @@ class SettlementPageState extends State<SettlementPage> {
   int expenseTotal = 0;
   Map<String, Map<String, dynamic>> profileAmounts = {};
   int colorValue = 0;
+  late bool isSettlement;
 
   @override
   void initState() {
@@ -33,6 +36,7 @@ class SettlementPageState extends State<SettlementPage> {
     // initState 内で widget.transaction を初期化
     transactions = widget.transactions;
     month = widget.month;
+    isSettlement = widget.isSettlement;
     _calcProfileAmounts(transactions);
     _calcPaymentPerPerson();
   }
@@ -93,9 +97,11 @@ class SettlementPageState extends State<SettlementPage> {
           .select('group_id')
           .eq('id', userId)
           .single();
+      DateTime now = DateTime.now();
+      final settlementDate = DateTime(now.year, now.month, 1).toIso8601String();
       final settlementData = {
         'group_id': profiles['group_id'],
-        'settlement_date': DateTime.now().toIso8601String(),
+        'settlement_date': settlementDate,
         'total_amount': expenseTotal,
         'amount_per_person': paymentPerPerson,
         'status': 'completed',
@@ -122,10 +128,22 @@ class SettlementPageState extends State<SettlementPage> {
       });
       await supabase.from('settlement_items').insert(settlementItem);
 
+      List<Map<String, dynamic>> transactionIds = [];
+      for (var transaction in transactions) {
+        transaction.remove('profiles');
+        transaction.remove('categories');
+        transactionIds.add({
+          ...transaction,
+          'settlement_id': settlement['id'],
+          'updated_at': DateTime.now().toIso8601String(),
+        });
+      }
+      await supabase.from('transactions').upsert(transactionIds);
+
       if (mounted) {
         context.showSnackBar(
             message: '清算を確定しました', backgroundColor: Colors.green);
-        Navigator.of(context).pop();
+        Navigator.of(context).pop(true);
       }
     } catch (error) {
       if (mounted) {
@@ -301,44 +319,45 @@ class SettlementPageState extends State<SettlementPage> {
             ),
             const SizedBox(height: 16),
             // 清算確定ボタン
-            Center(
-              child: SizedBox(
-                child: ElevatedButton(
-                  onPressed: () {
-                    showDialog<void>(
-                      context: context,
-                      builder: (BuildContext dialogContext) {
-                        return AlertDialog(
-                          title: Text('清算確定処理'),
-                          content: Text('確定すると変更することはできません。よろしいですか？'),
-                          actions: <Widget>[
-                            TextButton(
-                              child: Text('はい'),
-                              onPressed: () {
-                                Navigator.of(dialogContext)
-                                    .pop(); // Dismiss alert dialog
-                                _settlementConfirm();
-                              },
-                            ),
-                            TextButton(
-                              child: Text('いいえ'),
-                              onPressed: () {
-                                Navigator.of(dialogContext)
-                                    .pop(); // Dismiss alert dialog
-                              },
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    fixedSize: const Size(200, 50),
+            if (!isSettlement)
+              Center(
+                child: SizedBox(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      showDialog<void>(
+                        context: context,
+                        builder: (BuildContext dialogContext) {
+                          return AlertDialog(
+                            title: Text('清算確定処理'),
+                            content: Text('確定すると変更することはできません。よろしいですか？'),
+                            actions: <Widget>[
+                              TextButton(
+                                child: Text('はい'),
+                                onPressed: () {
+                                  Navigator.of(dialogContext)
+                                      .pop(); // Dismiss alert dialog
+                                  _settlementConfirm();
+                                },
+                              ),
+                              TextButton(
+                                child: Text('いいえ'),
+                                onPressed: () {
+                                  Navigator.of(dialogContext)
+                                      .pop(); // Dismiss alert dialog
+                                },
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      fixedSize: const Size(200, 50),
+                    ),
+                    child: const Text('清算を確定する'),
                   ),
-                  child: const Text('清算を確定する'),
                 ),
               ),
-            ),
             const SizedBox(height: 16),
             // 共有された明細の一覧
             Card(

@@ -154,7 +154,7 @@ class SettlementListPageState extends State<SettlementListPage> {
                       double amount = settlements[index]['total_amount'];
                       final displayAmount =
                           context.convertToYenFormat(amount: amount.round());
-                      final settlementDate = DateFormat('yyyy年MM月').format(
+                      final settlementDate = DateFormat('yyyy/MM').format(
                           DateTime.parse(
                               settlements[index]['settlement_date']));
                       return InkWell(
@@ -165,7 +165,9 @@ class SettlementListPageState extends State<SettlementListPage> {
                               context,
                               MaterialPageRoute(
                                   builder: (context) => SettlementDetailPage(
-                                      settlement: settlements[index])));
+                                        settlementId: settlements[index]['id'],
+                                        month: settlementDate,
+                                      )));
                         },
                         child: Container(
                           // 清算一覧

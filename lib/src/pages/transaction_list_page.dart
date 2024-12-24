@@ -62,15 +62,17 @@ class TransactionListPageState extends State<TransactionListPage> {
           .select('settlement_date')
           .eq('group_id', profile['group_id']);
 
-      DateTime now = DateTime.now().toLocal();
-      String nowString = DateFormat('yyyy/MM').format(now);
       for (var item in data) {
         DateTime date = DateTime.parse(item['settlement_date']).toLocal();
         String settlementDate = DateFormat('yyyy/MM').format(date);
-        if (settlementDate == nowString) {
+        if (settlementDate == months[selectedIndex]) {
           // 清算済み
           setState(() {
             _isSettlement = true;
+          });
+        } else {
+          setState(() {
+            _isSettlement = false;
           });
         }
       }
@@ -289,11 +291,12 @@ class TransactionListPageState extends State<TransactionListPage> {
                 });
                 // 選択された月のデータを取得する
                 _fetchDataForMonth(months[selectedIndex], _selectedFilter);
+                _checkSettlement();
               },
               itemCount: months.length,
               itemBuilder: (context, index) {
                 // loading...
-                if (_isLoading) {
+                if (_isLoading || _isSettlementLoading) {
                   return Center(
                     child: CircularProgressIndicator(),
                   );
@@ -397,6 +400,7 @@ class TransactionListPageState extends State<TransactionListPage> {
                               ),
                             ],
                             onChanged: (value) {
+                              // TODO: マイデータのときの清算をどうするか
                               _loadCache(value);
                               _selectedFilter = value!;
                             },
@@ -404,15 +408,28 @@ class TransactionListPageState extends State<TransactionListPage> {
                           ElevatedButton.icon(
                             onPressed: _isSettlement
                                 ? null
-                                : () {
-                                    Navigator.of(context).push(
+                                : () async {
+                                    final response = await Navigator.push(
+                                        context,
                                         MaterialPageRoute(
                                             builder: (context) =>
                                                 SettlementPage(
-                                                    month:
-                                                        months[selectedIndex],
-                                                    transactions:
-                                                        transactions)));
+                                                  month: months[selectedIndex],
+                                                  transactions: transactions,
+                                                  isSettlement: false,
+                                                )));
+
+                                    if (response == true) {
+                                      String stringMonth = DateFormat('yyyy/MM')
+                                          .format(_currentMonth);
+                                      transactionService
+                                          .clearCache(stringMonth);
+                                      _fetchDataForMonth(
+                                          stringMonth, _selectedFilter);
+                                      setState(() {
+                                        _isSettlement = true;
+                                      });
+                                    }
                                   },
                             label: Text(_isSettlement ? '清算済み' : '清算する'),
                             icon: const Icon(Icons.check_circle),

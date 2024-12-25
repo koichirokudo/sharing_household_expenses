@@ -179,6 +179,7 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
 
       final response = await transactionService.upsertData(data);
 
+      // 新規登録
       if (_id == null) {
         _formKey.currentState!.reset();
         _dateController.text = DateFormat('yyyy-MM-dd').format(DateTime.now());
@@ -189,6 +190,7 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
         _isShare = false;
         selectedCategory = null;
       } else {
+        // 更新
         if (mounted) {
           Navigator.pop(context, response);
         }

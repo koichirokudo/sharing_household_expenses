@@ -452,13 +452,11 @@ class TransactionListPageState extends State<TransactionListPage> {
                                                             )));
 
                                             if (response == true) {
-                                              String stringMonth =
-                                                  DateFormat('yyyy/MM')
-                                                      .format(_currentMonth);
-                                              transactionService
-                                                  .clearCache(stringMonth);
+                                              transactionService.clearCache(
+                                                  months[selectedIndex]);
                                               _fetchDataForMonth(
-                                                  stringMonth, _selectedFilter);
+                                                  months[selectedIndex],
+                                                  _selectedFilter);
                                               setState(() {
                                                 _isSettlement = true;
                                               });
@@ -527,12 +525,10 @@ class TransactionListPageState extends State<TransactionListPage> {
                                               );
 
                                               if (response == true) {
-                                                String stringMonth =
-                                                    DateFormat('yyyy/MM')
-                                                        .format(_currentMonth);
-                                                transactionService
-                                                    .clearCache(stringMonth);
-                                                _fetchDataForMonth(stringMonth,
+                                                transactionService.clearCache(
+                                                    months[selectedIndex]);
+                                                _fetchDataForMonth(
+                                                    months[selectedIndex],
                                                     _selectedFilter);
                                               }
                                             } else {

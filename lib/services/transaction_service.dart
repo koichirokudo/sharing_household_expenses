@@ -38,7 +38,7 @@ class TransactionService {
     if (data['id'] != null) {
       final response = await supabase
           .from('transactions')
-          .select('*, categories(id, name)')
+          .select('*, categories(id, name), profiles(username)')
           .eq('id', data['id'])
           .maybeSingle();
       return response;

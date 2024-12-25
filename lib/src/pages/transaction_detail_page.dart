@@ -6,11 +6,13 @@ import 'package:sharing_household_expenses/utils/constants.dart';
 
 class TransactionDetailPage extends StatefulWidget {
   final Map<String, dynamic> transaction;
+  final Map<String, dynamic> profile;
   final bool isSettlement;
 
   const TransactionDetailPage({
     super.key,
     required this.transaction,
+    required this.profile,
     required this.isSettlement,
   });
 
@@ -19,10 +21,12 @@ class TransactionDetailPage extends StatefulWidget {
 }
 
 class TransactionDetailPageState extends State<TransactionDetailPage> {
-  bool _isLoading = false;
-  bool _isEdited = false;
+  bool isLoading = false;
+  bool isEdited = false;
+  bool isEditable = false;
   late final TransactionService transactionService;
   late Map<String, dynamic> transaction;
+  late Map<String, dynamic> profile;
   late String displayAmount;
   late String transactionDate;
   late bool isSettlement;
@@ -33,6 +37,7 @@ class TransactionDetailPageState extends State<TransactionDetailPage> {
     transactionService = TransactionService(supabase);
     // initState 内で widget.transaction を初期化
     transaction = widget.transaction;
+    profile = widget.profile;
     double amount = transaction['amount'];
     displayAmount = context.convertToYenFormat(amount: amount.round());
     DateTime date = DateTime.parse(transaction['date']).toLocal();
@@ -43,7 +48,7 @@ class TransactionDetailPageState extends State<TransactionDetailPage> {
   Future<void> _delete() async {
     try {
       setState(() {
-        _isLoading = true;
+        isLoading = true;
       });
 
       await Future.delayed(Duration(milliseconds: 700));
@@ -60,13 +65,18 @@ class TransactionDetailPageState extends State<TransactionDetailPage> {
       }
     } finally {
       setState(() {
-        _isLoading = false;
+        isLoading = false;
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (transaction['profile_id'] == profile['id']) {
+      isEditable = true;
+    } else {
+      isEditable = false;
+    }
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -202,75 +212,79 @@ class TransactionDetailPageState extends State<TransactionDetailPage> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              ElevatedButton(
-                                onPressed: () {
-                                  if (_isEdited == true) {
-                                    Navigator.pop(context, true);
-                                  } else {
-                                    Navigator.pop(context);
-                                  }
-                                },
-                                child: const Text('戻る'),
-                              ),
-                              ElevatedButton(
-                                onPressed: () async {
-                                  final response = await Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          TransactionRegisterPage(
-                                        transaction: transaction,
+                              if (isEditable)
+                                ElevatedButton(
+                                  onPressed: () {
+                                    if (isEdited == true) {
+                                      Navigator.pop(context, true);
+                                    } else {
+                                      Navigator.pop(context);
+                                    }
+                                  },
+                                  child: const Text('戻る'),
+                                ),
+                              if (isEditable)
+                                ElevatedButton(
+                                  onPressed: () async {
+                                    final response = await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            TransactionRegisterPage(
+                                          transaction: transaction,
+                                        ),
                                       ),
-                                    ),
-                                  );
+                                    );
 
-                                  if (response != null) {
-                                    setState(() {
-                                      _isEdited = true;
-                                      transaction = response;
-                                      double amount = transaction['amount'];
-                                      displayAmount =
-                                          context.convertToYenFormat(
-                                              amount: amount.round());
-                                      DateTime date =
-                                          DateTime.parse(transaction['date'])
-                                              .toLocal();
-                                      transactionDate =
-                                          DateFormat('yyyy/MM/dd').format(date);
-                                    });
-                                  }
-                                },
-                                child: const Text('編集'),
-                              ),
-                              ElevatedButton(
-                                onPressed: () {
-                                  showDialog(
-                                      context: context,
-                                      builder: (BuildContext context) {
-                                        return AlertDialog(
-                                          title: Text('明細データの削除'),
-                                          content: Text(
-                                              'データを削除すると二度と復元することができません。削除しますか？'),
-                                          actions: [
-                                            TextButton(
-                                              child: Text('はい'),
-                                              onPressed: () {
-                                                Navigator.of(context).pop();
-                                                _delete();
-                                              },
-                                            ),
-                                            TextButton(
-                                              child: Text('いいえ'),
-                                              onPressed: () {
-                                                Navigator.of(context).pop();
-                                              },
-                                            ),
-                                          ],
-                                        );
+                                    if (response != null) {
+                                      setState(() {
+                                        isEdited = true;
+                                        transaction = response;
+                                        double amount = transaction['amount'];
+                                        displayAmount =
+                                            context.convertToYenFormat(
+                                                amount: amount.round());
+                                        DateTime date =
+                                            DateTime.parse(transaction['date'])
+                                                .toLocal();
+                                        transactionDate =
+                                            DateFormat('yyyy/MM/dd')
+                                                .format(date);
                                       });
-                                },
-                                child: const Text('削除'),
-                              ),
+                                    }
+                                  },
+                                  child: const Text('編集'),
+                                ),
+                              if (isEditable)
+                                ElevatedButton(
+                                  onPressed: () {
+                                    showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return AlertDialog(
+                                            title: Text('明細データの削除'),
+                                            content: Text(
+                                                'データを削除すると二度と復元することができません。削除しますか？'),
+                                            actions: [
+                                              TextButton(
+                                                child: Text('はい'),
+                                                onPressed: () {
+                                                  Navigator.of(context).pop();
+                                                  _delete();
+                                                },
+                                              ),
+                                              TextButton(
+                                                child: Text('いいえ'),
+                                                onPressed: () {
+                                                  Navigator.of(context).pop();
+                                                },
+                                              ),
+                                            ],
+                                          );
+                                        });
+                                  },
+                                  child: const Text('削除'),
+                                ),
                             ],
                           ),
                         ),

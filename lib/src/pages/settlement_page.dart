@@ -6,6 +6,7 @@ import 'package:sharing_household_expenses/utils/constants.dart';
 
 class SettlementPage extends StatefulWidget {
   final List<Map<String, dynamic>> transactions;
+  final Map<String, dynamic> profile;
   final String month;
   final bool isSettlement;
 
@@ -13,6 +14,7 @@ class SettlementPage extends StatefulWidget {
     super.key,
     required this.month,
     required this.transactions,
+    required this.profile,
     required this.isSettlement,
   });
 
@@ -23,8 +25,10 @@ class SettlementPage extends StatefulWidget {
 class SettlementPageState extends State<SettlementPage> {
   bool _isLoading = false;
   late List<Map<String, dynamic>> transactions;
+  late List<Map<String, dynamic>> profiles;
+  late Map<String, dynamic> profile;
   late String month;
-  late int paymentPerPerson;
+  int paymentPerPerson = 0;
   int expenseTotal = 0;
   Map<String, Map<String, dynamic>> profileAmounts = {};
   int colorValue = 0;
@@ -35,13 +39,47 @@ class SettlementPageState extends State<SettlementPage> {
     super.initState();
     // initState 内で widget.transaction を初期化
     transactions = widget.transactions;
+    profile = widget.profile;
     month = widget.month;
     isSettlement = widget.isSettlement;
-    _calcProfileAmounts(transactions);
-    _calcPaymentPerPerson();
+    _initializeData();
   }
 
-  void _calcProfileAmounts(List<Map<String, dynamic>> transactions) {
+  Future<void> _initializeData() async {
+    setState(() {
+      _isLoading = true;
+    });
+    await _getProfiles();
+    _calcProfileAmounts(transactions);
+    _calcPaymentPerPerson();
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _getProfiles() async {
+    try {
+      await Future.delayed(Duration(milliseconds: 700));
+      profiles = await supabase
+          .from('profiles')
+          .select()
+          .eq('group_id', profile['group_id']);
+    } catch (error) {
+      if (mounted) {
+        context.showSnackBarError(message: '$error');
+      }
+    }
+  }
+
+  void _calcProfileAmounts(List<Map<String, dynamic>> transactions) async {
+    // グループ全員のデータを初期化
+    for (var item in profiles) {
+      profileAmounts[item['id']] = {
+        'username': item['username'],
+        'amount': 0,
+      };
+    }
+
     // 共有したデータの中から、ユーザー別の支払い
     for (var item in transactions) {
       String username = item['profiles']['username'];
@@ -51,12 +89,6 @@ class SettlementPageState extends State<SettlementPage> {
       if (profileAmounts.containsKey(profileId)) {
         profileAmounts[profileId]!['amount'] =
             profileAmounts[profileId]!['amount'] + amount;
-        expenseTotal = expenseTotal + amount;
-      } else {
-        profileAmounts[profileId] = {
-          'username': username,
-          'amount': amount,
-        };
         expenseTotal = expenseTotal + amount;
       }
     }
@@ -201,326 +233,341 @@ class SettlementPageState extends State<SettlementPage> {
         title: const Text('清算'),
       ),
       body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // ヘッダー
-            Container(
-              alignment: Alignment.center,
-              padding: const EdgeInsets.all(16.0),
-              color: const Color(0x002a2a2a),
-              height: 60,
-              child: Text(
-                month,
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
+        child: _isLoading
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(128.0),
+                  child: CircularProgressIndicator(),
                 ),
-              ),
-            ),
-            // グラフ
-            SizedBox(
-              width: 200,
-              height: 200,
-              child: PieChart(
-                PieChartData(
-                  sections: sections,
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Center(
-              child: Text(
-                '清算結果',
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Center(
-              child: Text(
-                  '1人あたりの支払額: ${context.convertToYenFormat(amount: paymentPerPerson)}'),
-            ),
-            const SizedBox(height: 16),
-            if (payer != null &&
-                payee != null &&
-                payment != null &&
-                receive != null)
-              Center(
-                child: Text(
-                  '$payer さんは $payee さんに $payment 支払ってください',
-                  style: const TextStyle(
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-            const SizedBox(height: 16),
-            Center(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Column(
-                    children: [
-                      // ユーザー画像
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          image: DecorationImage(
-                            image: AssetImage('assets/icons/user_icon.png'),
-                            fit: BoxFit.fill,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text('$payer'),
-                    ],
-                  ),
-                  const SizedBox(width: 16),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.trending_flat_rounded, size: 32),
-                      Text(
-                        '$payment',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(width: 16),
-                  Column(
-                    children: [
-                      // ユーザー画像
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          image: DecorationImage(
-                            image: AssetImage('assets/icons/user_icon.png'),
-                            fit: BoxFit.fill,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text('$payee'),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            // 清算確定ボタン
-            if (!isSettlement)
-              Center(
-                child: SizedBox(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      showDialog<void>(
-                        context: context,
-                        builder: (BuildContext dialogContext) {
-                          return AlertDialog(
-                            title: Text('清算確定処理'),
-                            content: Text('確定すると変更することはできません。よろしいですか？'),
-                            actions: <Widget>[
-                              TextButton(
-                                child: Text('はい'),
-                                onPressed: () {
-                                  Navigator.of(dialogContext)
-                                      .pop(); // Dismiss alert dialog
-                                  _settlementConfirm();
-                                },
-                              ),
-                              TextButton(
-                                child: Text('いいえ'),
-                                onPressed: () {
-                                  Navigator.of(dialogContext)
-                                      .pop(); // Dismiss alert dialog
-                                },
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      fixedSize: const Size(200, 50),
-                    ),
-                    child: const Text('清算を確定する'),
-                  ),
-                ),
-              ),
-            const SizedBox(height: 16),
-            // 共有された明細の一覧
-            Card(
-              elevation: 4.0,
-              margin: const EdgeInsets.all(8.0),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16.0),
-              ),
-              child: Column(
-                children: [
+                  // ヘッダー
                   Container(
                     alignment: Alignment.center,
                     padding: const EdgeInsets.all(16.0),
-                    child: const Text(
-                      '共有された明細',
+                    color: const Color(0x002a2a2a),
+                    height: 60,
+                    child: Text(
+                      month,
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
                         color: Colors.black,
                       ),
                     ),
                   ),
-                  const Divider(height: 1, color: Colors.black12),
-                  // リスト部分
-                  ListView.builder(
-                    shrinkWrap: true,
-                    // 必須: ListViewをColumn内で展開可能にする
-                    physics: const NeverScrollableScrollPhysics(),
-                    // 外側のスクロールビューに依存
-                    padding: const EdgeInsets.all(16.0),
-                    itemCount: transactions.length,
-                    itemBuilder: (context, index) {
-                      double amount = transactions[index]['amount'];
-                      final displayAmount =
-                          context.convertToYenFormat(amount: amount.round());
-
-                      final date =
-                          DateTime.parse(transactions[index]['date']).toLocal();
-                      final transactionDate =
-                          DateFormat('yyyy/MM/dd').format(date);
-                      return InkWell(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => TransactionDetailPage(
-                                transaction: transactions[index],
-                                isSettlement: false,
-                              ),
-                            ),
-                          );
-                        },
-                        child: Container(
-                          height: 80,
-                          decoration: const BoxDecoration(
-                            border: Border(
-                              bottom: BorderSide(
-                                color: Colors.black12,
-                                width: 1.0,
-                              ),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Text(
-                                        transactions[index]['name'],
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                          '- ${transactions[index]['profiles']['username']}',
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.black,
-                                          )),
-                                    ],
-                                  ),
-                                  Row(
-                                    children: [
-                                      Text(
-                                        transactionDate,
-                                        style: const TextStyle(
-                                          fontSize: 10,
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 4.0,
-                                          vertical: 1.0,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          border: Border.all(
-                                            color: transactions[index]
-                                                        ['type'] ==
-                                                    'income'
-                                                ? Colors.green
-                                                : Colors.red,
-                                            width: 0.5,
-                                          ),
-                                          borderRadius:
-                                              BorderRadius.circular(4.0),
-                                        ),
-                                        child: Text(
-                                          transactions[index]['type'] ==
-                                                  'income'
-                                              ? '収入'
-                                              : '支出',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: transactions[index]
-                                                        ['type'] ==
-                                                    'income'
-                                                ? Colors.green
-                                                : Colors.red,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        transactions[index]['categories']
-                                            ['name'],
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                    ],
-                                  )
-                                ],
-                              ),
-                              Text(
-                                displayAmount,
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
+                  // グラフ
+                  SizedBox(
+                    width: 200,
+                    height: 200,
+                    child: PieChart(
+                      PieChartData(
+                        sections: sections,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Center(
+                    child: Text(
+                      '清算結果',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Center(
+                    child: Text(
+                        '1人あたりの支払額: ${context.convertToYenFormat(amount: paymentPerPerson)}'),
+                  ),
+                  const SizedBox(height: 16),
+                  if (payer != null &&
+                      payee != null &&
+                      payment != null &&
+                      receive != null)
+                    Center(
+                      child: Text(
+                        '$payer さんは $payee さんに $payment 支払ってください',
+                        style: const TextStyle(
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 16),
+                  Center(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Column(
+                          children: [
+                            // ユーザー画像
+                            Container(
+                              width: 32,
+                              height: 32,
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                image: DecorationImage(
+                                  image:
+                                      AssetImage('assets/icons/user_icon.png'),
+                                  fit: BoxFit.fill,
                                 ),
                               ),
-                            ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text('$payer'),
+                          ],
+                        ),
+                        const SizedBox(width: 16),
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.trending_flat_rounded, size: 32),
+                            Text(
+                              '$payment',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(width: 16),
+                        Column(
+                          children: [
+                            // ユーザー画像
+                            Container(
+                              width: 32,
+                              height: 32,
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                image: DecorationImage(
+                                  image:
+                                      AssetImage('assets/icons/user_icon.png'),
+                                  fit: BoxFit.fill,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text('$payee'),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // 清算確定ボタン
+                  if (!isSettlement)
+                    Center(
+                      child: SizedBox(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            showDialog<void>(
+                              context: context,
+                              builder: (BuildContext dialogContext) {
+                                return AlertDialog(
+                                  title: Text('清算確定処理'),
+                                  content: Text('確定すると変更することはできません。よろしいですか？'),
+                                  actions: <Widget>[
+                                    TextButton(
+                                      child: Text('はい'),
+                                      onPressed: () {
+                                        Navigator.of(dialogContext)
+                                            .pop(); // Dismiss alert dialog
+                                        _settlementConfirm();
+                                      },
+                                    ),
+                                    TextButton(
+                                      child: Text('いいえ'),
+                                      onPressed: () {
+                                        Navigator.of(dialogContext)
+                                            .pop(); // Dismiss alert dialog
+                                      },
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            fixedSize: const Size(200, 50),
+                          ),
+                          child: const Text('清算を確定する'),
+                        ),
+                      ),
+                    ),
+                  const SizedBox(height: 16),
+                  // 共有された明細の一覧
+                  Card(
+                    elevation: 4.0,
+                    margin: const EdgeInsets.all(8.0),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16.0),
+                    ),
+                    child: Column(
+                      children: [
+                        Container(
+                          alignment: Alignment.center,
+                          padding: const EdgeInsets.all(16.0),
+                          child: const Text(
+                            '共有された明細',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
                           ),
                         ),
-                      );
-                    },
+                        const Divider(height: 1, color: Colors.black12),
+                        // リスト部分
+                        ListView.builder(
+                          shrinkWrap: true,
+                          // 必須: ListViewをColumn内で展開可能にする
+                          physics: const NeverScrollableScrollPhysics(),
+                          // 外側のスクロールビューに依存
+                          padding: const EdgeInsets.all(16.0),
+                          itemCount: transactions.length,
+                          itemBuilder: (context, index) {
+                            double amount = transactions[index]['amount'];
+                            final displayAmount = context.convertToYenFormat(
+                                amount: amount.round());
+
+                            final date =
+                                DateTime.parse(transactions[index]['date'])
+                                    .toLocal();
+                            final transactionDate =
+                                DateFormat('yyyy/MM/dd').format(date);
+                            return InkWell(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => TransactionDetailPage(
+                                      transaction: transactions[index],
+                                      profile: profile,
+                                      isSettlement: false,
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                height: 80,
+                                decoration: const BoxDecoration(
+                                  border: Border(
+                                    bottom: BorderSide(
+                                      color: Colors.black12,
+                                      width: 1.0,
+                                    ),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Text(
+                                              transactions[index]['name'],
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                                '- ${transactions[index]['profiles']['username']}',
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.black,
+                                                )),
+                                          ],
+                                        ),
+                                        Row(
+                                          children: [
+                                            Text(
+                                              transactionDate,
+                                              style: const TextStyle(
+                                                fontSize: 10,
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                horizontal: 4.0,
+                                                vertical: 1.0,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                border: Border.all(
+                                                  color: transactions[index]
+                                                              ['type'] ==
+                                                          'income'
+                                                      ? Colors.green
+                                                      : Colors.red,
+                                                  width: 0.5,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(4.0),
+                                              ),
+                                              child: Text(
+                                                transactions[index]['type'] ==
+                                                        'income'
+                                                    ? '収入'
+                                                    : '支出',
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: transactions[index]
+                                                              ['type'] ==
+                                                          'income'
+                                                      ? Colors.green
+                                                      : Colors.red,
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              transactions[index]['categories']
+                                                  ['name'],
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                          ],
+                                        )
+                                      ],
+                                    ),
+                                    Text(
+                                      displayAmount,
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
-            ),
-          ],
-        ),
       ),
     );
   }

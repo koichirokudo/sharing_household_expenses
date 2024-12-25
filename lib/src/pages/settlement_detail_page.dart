@@ -10,9 +10,14 @@ import '../../utils/constants.dart';
 class SettlementDetailPage extends StatefulWidget {
   final int settlementId;
   final String month;
+  final Map<String, dynamic> profile;
 
-  const SettlementDetailPage(
-      {super.key, required this.settlementId, required this.month});
+  const SettlementDetailPage({
+    super.key,
+    required this.settlementId,
+    required this.profile,
+    required this.month,
+  });
 
   @override
   SettlementDetailPageState createState() => SettlementDetailPageState();
@@ -24,6 +29,7 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
   late String month;
   late int settlementId;
   List<Map<String, dynamic>> transactions = [];
+  Map<String, dynamic> profile = {};
   int paymentPerPerson = 0;
   int expenseTotal = 0;
   Map<String, Map<String, dynamic>> profileAmounts = {};
@@ -35,6 +41,7 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
     super.initState();
     transactionService = TransactionService(supabase);
     settlementId = widget.settlementId;
+    profile = widget.profile;
     month = widget.month;
     _fetchTransactions();
   }
@@ -344,6 +351,7 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
                             MaterialPageRoute(
                               builder: (context) => TransactionDetailPage(
                                 transaction: transactions[index],
+                                profile: profile,
                                 isSettlement: true,
                               ),
                             ),

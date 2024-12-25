@@ -10,7 +10,7 @@ class ShareTransactionListPage extends StatelessWidget {
         title: const Text('共有取引一覧'),
       ),
       body:
-      const Center(child: Text('共有取引一覧', style: TextStyle(fontSize: 32.0))),
+          const Center(child: Text('共有取引一覧', style: TextStyle(fontSize: 32.0))),
     );
   }
 }

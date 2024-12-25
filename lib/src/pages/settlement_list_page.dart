@@ -21,6 +21,7 @@ class SettlementListPageState extends State<SettlementListPage> {
   late SettlementService settlementService;
   late int selectedIndex = years.length - 1;
   List<Map<String, dynamic>> settlements = [];
+  Map<String, dynamic> profile = {};
   late final PageController _pageController =
       PageController(initialPage: years.length - 1, viewportFraction: 1);
 
@@ -56,7 +57,7 @@ class SettlementListPageState extends State<SettlementListPage> {
       }
 
       final userId = supabase.auth.currentUser!.id;
-      final profile =
+      profile =
           await supabase.from('profiles').select().eq('id', userId).single();
 
       await Future.delayed(Duration(milliseconds: 700));
@@ -166,6 +167,7 @@ class SettlementListPageState extends State<SettlementListPage> {
                               MaterialPageRoute(
                                   builder: (context) => SettlementDetailPage(
                                         settlementId: settlements[index]['id'],
+                                        profile: profile,
                                         month: settlementDate,
                                       )));
                         },

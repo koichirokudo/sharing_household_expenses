@@ -431,7 +431,8 @@ class TransactionListPageState extends State<TransactionListPage> {
                                   },
                                 ),
                                 ElevatedButton.icon(
-                                  onPressed: _isSettlement
+                                  onPressed: _isSettlement ||
+                                          transactions.isEmpty
                                       ? null
                                       : () async {
                                           if (profile.isNotEmpty) {

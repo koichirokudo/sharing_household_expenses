@@ -89,12 +89,11 @@ class TransactionListPageState extends State<TransactionListPage> {
       final List<Map<String, dynamic>> data = await supabase
           .from('settlements')
           .select('settlement_date')
-          .eq('group_id', profile['group_id']);
+          .eq('group_id', profile['group_id'])
+          .eq('status', 'completed');
 
       for (var item in data) {
-        DateTime date = DateTime.parse(item['settlement_date']).toLocal();
-        String settlementDate = DateFormat('yyyy/MM').format(date);
-        if (settlementDate == months[selectedIndex]) {
+        if (item['settlement_date'] == months[selectedIndex]) {
           // 清算済み
           setState(() {
             _isSettlement = true;
@@ -107,7 +106,40 @@ class TransactionListPageState extends State<TransactionListPage> {
       }
     } catch (error) {
       if (mounted) {
-        context.showSnackBarError(message: "$error");
+        context.showSnackBarError(message: '$error');
+      }
+    } finally {
+      setState(() {
+        _isSettlementLoading = false;
+      });
+    }
+  }
+
+  Future<void> _checkSelfSettlement() async {
+    try {
+      setState(() {
+        _isSettlementLoading = true;
+      });
+
+      await Future.delayed(Duration(milliseconds: 350));
+
+      // データ取得
+      final List<Map<String, dynamic>> response = await supabase
+          .from('settlements')
+          .select(
+              'id, settlement_date, settlement_items!inner(profile_id, role)')
+          .eq('group_id', profile['group_id'])
+          .eq('status', 'completed')
+          .eq('settlement_items.role', 'self')
+          .eq('settlement_items.profile_id', profile['id'])
+          .textSearch('settlement_date', months[selectedIndex]);
+
+      setState(() {
+        _isSettlement = response.isNotEmpty;
+      });
+    } catch (error) {
+      if (mounted) {
+        context.showSnackBarError(message: '$error');
       }
     } finally {
       setState(() {
@@ -158,8 +190,9 @@ class TransactionListPageState extends State<TransactionListPage> {
         return false;
       }).toList();
 
+      // 自分が登録したかつ共有していないデータ
       final privateData = data?.where((item) {
-        if (item['profile_id'] == userId) {
+        if (item['profile_id'] == userId && item['share'] == false) {
           return true;
         }
         return false;
@@ -421,13 +454,19 @@ class TransactionListPageState extends State<TransactionListPage> {
                                     ),
                                     DropdownMenuItem(
                                       value: 'private',
-                                      child: Text('マイデータ'),
+                                      child: Text('個人データ'),
                                     ),
                                   ],
                                   onChanged: (value) {
-                                    // TODO: マイデータのときの清算をどうするか
                                     _loadCache(value);
                                     _selectedFilter = value!;
+                                    if (value == 'share') {
+                                      // 共有データ時に清算済みかをチェックする
+                                      _checkSettlement();
+                                    } else {
+                                      // 個人データ時に清算済みかをチェックする
+                                      _checkSelfSettlement();
+                                    }
                                   },
                                 ),
                                 ElevatedButton.icon(

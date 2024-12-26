@@ -3,7 +3,7 @@ CREATE SEQUENCE settlements_id_seq;
 CREATE TABLE settlements (
     id integer PRIMARY KEY DEFAULT nextval('settlements_id_seq'::regclass),
     group_id uuid NOT NULL REFERENCES user_groups(id),
-    settlement_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    settlement_date TEXT NOT NULL,
     total_amount NUMERIC(10, 2) NOT NULL DEFAULT 0,
     amount_per_person NUMERIC(10, 2) NOT NULL DEFAULT 0,
     status TEXT CHECK(status IN ('completed', 'canceled', 'pending')),

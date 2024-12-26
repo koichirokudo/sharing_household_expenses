@@ -130,7 +130,7 @@ class SettlementPageState extends State<SettlementPage> {
           .eq('id', userId)
           .single();
       DateTime now = DateTime.now();
-      final settlementDate = DateTime(now.year, now.month, 1).toIso8601String();
+      final settlementDate = DateFormat('yyyy/MM').format(now);
       final settlementData = {
         'group_id': profiles['group_id'],
         'settlement_date': settlementDate,

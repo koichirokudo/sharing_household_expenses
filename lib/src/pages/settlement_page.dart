@@ -69,7 +69,6 @@ class SettlementPageState extends State<SettlementPage> {
       // 個人データ用の処理
       // カテゴリごとに計算したものをグラフに表示する？
       _calcCategory(transactions);
-      // TODO: 個人用の清算確定処理を作る
     }
     setState(() {
       _isLoading = false;
@@ -174,6 +173,7 @@ class SettlementPageState extends State<SettlementPage> {
       final settlementDate = DateFormat('yyyy/MM').format(now);
       final settlementData = {
         'group_id': profiles['group_id'],
+        'visibility': selectedDataType == 'share' ? 'share' : 'private',
         'settlement_date': settlementDate,
         'total_amount': expenseTotal,
         'amount_per_person': paymentPerPerson,

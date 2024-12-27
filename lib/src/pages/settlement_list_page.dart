@@ -26,6 +26,7 @@ class SettlementListPageState extends State<SettlementListPage> {
   late final PageController _pageController =
       PageController(initialPage: years.length - 1, viewportFraction: 1);
   double payerAmount = 0.0;
+  late String _selectedDataType = 'share';
 
   @override
   void initState() {
@@ -41,16 +42,16 @@ class SettlementListPageState extends State<SettlementListPage> {
     // 現在の年から過去2年分の年を取得する
     _generateYears(_now);
     // 今年のデータを取得する
-    await _fetchDataForYear(years[selectedIndex]);
+    await _fetchDataForYear(years[selectedIndex], _selectedDataType);
   }
 
-  Future<void> _fetchDataForYear(String year) async {
+  Future<void> _fetchDataForYear(String year, String type) async {
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final cacheData = settlementService.loadCache(years[selectedIndex]);
+      final cacheData = settlementService.loadCache(years[selectedIndex], type);
       if (cacheData != null) {
         setState(() {
           settlements = cacheData;
@@ -68,13 +69,90 @@ class SettlementListPageState extends State<SettlementListPage> {
       final List<Map<String, dynamic>>? data = await settlementService
           .fetchYearlyData(profile['group_id'], convertYearToDateTime(year));
 
-      settlementService.storeCache(year, data ?? []);
+      // 共有データ
+      final shareData = data?.where((item) {
+        if (item['visibility'] == 'share') {
+          return true;
+        }
+        return false;
+      }).toList();
+
+      //　個人データ
+      final privateData = data?.where((item) {
+        if (item['visibility'] == 'private') {
+          return true;
+        }
+        return false;
+      }).toList();
+
+      settlementService.storeCache(year, 'share', shareData ?? []);
+      settlementService.storeCache(year, 'private', privateData ?? []);
+
+      // 初期設定は共有データ
       setState(() {
-        settlements = data ?? [];
+        settlements = shareData ?? [];
       });
     } on PostgrestException catch (error) {
       if (mounted) {
-        context.showSnackBarError(message: "$error");
+        context.showSnackBarError(message: '$error');
+      }
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  // リフレッシュデータ
+  Future<void> _refreshData() async {
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+
+      final userId = supabase.auth.currentUser!.id;
+      profile =
+          await supabase.from('profiles').select().eq('id', userId).single();
+
+      await Future.delayed(Duration(milliseconds: 700));
+
+      // 選択された年の清算情報一覧を取得する
+      final List<Map<String, dynamic>>? freshData =
+          await settlementService.fetchYearlyData(
+              profile['group_id'], convertYearToDateTime(years[selectedIndex]));
+
+      // 共有データ
+      final shareData = freshData?.where((item) {
+        if (item['visibility'] == 'share') {
+          return true;
+        }
+        return false;
+      }).toList();
+
+      //　個人データ
+      final privateData = freshData?.where((item) {
+        if (item['visibility'] == 'private') {
+          return true;
+        }
+        return false;
+      }).toList();
+
+      // キャッシュに保存（データがなくても空リストを保存）
+      if (freshData != null) {
+        settlementService.storeCache(
+            years[selectedIndex], 'share', shareData ?? []);
+        settlementService.storeCache(
+            years[selectedIndex], 'private', privateData ?? []);
+      }
+
+      // set transaction data
+      setState(() {
+        settlements =
+            _selectedDataType == 'share' ? shareData ?? [] : privateData ?? [];
+      });
+    } catch (error) {
+      if (mounted) {
+        context.showSnackBarError(message: '$error');
       }
     } finally {
       setState(() {
@@ -140,6 +218,30 @@ class SettlementListPageState extends State<SettlementListPage> {
               ],
             ),
           ),
+          SizedBox(
+            child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              DropdownButton<String>(
+                value: _selectedDataType,
+                items: [
+                  DropdownMenuItem(
+                    value: 'share',
+                    child: Text('共有データ'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'private',
+                    child: Text('個人データ'),
+                  ),
+                ],
+                onChanged: (value) {
+                  if (value == 'share') {
+                    // 共有データの清算一覧を表示
+                  } else {
+                    // 個人データの清算一覧を表示
+                  }
+                },
+              ),
+            ]),
+          ),
           Expanded(
             child: PageView.builder(
               controller: _pageController,
@@ -147,150 +249,196 @@ class SettlementListPageState extends State<SettlementListPage> {
                 setState(() {
                   selectedIndex = index;
                 });
+                // 選択された年のデータを取得する
+                Future.delayed(Duration(milliseconds: 100), () {
+                  _fetchDataForYear(years[selectedIndex], _selectedDataType);
+                });
               },
               itemCount: years.length,
               itemBuilder: (context, index) {
-                return ListView.builder(
-                    padding: const EdgeInsets.all(16.0),
-                    itemCount: settlements.length,
-                    itemBuilder: (context, index) {
-                      final settlementItems =
-                          settlements[index]['settlement_items'];
-                      double amount = 0.0;
-                      for (var item in settlementItems) {
-                        if (item['role'] == 'payer') {
-                          amount = item['amount'];
-                        }
-                      }
-                      final displayAmount =
-                          context.convertToYenFormat(amount: amount.round());
-                      final settlementDate =
-                          settlements[index]['settlement_date'];
-                      return InkWell(
-                        onTap: () {
-                          // TODO: 清算画面に遷移
-                          // タップ時の処理
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) => SettlementDetailPage(
-                                        settlementId: settlements[index]['id'],
-                                        profile: profile,
-                                        month: settlementDate,
-                                      )));
-                        },
-                        child: Container(
-                          // 清算一覧
-                          height: 80,
-                          decoration: const BoxDecoration(
-                            color: Color(0x00FFE7D4),
-                            border: Border(
-                              bottom: BorderSide(
-                                color: Colors.black12,
-                                width: 1.0,
-                              ),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              // 年月
-                              Text(
-                                settlementDate,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(width: 32),
-                              Row(
+                return _isLoading
+                    ? Center(child: CircularProgressIndicator())
+                    : RefreshIndicator(
+                        onRefresh: _refreshData,
+                        child: settlements.isEmpty
+                            ? ListView(
+                                // 常にスクロール可能にすることで、データが無い場合でもリフレっ操作を可能にする
+                                physics: AlwaysScrollableScrollPhysics(),
                                 children: [
-                                  Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      // ユーザー画像
-                                      Container(
-                                        width: 32,
-                                        height: 32,
-                                        decoration: const BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          image: DecorationImage(
-                                            image: AssetImage(
-                                                'assets/icons/user_icon.png'),
-                                            fit: BoxFit.fill,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      // ユーザー名
-                                      Text(
-                                        settlements[index]['settlement_items']
-                                            [0]['profiles']['username'],
-                                        style: const TextStyle(
-                                          fontSize: 10,
-                                          color: Colors.black,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(width: 32),
-                                  // 金額
-                                  Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      const Icon(Icons.trending_flat_rounded,
-                                          size: 32),
-                                      Text(
-                                        displayAmount,
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(width: 32),
-                                  // カテゴリ
-                                  Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      // ユーザー画像
-                                      Container(
-                                        width: 32,
-                                        height: 32,
-                                        decoration: const BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          image: DecorationImage(
-                                            image: AssetImage(
-                                                'assets/icons/user_icon.png'),
-                                            fit: BoxFit.fill,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      // ユーザー名
-                                      Text(
-                                        settlements[index]['settlement_items']
-                                            [1]['profiles']['username'],
-                                        style: const TextStyle(
-                                          fontSize: 10,
-                                          color: Colors.black,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ],
+                                  Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: Center(
+                                      child: Text(
+                                          'データがありません。\n下に引っ張って更新してください。',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                              fontSize: 18,
+                                              color: Colors.grey)),
+                                    ),
                                   ),
                                 ],
-                              ),
-                            ],
-                          ),
-                        ),
+                              )
+                            : ListView.builder(
+                                padding: const EdgeInsets.all(16.0),
+                                itemCount: settlements.length,
+                                itemBuilder: (context, index) {
+                                  final settlementItems =
+                                      settlements[index]['settlement_items'];
+                                  double amount = 0.0;
+                                  for (var item in settlementItems) {
+                                    if (item['role'] == 'payer') {
+                                      amount = item['amount'];
+                                    }
+                                  }
+                                  final displayAmount =
+                                      context.convertToYenFormat(
+                                          amount: amount.round());
+                                  final settlementDate =
+                                      settlements[index]['settlement_date'];
+                                  return InkWell(
+                                    onTap: () {
+                                      // タップ時の処理
+                                      Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  SettlementDetailPage(
+                                                    settlementId:
+                                                        settlements[index]
+                                                            ['id'],
+                                                    profile: profile,
+                                                    month: settlementDate,
+                                                  )));
+                                    },
+                                    child: Container(
+                                      // 清算一覧
+                                      height: 80,
+                                      decoration: const BoxDecoration(
+                                        color: Color(0x00FFE7D4),
+                                        border: Border(
+                                          bottom: BorderSide(
+                                            color: Colors.black12,
+                                            width: 1.0,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        children: [
+                                          // 年月
+                                          Text(
+                                            settlementDate,
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.black,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(width: 32),
+                                          Row(
+                                            children: [
+                                              Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  // ユーザー画像
+                                                  Container(
+                                                    width: 32,
+                                                    height: 32,
+                                                    decoration:
+                                                        const BoxDecoration(
+                                                      shape: BoxShape.circle,
+                                                      image: DecorationImage(
+                                                        image: AssetImage(
+                                                            'assets/icons/user_icon.png'),
+                                                        fit: BoxFit.fill,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  // ユーザー名
+                                                  Text(
+                                                    settlements[index][
+                                                            'settlement_items'][0]
+                                                        [
+                                                        'profiles']['username'],
+                                                    style: const TextStyle(
+                                                      fontSize: 10,
+                                                      color: Colors.black,
+                                                    ),
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(width: 32),
+                                              // 金額
+                                              Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  const Icon(
+                                                      Icons
+                                                          .trending_flat_rounded,
+                                                      size: 32),
+                                                  Text(
+                                                    displayAmount,
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(width: 32),
+                                              // カテゴリ
+                                              Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  // ユーザー画像
+                                                  Container(
+                                                    width: 32,
+                                                    height: 32,
+                                                    decoration:
+                                                        const BoxDecoration(
+                                                      shape: BoxShape.circle,
+                                                      image: DecorationImage(
+                                                        image: AssetImage(
+                                                            'assets/icons/user_icon.png'),
+                                                        fit: BoxFit.fill,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  // ユーザー名
+                                                  Text(
+                                                    settlements[index][
+                                                            'settlement_items'][1]
+                                                        [
+                                                        'profiles']['username'],
+                                                    style: const TextStyle(
+                                                      fontSize: 10,
+                                                      color: Colors.black,
+                                                    ),
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                }),
                       );
-                    });
               },
             ),
           ),

@@ -52,21 +52,22 @@ class SettlementService {
     await supabase.from('settlements').delete().eq('id', id);
   }
 
-  void storeCache(String year, List<Map<String, dynamic>> data) {
-    _settlementCache[year] = {
+  void storeCache(String year, String type, List<Map<String, dynamic>> data) {
+    _settlementCache[year] ??= {};
+    _settlementCache[year]![type] = {
       'data': data,
       'timestamp': DateTime.now(),
     };
   }
 
-  List<Map<String, dynamic>>? loadCache(String year,
+  List<Map<String, dynamic>>? loadCache(String year, String type,
       {Duration expiry = const Duration(minutes: 15)}) {
     final cache = _settlementCache[year];
     if (cache != null) {
-      final timestamp = cache['timestamp'] as DateTime?;
+      final timestamp = cache[type]['timestamp'] as DateTime?;
       // 有効期限内の場合のみデータを返す
       if (timestamp != null && DateTime.now().difference(timestamp) <= expiry) {
-        return cache['data'] as List<Map<String, dynamic>>;
+        return cache[type]['data'] as List<Map<String, dynamic>>;
       }
     }
     return null;

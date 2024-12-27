@@ -202,11 +202,11 @@ class TransactionListPageState extends State<TransactionListPage> {
       transactionService.storeCache(month, 'share', shareData ?? []);
       transactionService.storeCache(month, 'private', privateData ?? []);
 
-      // トランザクションデータを設定
+      // 初期設定は共有データ
       setState(() {
         transactions = shareData ?? [];
       });
-    } catch (error) {
+    } on PostgrestException catch (error) {
       if (mounted) {
         context.showSnackBarError(message: '$error');
       }
@@ -349,7 +349,6 @@ class TransactionListPageState extends State<TransactionListPage> {
                 });
                 // 選択された月のデータを取得する
                 Future.delayed(Duration(milliseconds: 100), () {
-                  // 選択された月のデータを取得する
                   _fetchDataForMonth(months[selectedIndex], _selectedDataType);
                   _checkSettlement();
                 });

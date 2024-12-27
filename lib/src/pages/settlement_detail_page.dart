@@ -1,6 +1,6 @@
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:pie_chart/pie_chart.dart';
 import 'package:sharing_household_expenses/src/pages/transaction_detail_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -36,6 +36,8 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
   Map<String, Map<String, dynamic>> profileAmounts = {};
   int colorValue = 0;
   late bool isSettlement;
+  Map<String, double> sections = {};
+  Map<String, Map<String, dynamic>>? settlementData = {};
 
   @override
   void initState() {
@@ -55,8 +57,8 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
     await _fetchTransactions();
     // 共有データ用の処理
     // 個人データ用の処理
+    _generateSettlementData();
     // カテゴリごとに計算したものをグラフに表示する？
-    // TODO: 個人用の清算確定処理を作る
     setState(() {
       _isLoading = false;
     });
@@ -104,6 +106,7 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
     for (var item in profiles) {
       profileAmounts[item['id']] = {
         'username': item['username'],
+        'avatar_url': item['avatar_url'],
         'amount': 0,
       };
     }
@@ -148,50 +151,150 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    List<PieChartSectionData> sections = [];
-    double totalAmount =
-        profileAmounts.values.fold(0, (sum, data) => sum + data['amount']);
-    String? payer, payee, payment, receive;
-
-    Color getColorForProfile(int value) {
-      // ユーザーに応じた色を返す（例: 一意の色を生成）
-      if (value == 1) {
-        return Colors.green;
-      } else if (value == 2) {
-        return Colors.blue;
-      } else {
-        return Colors.orange; // その他のユーザーにはオレンジ色を使う
-      }
-    }
+  void _generateSettlementData() {
+    String? payer,
+        payee,
+        payment,
+        receive,
+        payerAmount,
+        payeeAmount,
+        payerAvatarUrl,
+        payeeAvatarUrl;
 
     profileAmounts.forEach((profileId, data) {
-      colorValue++;
-      double percentage = (data['amount'] as int) / totalAmount * 100;
-      sections.add(
-        PieChartSectionData(
-            color: getColorForProfile(colorValue),
-            value: percentage,
-            title:
-                '${data['username']}の支出\n${context.convertToYenFormat(amount: data['amount'])}',
-            radius: 50),
-      );
+      sections['${data['username']}'] = double.parse(data['amount'].toString());
       if (data['role'] == 'payer') {
         payer = data['username'];
+        payerAvatarUrl = data['avatar_url'];
+        payerAmount = context.convertToYenFormat(amount: data['amount']);
         payment = context.convertToYenFormat(amount: data['payments']);
       } else if (data['role'] == 'payee') {
         payee = data['username'];
+        payeeAvatarUrl = data['avatar_url'];
+        payeeAmount = context.convertToYenFormat(amount: data['amount']);
         receive = context.convertToYenFormat(amount: data['payments']);
       }
     });
 
+    // どちらも null でなければ SettlementData 作成
+    if (payer != null && payee != null && payment != null && receive != null) {
+      settlementData?['payer'] = {
+        'role': 'payer',
+        'username': payer!,
+        'avatarUrl': payerAvatarUrl,
+        'advancePayment': payerAmount ?? '0',
+        'payment': payment!,
+      };
+      settlementData?['payee'] = {
+        'role': 'payee',
+        'username': payee!,
+        'avatarUrl': payeeAvatarUrl,
+        'advancePayment': payeeAmount ?? '0',
+        'payment': receive!,
+      };
+    } else {
+      // 受け渡し情報が無い場合は null のまま
+      settlementData = null;
+    }
+  }
+
+  Widget _buildSettlementCard(data) {
+    return Card(
+      elevation: 1.0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16.0),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                const SizedBox(width: 8),
+                // ユーザー画像
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      image: DecorationImage(
+                        fit: BoxFit.fill,
+                        image: data['avatarUrl'] != null
+                            ? NetworkImage(data['avatarUrl'])
+                            : AssetImage('assets/icons/user_icon.png'),
+                      )),
+                ),
+                const SizedBox(width: 8),
+                // 支払人
+                Text('${data['username']}'),
+              ],
+            ),
+            const Divider(height: 16),
+            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  const SizedBox(width: 16),
+                  Text('割り勘金額'),
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                      '${context.convertToYenFormat(amount: paymentPerPerson)}'),
+                  const SizedBox(width: 16),
+                ],
+              )
+            ]),
+            const SizedBox(height: 8),
+            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  const SizedBox(width: 16),
+                  Text('立替金額'),
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text('${data['advancePayment']}'),
+                  const SizedBox(width: 16),
+                ],
+              )
+            ]),
+            const SizedBox(height: 8),
+            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  const SizedBox(width: 16),
+                  Text(data['role'] == 'payer' ? '清算で支払う金額' : '清算で受け取る金額'),
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text('${data['payment']}'),
+                  const SizedBox(width: 16),
+                ],
+              )
+            ])
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
         appBar: AppBar(
           centerTitle: true,
           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-          title: Text('清算済み'),
+          title: Text('清算結果'),
         ),
         body: circularIndicator,
       );
@@ -202,7 +305,7 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
         appBar: AppBar(
           centerTitle: true,
           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-          title: Text('清算済み'),
+          title: Text('清算結果'),
         ),
         body: Center(child: Text('データがありません')),
       );
@@ -212,7 +315,7 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
       appBar: AppBar(
         centerTitle: true,
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: const Text('清算済み'),
+        title: const Text('清算結果'),
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -233,105 +336,38 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
                 ),
               ),
             ),
+            const SizedBox(height: 16),
             // グラフ
             SizedBox(
               width: 200,
               height: 200,
               child: PieChart(
-                PieChartData(
-                  sections: sections,
+                dataMap: sections,
+                legendOptions:
+                    LegendOptions(legendPosition: LegendPosition.left),
+                chartValuesOptions: ChartValuesOptions(
+                  decimalPlaces: 0,
+                  showChartValuesInPercentage: false,
+                  showChartValuesOutside: true,
                 ),
+                formatChartValues: (value) {
+                  return NumberFormat.currency(locale: 'ja_JP', symbol: '¥')
+                      .format(value);
+                },
+                chartLegendSpacing: 24,
+                chartType: ChartType.ring,
+                centerText:
+                    '支払合計額: ${context.convertToYenFormat(amount: expenseTotal)}\n'
+                    '割り勘金額: ${context.convertToYenFormat(amount: paymentPerPerson)}',
               ),
             ),
             const SizedBox(height: 16),
-            Center(
-              child: Text(
-                '清算結果',
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Center(
-              child: Text(
-                  '1人あたりの支払額: ${context.convertToYenFormat(amount: paymentPerPerson)}'),
-            ),
-            const SizedBox(height: 16),
-            if (payer != null &&
-                payee != null &&
-                payment != null &&
-                receive != null)
-              Center(
-                child: Text(
-                  '$payer さんは $payee さんに $payment 支払ってください',
-                  style: const TextStyle(
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-            const SizedBox(height: 16),
-            Center(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Column(
-                    children: [
-                      // ユーザー画像
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          image: DecorationImage(
-                            image: AssetImage('assets/icons/user_icon.png'),
-                            fit: BoxFit.fill,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text('$payer'),
-                    ],
-                  ),
-                  const SizedBox(width: 16),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.trending_flat_rounded, size: 32),
-                      Text(
-                        '$payment',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(width: 16),
-                  Column(
-                    children: [
-                      // ユーザー画像
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          image: DecorationImage(
-                            image: AssetImage('assets/icons/user_icon.png'),
-                            fit: BoxFit.fill,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text('$payee'),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
+            if (settlementData != null) ...[
+              _buildSettlementCard(settlementData?['payer']),
+              const SizedBox(height: 8),
+              _buildSettlementCard(settlementData?['payee']),
+            ],
+            const SizedBox(height: 8),
             // 共有された明細の一覧
             Card(
               elevation: 4.0,
@@ -345,7 +381,7 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
                     alignment: Alignment.center,
                     padding: const EdgeInsets.all(16.0),
                     child: const Text(
-                      '共有された明細',
+                      '共有明細一覧',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,

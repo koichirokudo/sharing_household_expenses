@@ -30,7 +30,7 @@ class FirstGroupInvitePageState extends State<FirstGroupInvitePage> {
     final inviteCode = _inviteCodeController.text.trim();
 
     try {
-      final response = await supabase.functions.invoke("join-group", body: {
+      final response = await supabase.functions.invoke('join-group', body: {
         'invite_code': inviteCode,
       });
       if (response.data['success'] == true) {

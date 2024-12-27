@@ -55,10 +55,7 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
     });
     await _getProfiles();
     await _fetchTransactions();
-    // 共有データ用の処理
-    // 個人データ用の処理
     _generateSettlementData();
-    // カテゴリごとに計算したものをグラフに表示する？
     setState(() {
       _isLoading = false;
     });

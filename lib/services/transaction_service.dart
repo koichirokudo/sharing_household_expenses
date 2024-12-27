@@ -20,7 +20,7 @@ class TransactionService {
         .subtract(const Duration(seconds: 1));
     final data = await supabase
         .from('transactions')
-        .select('*, categories(id, name), profiles(username)')
+        .select('*, categories!inner(id, name), profiles!inner(username)')
         .gte('date', startOfMonth.toIso8601String())
         .lt('date', endOfMonth.toIso8601String())
         .eq('group_id', groupId)

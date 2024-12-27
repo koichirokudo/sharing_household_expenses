@@ -304,12 +304,10 @@ class SettlementPageState extends State<SettlementPage> {
           .select('group_id')
           .eq('id', userId)
           .single();
-      DateTime now = DateTime.now();
-      final settlementDate = DateFormat('yyyy/MM').format(now);
       final settlementData = {
         'group_id': profiles['group_id'],
         'visibility': selectedDataType == 'share' ? 'share' : 'private',
-        'settlement_date': settlementDate,
+        'settlement_date': month,
         'total_amount': expenseTotal,
         'amount_per_person': paymentPerPerson,
         'status': 'completed',

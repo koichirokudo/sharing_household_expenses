@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -9,6 +11,7 @@ class SettlementPage extends StatefulWidget {
   final Map<String, dynamic> profile;
   final String month;
   final bool isSettlement;
+  final String selectedDataType;
 
   const SettlementPage({
     super.key,
@@ -16,6 +19,7 @@ class SettlementPage extends StatefulWidget {
     required this.transactions,
     required this.profile,
     required this.isSettlement,
+    required this.selectedDataType,
   });
 
   @override
@@ -26,11 +30,14 @@ class SettlementPageState extends State<SettlementPage> {
   bool _isLoading = false;
   late List<Map<String, dynamic>> transactions;
   late List<Map<String, dynamic>> profiles;
+  late List<Map<String, dynamic>> expenses;
   late Map<String, dynamic> profile;
   late String month;
+  late String selectedDataType;
   int paymentPerPerson = 0;
   int expenseTotal = 0;
   Map<String, Map<String, dynamic>> profileAmounts = {};
+  Map<String, Map<String, dynamic>> categoryAmounts = {};
   int colorValue = 0;
   late bool isSettlement;
 
@@ -42,6 +49,7 @@ class SettlementPageState extends State<SettlementPage> {
     profile = widget.profile;
     month = widget.month;
     isSettlement = widget.isSettlement;
+    selectedDataType = widget.selectedDataType;
     _initializeData();
   }
 
@@ -50,8 +58,19 @@ class SettlementPageState extends State<SettlementPage> {
       _isLoading = true;
     });
     await _getProfiles();
-    _calcProfileAmounts(transactions);
-    _calcPaymentPerPerson();
+    expenses = transactions
+        .where((transaction) => transaction['type'] == 'expense')
+        .toList();
+    if (selectedDataType == 'share') {
+      // 共有データ用の処理
+      _calcProfileAmounts(transactions);
+      _calcPaymentPerPerson();
+    } else {
+      // 個人データ用の処理
+      // カテゴリごとに計算したものをグラフに表示する？
+      _calcCategory(transactions);
+      // TODO: 個人用の清算確定処理を作る
+    }
     setState(() {
       _isLoading = false;
     });
@@ -82,7 +101,9 @@ class SettlementPageState extends State<SettlementPage> {
 
     // 共有したデータの中から、ユーザー別の支払い
     for (var item in transactions) {
-      String username = item['profiles']['username'];
+      if (item['type'] == 'income') {
+        continue;
+      }
       String profileId = item['profile_id'];
       double doubleAmount = item['amount'];
       int amount = doubleAmount.round();
@@ -114,6 +135,26 @@ class SettlementPageState extends State<SettlementPage> {
         item['role'] = 'neutral';
       }
     });
+  }
+
+  void _calcCategory(transactions) {
+    for (var item in transactions) {
+      if (item['type'] == 'income') {
+        continue;
+      }
+      final categoryName = item['categories']['name'];
+      double doubleAmount = item['amount'];
+      int amount = doubleAmount.round();
+      if (categoryAmounts.containsKey(categoryName)) {
+        categoryAmounts[categoryName]!['amount'] =
+            categoryAmounts[categoryName]!['amount'] + amount;
+      } else {
+        categoryAmounts[categoryName] = {
+          'amount': amount,
+        };
+        expenseTotal = expenseTotal + amount;
+      }
+    }
   }
 
   Future<void> _settlementConfirm() async {
@@ -188,43 +229,128 @@ class SettlementPageState extends State<SettlementPage> {
     }
   }
 
+  Future<void> _selfSettlementConfirm() async {
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+
+      await Future.delayed(Duration(milliseconds: 700));
+      final userId = supabase.auth.currentUser!.id;
+      final profiles = await supabase
+          .from('profiles')
+          .select('group_id')
+          .eq('id', userId)
+          .single();
+      DateTime now = DateTime.now();
+      final settlementDate = DateFormat('yyyy/MM').format(now);
+      final settlementData = {
+        'group_id': profiles['group_id'],
+        'settlement_date': settlementDate,
+        'total_amount': expenseTotal,
+        'amount_per_person': expenseTotal,
+        'status': 'completed',
+        'created_at': DateTime.now().toIso8601String(),
+        'updated_at': DateTime.now().toIso8601String(),
+      };
+      final settlement = await supabase
+          .from('settlements')
+          .insert(settlementData)
+          .select()
+          .single();
+
+      List<Map<String, dynamic>> settlementItem = [];
+      settlementItem.add({
+        'settlement_id': settlement['id'],
+        'profile_id': profile['id'],
+        'role': 'self',
+        'amount': expenseTotal,
+        'percentage': 100,
+        'created_at': DateTime.now().toIso8601String(),
+        'updated_at': DateTime.now().toIso8601String(),
+      });
+      await supabase.from('settlement_items').insert(settlementItem);
+
+      List<Map<String, dynamic>> transactionIds = [];
+      for (var transaction in transactions) {
+        transaction.remove('profiles');
+        transaction.remove('categories');
+        transactionIds.add({
+          ...transaction,
+          'settlement_id': settlement['id'],
+          'updated_at': DateTime.now().toIso8601String(),
+        });
+      }
+      await supabase.from('transactions').upsert(transactionIds);
+
+      if (mounted) {
+        context.showSnackBar(
+            message: '清算を確定しました', backgroundColor: Colors.green);
+        Navigator.of(context).pop(true);
+      }
+    } catch (error) {
+      if (mounted) {
+        context.showSnackBarError(message: '$error');
+      }
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     List<PieChartSectionData> sections = [];
-    double totalAmount =
+    double profileTotalAmount =
         profileAmounts.values.fold(0, (sum, data) => sum + data['amount']);
+    double categoryTotalAmount =
+        categoryAmounts.values.fold(0, (sum, data) => sum + data['amount']);
     String? payer, payee, payment, receive;
 
-    Color getColorForProfile(int value) {
+    // TODO: random color にするとびみょー
+    // TODO: primary color を段階的にする方が楽で綺麗かも
+    Color getColorForProfile() {
       // ユーザーに応じた色を返す（例: 一意の色を生成）
-      if (value == 1) {
-        return Colors.green;
-      } else if (value == 2) {
-        return Colors.blue;
-      } else {
-        return Colors.orange; // その他のユーザーにはオレンジ色を使う
-      }
+      return Color((math.Random().nextDouble() * 0xFFFFFF).toInt())
+          .withOpacity(1.0);
     }
 
-    profileAmounts.forEach((profileId, data) {
-      colorValue++;
-      double percentage = (data['amount'] as int) / totalAmount * 100;
-      sections.add(
-        PieChartSectionData(
-            color: getColorForProfile(colorValue),
-            value: percentage,
-            title:
-                '${data['username']}の支出\n${context.convertToYenFormat(amount: data['amount'])}',
-            radius: 50),
-      );
-      if (data['role'] == 'payer') {
-        payer = data['username'];
-        payment = context.convertToYenFormat(amount: data['payments']);
-      } else if (data['role'] == 'payee') {
-        payee = data['username'];
-        receive = context.convertToYenFormat(amount: data['payments']);
-      }
-    });
+    // グラフデータの生成
+    if (selectedDataType == 'share') {
+      // 共有者同士の合計値
+      profileAmounts.forEach((profileId, data) {
+        double percentage = (data['amount']) / profileTotalAmount * 100;
+        sections.add(
+          PieChartSectionData(
+              color: getColorForProfile(),
+              value: percentage,
+              title:
+                  '${data['username']}の支出\n${context.convertToYenFormat(amount: data['amount'])}',
+              radius: 50),
+        );
+        if (data['role'] == 'payer') {
+          payer = data['username'];
+          payment = context.convertToYenFormat(amount: data['payments']);
+        } else if (data['role'] == 'payee') {
+          payee = data['username'];
+          receive = context.convertToYenFormat(amount: data['payments']);
+        }
+      });
+    } else {
+      // カテゴリごとの合計値
+      categoryAmounts.forEach((categoryName, data) {
+        double percentage = (data['amount']) / categoryTotalAmount * 100;
+        sections.add(
+          PieChartSectionData(
+              color: getColorForProfile(),
+              value: percentage,
+              title:
+                  '${categoryName}\n${context.convertToYenFormat(amount: data['amount'])}',
+              radius: 50),
+        );
+      });
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -269,95 +395,97 @@ class SettlementPageState extends State<SettlementPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Center(
-                    child: Text(
-                      '清算結果',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Center(
-                    child: Text(
-                        '1人あたりの支払額: ${context.convertToYenFormat(amount: paymentPerPerson)}'),
-                  ),
-                  const SizedBox(height: 16),
-                  if (payer != null &&
-                      payee != null &&
-                      payment != null &&
-                      receive != null)
+                  if (selectedDataType == 'share') ...[
                     Center(
                       child: Text(
-                        '$payer さんは $payee さんに $payment 支払ってください',
+                        '清算結果',
                         style: const TextStyle(
-                          fontSize: 13,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                  const SizedBox(height: 16),
-                  Center(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Column(
-                          children: [
-                            // ユーザー画像
-                            Container(
-                              width: 32,
-                              height: 32,
-                              decoration: const BoxDecoration(
-                                shape: BoxShape.circle,
-                                image: DecorationImage(
-                                  image:
-                                      AssetImage('assets/icons/user_icon.png'),
-                                  fit: BoxFit.fill,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text('$payer'),
-                          ],
-                        ),
-                        const SizedBox(width: 16),
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.trending_flat_rounded, size: 32),
-                            Text(
-                              '$payment',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(width: 16),
-                        Column(
-                          children: [
-                            // ユーザー画像
-                            Container(
-                              width: 32,
-                              height: 32,
-                              decoration: const BoxDecoration(
-                                shape: BoxShape.circle,
-                                image: DecorationImage(
-                                  image:
-                                      AssetImage('assets/icons/user_icon.png'),
-                                  fit: BoxFit.fill,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text('$payee'),
-                          ],
-                        ),
-                      ],
+                    const SizedBox(height: 16),
+                    Center(
+                      child: Text(
+                          '1人あたりの支払額: ${context.convertToYenFormat(amount: paymentPerPerson)}'),
                     ),
-                  ),
+                    const SizedBox(height: 16),
+                    if (payer != null &&
+                        payee != null &&
+                        payment != null &&
+                        receive != null)
+                      Center(
+                        child: Text(
+                          '$payer さんは $payee さんに $payment 支払ってください',
+                          style: const TextStyle(
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 16),
+                    Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Column(
+                            children: [
+                              // ユーザー画像
+                              Container(
+                                width: 32,
+                                height: 32,
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  image: DecorationImage(
+                                    image: AssetImage(
+                                        'assets/icons/user_icon.png'),
+                                    fit: BoxFit.fill,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text('$payer'),
+                            ],
+                          ),
+                          const SizedBox(width: 16),
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.trending_flat_rounded, size: 32),
+                              Text(
+                                '$payment',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(width: 16),
+                          Column(
+                            children: [
+                              // ユーザー画像
+                              Container(
+                                width: 32,
+                                height: 32,
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  image: DecorationImage(
+                                    image: AssetImage(
+                                        'assets/icons/user_icon.png'),
+                                    fit: BoxFit.fill,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text('$payee'),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   // 清算確定ボタン
                   if (!isSettlement)
@@ -377,7 +505,11 @@ class SettlementPageState extends State<SettlementPage> {
                                       onPressed: () {
                                         Navigator.of(dialogContext)
                                             .pop(); // Dismiss alert dialog
-                                        _settlementConfirm();
+                                        if (selectedDataType == 'share') {
+                                          _settlementConfirm();
+                                        } else {
+                                          _selfSettlementConfirm();
+                                        }
                                       },
                                     ),
                                     TextButton(

@@ -28,7 +28,7 @@ class TransactionListPageState extends State<TransactionListPage> {
   late int selectedIndex = months.length - 1;
   late final PageController _pageController =
       PageController(initialPage: months.length - 1, viewportFraction: 1);
-  late String _selectedFilter = 'share';
+  late String _selectedDataType = 'share';
 
   @override
   void initState() {
@@ -49,7 +49,7 @@ class TransactionListPageState extends State<TransactionListPage> {
     await _getProfile();
     // 今月のデータを取得する
     await _fetchDataForMonth(
-        DateFormat('yyyy/MM').format(_currentMonth), _selectedFilter);
+        DateFormat('yyyy/MM').format(_currentMonth), _selectedDataType);
     await _checkSettlement();
     setState(() {
       _isLoading = false;
@@ -276,7 +276,7 @@ class TransactionListPageState extends State<TransactionListPage> {
       // set transaction data
       setState(() {
         transactions =
-            _selectedFilter == 'share' ? shareData ?? [] : privateData ?? [];
+            _selectedDataType == 'share' ? shareData ?? [] : privateData ?? [];
       });
     } catch (error) {
       if (mounted) {
@@ -350,7 +350,7 @@ class TransactionListPageState extends State<TransactionListPage> {
                 // 選択された月のデータを取得する
                 Future.delayed(Duration(milliseconds: 100), () {
                   // 選択された月のデータを取得する
-                  _fetchDataForMonth(months[selectedIndex], _selectedFilter);
+                  _fetchDataForMonth(months[selectedIndex], _selectedDataType);
                   _checkSettlement();
                 });
               },
@@ -446,7 +446,7 @@ class TransactionListPageState extends State<TransactionListPage> {
                                 // filter
                                 const SizedBox(width: 8),
                                 DropdownButton<String>(
-                                  value: _selectedFilter,
+                                  value: _selectedDataType,
                                   items: [
                                     DropdownMenuItem(
                                       value: 'share',
@@ -459,7 +459,7 @@ class TransactionListPageState extends State<TransactionListPage> {
                                   ],
                                   onChanged: (value) {
                                     _loadCache(value);
-                                    _selectedFilter = value!;
+                                    _selectedDataType = value!;
                                     if (value == 'share') {
                                       // 共有データ時に清算済みかをチェックする
                                       _checkSettlement();
@@ -488,6 +488,8 @@ class TransactionListPageState extends State<TransactionListPage> {
                                                               profile: profile,
                                                               isSettlement:
                                                                   false,
+                                                              selectedDataType:
+                                                                  _selectedDataType,
                                                             )));
 
                                             if (response == true) {
@@ -495,7 +497,7 @@ class TransactionListPageState extends State<TransactionListPage> {
                                                   months[selectedIndex]);
                                               _fetchDataForMonth(
                                                   months[selectedIndex],
-                                                  _selectedFilter);
+                                                  _selectedDataType);
                                               setState(() {
                                                 _isSettlement = true;
                                               });
@@ -568,7 +570,7 @@ class TransactionListPageState extends State<TransactionListPage> {
                                                     months[selectedIndex]);
                                                 _fetchDataForMonth(
                                                     months[selectedIndex],
-                                                    _selectedFilter);
+                                                    _selectedDataType);
                                               }
                                             } else {
                                               if (mounted) {

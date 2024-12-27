@@ -21,9 +21,11 @@ class SettlementListPageState extends State<SettlementListPage> {
   late SettlementService settlementService;
   late int selectedIndex = years.length - 1;
   List<Map<String, dynamic>> settlements = [];
+  List<Map<String, dynamic>> settlementItems = [];
   Map<String, dynamic> profile = {};
   late final PageController _pageController =
       PageController(initialPage: years.length - 1, viewportFraction: 1);
+  double payerAmount = 0.0;
 
   @override
   void initState() {
@@ -39,7 +41,7 @@ class SettlementListPageState extends State<SettlementListPage> {
     // 現在の年から過去2年分の年を取得する
     _generateYears(_now);
     // 今年のデータを取得する
-    _fetchDataForYear(years[selectedIndex]);
+    await _fetchDataForYear(years[selectedIndex]);
   }
 
   Future<void> _fetchDataForYear(String year) async {
@@ -152,12 +154,18 @@ class SettlementListPageState extends State<SettlementListPage> {
                     padding: const EdgeInsets.all(16.0),
                     itemCount: settlements.length,
                     itemBuilder: (context, index) {
-                      double amount = settlements[index]['total_amount'];
+                      final settlementItems =
+                          settlements[index]['settlement_items'];
+                      double amount = 0.0;
+                      for (var item in settlementItems) {
+                        if (item['role'] == 'payer') {
+                          amount = item['amount'];
+                        }
+                      }
                       final displayAmount =
                           context.convertToYenFormat(amount: amount.round());
-                      final settlementDate = DateFormat('yyyy/MM').format(
-                          DateTime.parse(
-                              settlements[index]['settlement_date']));
+                      final settlementDate =
+                          settlements[index]['settlement_date'];
                       return InkWell(
                         onTap: () {
                           // TODO: 清算画面に遷移

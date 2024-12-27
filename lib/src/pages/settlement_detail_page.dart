@@ -28,6 +28,7 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
   late TransactionService transactionService;
   late String month;
   late int settlementId;
+  late List<Map<String, dynamic>> profiles;
   List<Map<String, dynamic>> transactions = [];
   Map<String, dynamic> profile = {};
   int paymentPerPerson = 0;
@@ -43,15 +44,27 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
     settlementId = widget.settlementId;
     profile = widget.profile;
     month = widget.month;
-    _fetchTransactions();
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
+    setState(() {
+      _isLoading = true;
+    });
+    await _getProfiles();
+    await _fetchTransactions();
+    // 共有データ用の処理
+    // 個人データ用の処理
+    // カテゴリごとに計算したものをグラフに表示する？
+    // TODO: 個人用の清算確定処理を作る
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   // 清算済みの transaction データを取得する
   Future<void> _fetchTransactions() async {
     try {
-      setState(() {
-        _isLoading = true;
-      });
       await Future.delayed(Duration(milliseconds: 700));
 
       final List<Map<String, dynamic>> data = await supabase
@@ -69,29 +82,43 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
       if (mounted) {
         context.showSnackBarError(message: "$error");
       }
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
     }
   }
 
-  void _calcProfileAmounts(List<Map<String, dynamic>> transactions) {
+  Future<void> _getProfiles() async {
+    try {
+      await Future.delayed(Duration(milliseconds: 700));
+      profiles = await supabase
+          .from('profiles')
+          .select()
+          .eq('group_id', profile['group_id']);
+    } catch (error) {
+      if (mounted) {
+        context.showSnackBarError(message: '$error');
+      }
+    }
+  }
+
+  void _calcProfileAmounts(List<Map<String, dynamic>> transactions) async {
+    // グループ全員のデータを初期化
+    for (var item in profiles) {
+      profileAmounts[item['id']] = {
+        'username': item['username'],
+        'amount': 0,
+      };
+    }
+
     // 共有したデータの中から、ユーザー別の支払い
     for (var item in transactions) {
-      String username = item['profiles']['username'];
+      if (item['type'] == 'income') {
+        continue;
+      }
       String profileId = item['profile_id'];
-      double doubleAmount = item['amount'] ?? 0.0;
-      int amount = doubleAmount.isFinite ? doubleAmount.round() : 0;
+      double doubleAmount = item['amount'];
+      int amount = doubleAmount.round();
       if (profileAmounts.containsKey(profileId)) {
         profileAmounts[profileId]!['amount'] =
             profileAmounts[profileId]!['amount'] + amount;
-        expenseTotal = expenseTotal + amount;
-      } else {
-        profileAmounts[profileId] = {
-          'username': username,
-          'amount': amount,
-        };
         expenseTotal = expenseTotal + amount;
       }
     }

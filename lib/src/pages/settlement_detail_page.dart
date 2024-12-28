@@ -11,12 +11,14 @@ class SettlementDetailPage extends StatefulWidget {
   final int settlementId;
   final String month;
   final Map<String, dynamic> profile;
+  final String selectedDataType;
 
   const SettlementDetailPage({
     super.key,
     required this.settlementId,
     required this.profile,
     required this.month,
+    required this.selectedDataType,
   });
 
   @override
@@ -27,17 +29,25 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
   bool _isLoading = false;
   late TransactionService transactionService;
   late String month;
+  late String selectedDataType;
   late int settlementId;
   late List<Map<String, dynamic>> profiles;
   List<Map<String, dynamic>> transactions = [];
   Map<String, dynamic> profile = {};
   int paymentPerPerson = 0;
-  int expenseTotal = 0;
-  Map<String, Map<String, dynamic>> profileAmounts = {};
+  String incomeExpenseType = 'expense';
+  Map<String, Map<String, dynamic>> sharedExpenseAmounts = {};
+  Map<String, Map<String, dynamic>> sharedIncomeAmounts = {};
+  Map<String, Map<String, dynamic>> selfExpenseAmounts = {};
+  Map<String, Map<String, dynamic>> selfIncomeAmounts = {};
   int colorValue = 0;
   late bool isSettlement;
-  Map<String, double> sections = {};
+  int expenseTotal = 0;
+  int incomeTotal = 0;
+  Map<String, double> expenseSections = {};
+  Map<String, double> incomeSections = {};
   Map<String, Map<String, dynamic>>? settlementData = {};
+  List<bool> _selectedType = <bool>[false, true];
 
   @override
   void initState() {
@@ -46,6 +56,7 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
     settlementId = widget.settlementId;
     profile = widget.profile;
     month = widget.month;
+    selectedDataType = widget.selectedDataType;
     _initializeData();
   }
 
@@ -54,8 +65,13 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
       _isLoading = true;
     });
     await _getProfiles();
-    await _fetchTransactions();
-    _generateSettlementData();
+    if (selectedDataType == 'share') {
+      // 共有データ用
+      await _fetchTransactions();
+      _generateShareSettlementData();
+    } else {
+      // 個人データ用
+    }
     setState(() {
       _isLoading = false;
     });
@@ -75,11 +91,11 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
         transactions = data;
       });
 
-      _calcProfileAmounts(transactions);
+      _calcShareSettlements(transactions);
       _calcPaymentPerPerson();
     } on PostgrestException catch (error) {
       if (mounted) {
-        context.showSnackBarError(message: "$error");
+        context.showSnackBarError(message: '$error');
       }
     }
   }
@@ -98,37 +114,51 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
     }
   }
 
-  void _calcProfileAmounts(List<Map<String, dynamic>> transactions) async {
+  void _calcShareSettlements(List<Map<String, dynamic>> transactions) async {
     // グループ全員のデータを初期化
     for (var item in profiles) {
-      profileAmounts[item['id']] = {
+      sharedExpenseAmounts[item['id']] = {
+        'username': item['username'],
+        'avatar_url': item['avatar_url'],
+        'amount': 0,
+      };
+      sharedIncomeAmounts[item['id']] = {
         'username': item['username'],
         'avatar_url': item['avatar_url'],
         'amount': 0,
       };
     }
 
-    // 共有したデータの中から、ユーザー別の支払い
+    // 共有データから支出額を計算する
     for (var item in transactions) {
-      if (item['type'] == 'income') {
-        continue;
-      }
-      String profileId = item['profile_id'];
-      double doubleAmount = item['amount'];
-      int amount = doubleAmount.round();
-      if (profileAmounts.containsKey(profileId)) {
-        profileAmounts[profileId]!['amount'] =
-            profileAmounts[profileId]!['amount'] + amount;
-        expenseTotal = expenseTotal + amount;
+      if (item['type'] == 'expense') {
+        String profileId = item['profile_id'];
+        double doubleAmount = item['amount'];
+        int amount = doubleAmount.round();
+        if (sharedExpenseAmounts.containsKey(profileId)) {
+          sharedExpenseAmounts[profileId]!['amount'] =
+              sharedExpenseAmounts[profileId]!['amount'] + amount;
+          expenseTotal = expenseTotal + amount;
+        }
+      } else {
+        String profileId = item['profile_id'];
+        double doubleAmount = item['amount'];
+        int amount = doubleAmount.round();
+        if (sharedIncomeAmounts.containsKey(profileId)) {
+          sharedIncomeAmounts[profileId]!['amount'] =
+              sharedIncomeAmounts[profileId]!['amount'] + amount;
+          incomeTotal = incomeTotal + amount;
+        }
       }
     }
   }
 
+  // 共有支出のみの計算処理
   void _calcPaymentPerPerson() {
-    paymentPerPerson = profileAmounts.isNotEmpty
-        ? (expenseTotal / profileAmounts.length).round()
+    paymentPerPerson = sharedExpenseAmounts.isNotEmpty
+        ? (expenseTotal / sharedExpenseAmounts.length).round()
         : 0;
-    profileAmounts.forEach((profileId, item) {
+    sharedExpenseAmounts.forEach((profileId, item) {
       // 1人当たりの支払額との差を計算
       num difference = paymentPerPerson - item['amount'];
       if (difference < 0) {
@@ -148,7 +178,7 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
     });
   }
 
-  void _generateSettlementData() {
+  void _generateShareSettlementData() {
     String? payer,
         payee,
         payment,
@@ -158,8 +188,9 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
         payerAvatarUrl,
         payeeAvatarUrl;
 
-    profileAmounts.forEach((profileId, data) {
-      sections['${data['username']}'] = double.parse(data['amount'].toString());
+    sharedExpenseAmounts.forEach((profileId, data) {
+      expenseSections['${data['username']}'] =
+          double.parse(data['amount'].toString());
       if (data['role'] == 'payer') {
         payer = data['username'];
         payerAvatarUrl = data['avatar_url'];
@@ -171,6 +202,11 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
         payeeAmount = context.convertToYenFormat(amount: data['amount']);
         receive = context.convertToYenFormat(amount: data['payments']);
       }
+    });
+
+    sharedIncomeAmounts.forEach((profileId, data) {
+      incomeSections['${data['username']}'] =
+          double.parse(data['amount'].toString());
     });
 
     // どちらも null でなければ SettlementData 作成
@@ -193,6 +229,18 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
       // 受け渡し情報が無い場合は null のまま
       settlementData = null;
     }
+  }
+
+  void _generateSelfSettlementData() {
+    selfExpenseAmounts.forEach((categoryName, data) {
+      expenseSections['${categoryName}'] =
+          double.parse(data['amount'].toString());
+    });
+
+    selfIncomeAmounts.forEach((categoryName, data) {
+      incomeSections['${categoryName}'] =
+          double.parse(data['amount'].toString());
+    });
   }
 
   Widget _buildSettlementCard(data) {
@@ -286,6 +334,20 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    String pieChartCenterText = '';
+    if (incomeExpenseType == 'expense' && selectedDataType == 'share') {
+      pieChartCenterText =
+          '支払合計額: ${context.convertToYenFormat(amount: expenseTotal)}\n'
+          '割り勘金額: ${context.convertToYenFormat(amount: paymentPerPerson)}';
+    } else if (incomeExpenseType == 'expense' &&
+        selectedDataType == 'private') {
+      pieChartCenterText =
+          '支払合計額: ${context.convertToYenFormat(amount: expenseTotal)}';
+    } else if (incomeExpenseType == 'income') {
+      pieChartCenterText =
+          '収入合計額: ${context.convertToYenFormat(amount: incomeTotal)}';
+    }
+
     if (_isLoading) {
       return Scaffold(
         appBar: AppBar(
@@ -333,33 +395,79 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
                 ),
               ),
             ),
+            const SizedBox(height: 8),
+            // トグルボタン
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ToggleButtons(
+                  onPressed: (int index) {
+                    setState(() {
+                      for (int i = 0; i < _selectedType.length; i++) {
+                        _selectedType[i] = i == index;
+                      }
+                      if (index == 0) {
+                        incomeExpenseType = 'income';
+                      } else {
+                        incomeExpenseType = 'expense';
+                      }
+                    });
+                  },
+                  children: [
+                    Text('収入'),
+                    Text('支出'),
+                  ],
+                  isSelected: _selectedType,
+                  borderRadius: const BorderRadius.all(Radius.circular(8)),
+                  constraints: const BoxConstraints(
+                    minHeight: 40.0,
+                    minWidth: 80.0,
+                  ),
+                )
+              ],
+            ),
             const SizedBox(height: 16),
             // グラフ
             SizedBox(
               width: 200,
               height: 200,
-              child: PieChart(
-                dataMap: sections,
-                legendOptions:
-                    LegendOptions(legendPosition: LegendPosition.left),
-                chartValuesOptions: ChartValuesOptions(
-                  decimalPlaces: 0,
-                  showChartValuesInPercentage: false,
-                  showChartValuesOutside: true,
-                ),
-                formatChartValues: (value) {
-                  return NumberFormat.currency(locale: 'ja_JP', symbol: '¥')
-                      .format(value);
-                },
-                chartLegendSpacing: 24,
-                chartType: ChartType.ring,
-                centerText:
-                    '支払合計額: ${context.convertToYenFormat(amount: expenseTotal)}\n'
-                    '割り勘金額: ${context.convertToYenFormat(amount: paymentPerPerson)}',
-              ),
+              child: (incomeExpenseType == 'expense' &&
+                          expenseSections.isEmpty) ||
+                      (incomeExpenseType == 'income' && incomeSections.isEmpty)
+                  ? Center(
+                      child: Text(
+                        'データがありません',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    )
+                  : PieChart(
+                      dataMap: incomeExpenseType == 'expense'
+                          ? expenseSections
+                          : incomeSections,
+                      legendOptions: LegendOptions(
+                        legendPosition: LegendPosition.left,
+                      ),
+                      chartValuesOptions: ChartValuesOptions(
+                        decimalPlaces: 0,
+                        showChartValuesInPercentage: false,
+                        showChartValuesOutside: true,
+                      ),
+                      formatChartValues: (value) {
+                        return NumberFormat.currency(
+                                locale: 'ja_JP', symbol: '¥')
+                            .format(value);
+                      },
+                      chartLegendSpacing: 48,
+                      chartType: ChartType.ring,
+                      centerText: pieChartCenterText,
+                    ),
             ),
-            const SizedBox(height: 16),
-            if (settlementData != null) ...[
+            const SizedBox(height: 8),
+            if (selectedDataType == 'share' && settlementData != null) ...[
               _buildSettlementCard(settlementData?['payer']),
               const SizedBox(height: 8),
               _buildSettlementCard(settlementData?['payee']),

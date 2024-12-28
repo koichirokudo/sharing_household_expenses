@@ -32,14 +32,20 @@ class SettlementPageState extends State<SettlementPage> {
   late Map<String, dynamic> profile;
   late String month;
   late String selectedDataType;
+  String incomeExpenseType = 'expense';
   int paymentPerPerson = 0;
   int expenseTotal = 0;
-  Map<String, Map<String, dynamic>> profileAmounts = {};
-  Map<String, Map<String, dynamic>> categoryAmounts = {};
+  int incomeTotal = 0;
+  Map<String, Map<String, dynamic>> sharedExpenseAmounts = {};
+  Map<String, Map<String, dynamic>> sharedIncomeAmounts = {};
+  Map<String, Map<String, dynamic>> selfExpenseAmounts = {};
+  Map<String, Map<String, dynamic>> selfIncomeAmounts = {};
   int colorValue = 0;
   late bool isSettlement;
-  Map<String, double> sections = {};
+  Map<String, double> expenseSections = {};
+  Map<String, double> incomeSections = {};
   Map<String, Map<String, dynamic>>? settlementData = {};
+  List<bool> _selectedType = <bool>[false, true];
 
   @override
   void initState() {
@@ -60,13 +66,14 @@ class SettlementPageState extends State<SettlementPage> {
     await _getProfiles();
     if (selectedDataType == 'share') {
       // 共有データ用の処理
-      _calcProfileAmounts(transactions);
+      _calcShareSettlements(transactions);
       _calcPaymentPerPerson();
-      _generateSettlementData();
+      _generateShareSettlementData();
     } else {
       // 個人データ用の処理
       // カテゴリごとに計算したものをグラフに表示する？
-      _calcCategory(transactions);
+      _calcSelfSettlements(transactions);
+      _generateSelfSettlementData();
     }
     setState(() {
       _isLoading = false;
@@ -87,35 +94,49 @@ class SettlementPageState extends State<SettlementPage> {
     }
   }
 
-  void _calcProfileAmounts(List<Map<String, dynamic>> transactions) async {
+  void _calcShareSettlements(List<Map<String, dynamic>> transactions) async {
     // グループ全員のデータを初期化
     for (var item in profiles) {
-      profileAmounts[item['id']] = {
+      sharedExpenseAmounts[item['id']] = {
+        'username': item['username'],
+        'avatar_url': item['avatar_url'],
+        'amount': 0,
+      };
+      sharedIncomeAmounts[item['id']] = {
         'username': item['username'],
         'avatar_url': item['avatar_url'],
         'amount': 0,
       };
     }
 
-    // 共有したデータの中から、ユーザー別の支払い
+    // 共有データから支出額を計算する
     for (var item in transactions) {
-      if (item['type'] == 'income') {
-        continue;
-      }
-      String profileId = item['profile_id'];
-      double doubleAmount = item['amount'];
-      int amount = doubleAmount.round();
-      if (profileAmounts.containsKey(profileId)) {
-        profileAmounts[profileId]!['amount'] =
-            profileAmounts[profileId]!['amount'] + amount;
-        expenseTotal = expenseTotal + amount;
+      if (item['type'] == 'expense') {
+        String profileId = item['profile_id'];
+        double doubleAmount = item['amount'];
+        int amount = doubleAmount.round();
+        if (sharedExpenseAmounts.containsKey(profileId)) {
+          sharedExpenseAmounts[profileId]!['amount'] =
+              sharedExpenseAmounts[profileId]!['amount'] + amount;
+          expenseTotal = expenseTotal + amount;
+        }
+      } else {
+        String profileId = item['profile_id'];
+        double doubleAmount = item['amount'];
+        int amount = doubleAmount.round();
+        if (sharedIncomeAmounts.containsKey(profileId)) {
+          sharedIncomeAmounts[profileId]!['amount'] =
+              sharedIncomeAmounts[profileId]!['amount'] + amount;
+          incomeTotal = incomeTotal + amount;
+        }
       }
     }
   }
 
+  // 共有支出のみの計算処理
   void _calcPaymentPerPerson() {
-    paymentPerPerson = (expenseTotal / profileAmounts.length).round();
-    profileAmounts.forEach((profileId, item) {
+    paymentPerPerson = (expenseTotal / sharedExpenseAmounts.length).round();
+    sharedExpenseAmounts.forEach((profileId, item) {
       // 1人当たりの支払額との差を計算
       num difference = paymentPerPerson - item['amount'];
       if (difference < 0) {
@@ -135,27 +156,39 @@ class SettlementPageState extends State<SettlementPage> {
     });
   }
 
-  void _calcCategory(transactions) {
+  void _calcSelfSettlements(transactions) {
     for (var item in transactions) {
-      if (item['type'] == 'income') {
-        continue;
-      }
-      final categoryName = item['categories']['name'];
-      double doubleAmount = item['amount'];
-      int amount = doubleAmount.round();
-      if (categoryAmounts.containsKey(categoryName)) {
-        categoryAmounts[categoryName]!['amount'] =
-            categoryAmounts[categoryName]!['amount'] + amount;
+      if (item['type'] == 'expense') {
+        final categoryName = item['categories']['name'];
+        double doubleAmount = item['amount'];
+        int amount = doubleAmount.round();
+        if (selfExpenseAmounts.containsKey(categoryName)) {
+          selfExpenseAmounts[categoryName]!['amount'] =
+              selfExpenseAmounts[categoryName]!['amount'] + amount;
+        } else {
+          selfExpenseAmounts[categoryName] = {
+            'amount': amount,
+          };
+          expenseTotal = expenseTotal + amount;
+        }
       } else {
-        categoryAmounts[categoryName] = {
-          'amount': amount,
-        };
-        expenseTotal = expenseTotal + amount;
+        final categoryName = item['categories']['name'];
+        double doubleAmount = item['amount'];
+        int amount = doubleAmount.round();
+        if (selfIncomeAmounts.containsKey(categoryName)) {
+          selfIncomeAmounts[categoryName]!['amount'] =
+              selfIncomeAmounts[categoryName]!['amount'] + amount;
+        } else {
+          selfIncomeAmounts[categoryName] = {
+            'amount': amount,
+          };
+          incomeTotal = incomeTotal + amount;
+        }
       }
     }
   }
 
-  void _generateSettlementData() {
+  void _generateShareSettlementData() {
     String? payer,
         payee,
         payment,
@@ -165,8 +198,9 @@ class SettlementPageState extends State<SettlementPage> {
         payerAvatarUrl,
         payeeAvatarUrl;
 
-    profileAmounts.forEach((profileId, data) {
-      sections['${data['username']}'] = double.parse(data['amount'].toString());
+    sharedExpenseAmounts.forEach((profileId, data) {
+      expenseSections['${data['username']}'] =
+          double.parse(data['amount'].toString());
       if (data['role'] == 'payer') {
         payer = data['username'];
         payerAvatarUrl = data['avatar_url'];
@@ -178,6 +212,11 @@ class SettlementPageState extends State<SettlementPage> {
         payeeAmount = context.convertToYenFormat(amount: data['amount']);
         receive = context.convertToYenFormat(amount: data['payments']);
       }
+    });
+
+    sharedIncomeAmounts.forEach((profileId, data) {
+      incomeSections['${data['username']}'] =
+          double.parse(data['amount'].toString());
     });
 
     // どちらも null でなければ SettlementData 作成
@@ -199,6 +238,159 @@ class SettlementPageState extends State<SettlementPage> {
     } else {
       // 受け渡し情報が無い場合は null のまま
       settlementData = null;
+    }
+  }
+
+  void _generateSelfSettlementData() {
+    selfExpenseAmounts.forEach((categoryName, data) {
+      expenseSections['${categoryName}'] =
+          double.parse(data['amount'].toString());
+    });
+
+    selfIncomeAmounts.forEach((categoryName, data) {
+      incomeSections['${categoryName}'] =
+          double.parse(data['amount'].toString());
+    });
+  }
+
+  Future<void> _settlementConfirm() async {
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+
+      await Future.delayed(Duration(milliseconds: 700));
+      final userId = supabase.auth.currentUser!.id;
+      final profiles = await supabase
+          .from('profiles')
+          .select('group_id')
+          .eq('id', userId)
+          .single();
+      final settlementData = {
+        'group_id': profiles['group_id'],
+        'visibility': selectedDataType == 'share' ? 'share' : 'private',
+        'settlement_date': month,
+        'total_amount': expenseTotal,
+        'amount_per_person': paymentPerPerson,
+        'status': 'completed',
+        'created_at': DateTime.now().toIso8601String(),
+        'updated_at': DateTime.now().toIso8601String(),
+      };
+      final settlement = await supabase
+          .from('settlements')
+          .insert(settlementData)
+          .select()
+          .single();
+
+      List<Map<String, dynamic>> settlementItem = [];
+      sharedExpenseAmounts.forEach((profileId, item) {
+        settlementItem.add({
+          'settlement_id': settlement['id'],
+          'profile_id': profileId,
+          'role': item['role'],
+          'amount': item['payments'],
+          'percentage': 50,
+          'created_at': DateTime.now().toIso8601String(),
+          'updated_at': DateTime.now().toIso8601String(),
+        });
+      });
+      await supabase.from('settlement_items').insert(settlementItem);
+
+      List<Map<String, dynamic>> transactionIds = [];
+      for (var transaction in transactions) {
+        transaction.remove('profiles');
+        transaction.remove('categories');
+        transactionIds.add({
+          ...transaction,
+          'settlement_id': settlement['id'],
+          'updated_at': DateTime.now().toIso8601String(),
+        });
+      }
+      await supabase.from('transactions').upsert(transactionIds);
+
+      if (mounted) {
+        context.showSnackBar(
+            message: '清算を確定しました', backgroundColor: Colors.green);
+        Navigator.pop(context, true);
+      }
+    } catch (error) {
+      if (mounted) {
+        context.showSnackBarError(message: '$error');
+      }
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _selfSettlementConfirm() async {
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+
+      await Future.delayed(Duration(milliseconds: 700));
+      final userId = supabase.auth.currentUser!.id;
+      final profiles = await supabase
+          .from('profiles')
+          .select('group_id')
+          .eq('id', userId)
+          .single();
+      DateTime now = DateTime.now();
+      final settlementDate = DateFormat('yyyy/MM').format(now);
+      final settlementData = {
+        'group_id': profiles['group_id'],
+        'settlement_date': settlementDate,
+        'total_amount': expenseTotal,
+        'amount_per_person': expenseTotal,
+        'status': 'completed',
+        'created_at': DateTime.now().toIso8601String(),
+        'updated_at': DateTime.now().toIso8601String(),
+      };
+      final settlement = await supabase
+          .from('settlements')
+          .insert(settlementData)
+          .select()
+          .single();
+
+      List<Map<String, dynamic>> settlementItem = [];
+      settlementItem.add({
+        'settlement_id': settlement['id'],
+        'profile_id': profile['id'],
+        'role': 'self',
+        'amount': expenseTotal,
+        'percentage': 100,
+        'created_at': DateTime.now().toIso8601String(),
+        'updated_at': DateTime.now().toIso8601String(),
+      });
+      await supabase.from('settlement_items').insert(settlementItem);
+
+      List<Map<String, dynamic>> transactionIds = [];
+      for (var transaction in transactions) {
+        transaction.remove('profiles');
+        transaction.remove('categories');
+        transactionIds.add({
+          ...transaction,
+          'settlement_id': settlement['id'],
+          'updated_at': DateTime.now().toIso8601String(),
+        });
+      }
+      await supabase.from('transactions').upsert(transactionIds);
+
+      if (mounted) {
+        context.showSnackBar(
+            message: '清算を確定しました', backgroundColor: Colors.green);
+        Navigator.of(context).pop(true);
+      }
+    } catch (error) {
+      if (mounted) {
+        context.showSnackBarError(message: '$error');
+      }
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -291,149 +483,21 @@ class SettlementPageState extends State<SettlementPage> {
     );
   }
 
-  Future<void> _settlementConfirm() async {
-    try {
-      setState(() {
-        _isLoading = true;
-      });
-
-      await Future.delayed(Duration(milliseconds: 700));
-      final userId = supabase.auth.currentUser!.id;
-      final profiles = await supabase
-          .from('profiles')
-          .select('group_id')
-          .eq('id', userId)
-          .single();
-      final settlementData = {
-        'group_id': profiles['group_id'],
-        'visibility': selectedDataType == 'share' ? 'share' : 'private',
-        'settlement_date': month,
-        'total_amount': expenseTotal,
-        'amount_per_person': paymentPerPerson,
-        'status': 'completed',
-        'created_at': DateTime.now().toIso8601String(),
-        'updated_at': DateTime.now().toIso8601String(),
-      };
-      final settlement = await supabase
-          .from('settlements')
-          .insert(settlementData)
-          .select()
-          .single();
-
-      List<Map<String, dynamic>> settlementItem = [];
-      profileAmounts.forEach((profileId, item) {
-        settlementItem.add({
-          'settlement_id': settlement['id'],
-          'profile_id': profileId,
-          'role': item['role'],
-          'amount': item['payments'],
-          'percentage': 50,
-          'created_at': DateTime.now().toIso8601String(),
-          'updated_at': DateTime.now().toIso8601String(),
-        });
-      });
-      await supabase.from('settlement_items').insert(settlementItem);
-
-      List<Map<String, dynamic>> transactionIds = [];
-      for (var transaction in transactions) {
-        transaction.remove('profiles');
-        transaction.remove('categories');
-        transactionIds.add({
-          ...transaction,
-          'settlement_id': settlement['id'],
-          'updated_at': DateTime.now().toIso8601String(),
-        });
-      }
-      await supabase.from('transactions').upsert(transactionIds);
-
-      if (mounted) {
-        context.showSnackBar(
-            message: '清算を確定しました', backgroundColor: Colors.green);
-        Navigator.pop(context, true);
-      }
-    } catch (error) {
-      if (mounted) {
-        context.showSnackBarError(message: "$error");
-      }
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
-  Future<void> _selfSettlementConfirm() async {
-    try {
-      setState(() {
-        _isLoading = true;
-      });
-
-      await Future.delayed(Duration(milliseconds: 700));
-      final userId = supabase.auth.currentUser!.id;
-      final profiles = await supabase
-          .from('profiles')
-          .select('group_id')
-          .eq('id', userId)
-          .single();
-      DateTime now = DateTime.now();
-      final settlementDate = DateFormat('yyyy/MM').format(now);
-      final settlementData = {
-        'group_id': profiles['group_id'],
-        'settlement_date': settlementDate,
-        'total_amount': expenseTotal,
-        'amount_per_person': expenseTotal,
-        'status': 'completed',
-        'created_at': DateTime.now().toIso8601String(),
-        'updated_at': DateTime.now().toIso8601String(),
-      };
-      final settlement = await supabase
-          .from('settlements')
-          .insert(settlementData)
-          .select()
-          .single();
-
-      List<Map<String, dynamic>> settlementItem = [];
-      settlementItem.add({
-        'settlement_id': settlement['id'],
-        'profile_id': profile['id'],
-        'role': 'self',
-        'amount': expenseTotal,
-        'percentage': 100,
-        'created_at': DateTime.now().toIso8601String(),
-        'updated_at': DateTime.now().toIso8601String(),
-      });
-      await supabase.from('settlement_items').insert(settlementItem);
-
-      List<Map<String, dynamic>> transactionIds = [];
-      for (var transaction in transactions) {
-        transaction.remove('profiles');
-        transaction.remove('categories');
-        transactionIds.add({
-          ...transaction,
-          'settlement_id': settlement['id'],
-          'updated_at': DateTime.now().toIso8601String(),
-        });
-      }
-      await supabase.from('transactions').upsert(transactionIds);
-
-      if (mounted) {
-        context.showSnackBar(
-            message: '清算を確定しました', backgroundColor: Colors.green);
-        Navigator.of(context).pop(true);
-      }
-    } catch (error) {
-      if (mounted) {
-        context.showSnackBarError(message: '$error');
-      }
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    String pieChartCenterText = '';
+    if (incomeExpenseType == 'expense' && selectedDataType == 'share') {
+      pieChartCenterText =
+          '支払合計額: ${context.convertToYenFormat(amount: expenseTotal)}\n'
+          '割り勘金額: ${context.convertToYenFormat(amount: paymentPerPerson)}';
+    } else if (incomeExpenseType == 'expense' &&
+        selectedDataType == 'private') {
+      pieChartCenterText =
+          '支払合計額: ${context.convertToYenFormat(amount: expenseTotal)}';
+    } else if (incomeExpenseType == 'income') {
+      pieChartCenterText =
+          '収入合計額: ${context.convertToYenFormat(amount: incomeTotal)}';
+    }
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -466,31 +530,78 @@ class SettlementPageState extends State<SettlementPage> {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 8),
+                  // トグルボタン
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ToggleButtons(
+                        onPressed: (int index) {
+                          setState(() {
+                            for (int i = 0; i < _selectedType.length; i++) {
+                              _selectedType[i] = i == index;
+                            }
+                            if (index == 0) {
+                              incomeExpenseType = 'income';
+                            } else {
+                              incomeExpenseType = 'expense';
+                            }
+                          });
+                        },
+                        children: [
+                          Text('収入'),
+                          Text('支出'),
+                        ],
+                        isSelected: _selectedType,
+                        borderRadius:
+                            const BorderRadius.all(Radius.circular(8)),
+                        constraints: const BoxConstraints(
+                          minHeight: 40.0,
+                          minWidth: 80.0,
+                        ),
+                      )
+                    ],
+                  ),
                   const SizedBox(height: 16),
                   // グラフ
                   SizedBox(
                     width: 200,
                     height: 200,
-                    child: PieChart(
-                      dataMap: sections,
-                      legendOptions:
-                          LegendOptions(legendPosition: LegendPosition.left),
-                      chartValuesOptions: ChartValuesOptions(
-                        decimalPlaces: 0,
-                        showChartValuesInPercentage: false,
-                        showChartValuesOutside: true,
-                      ),
-                      formatChartValues: (value) {
-                        return NumberFormat.currency(
-                                locale: 'ja_JP', symbol: '¥')
-                            .format(value);
-                      },
-                      chartLegendSpacing: 24,
-                      chartType: ChartType.ring,
-                      centerText:
-                          '支払合計額: ${context.convertToYenFormat(amount: expenseTotal)}\n'
-                          '割り勘金額: ${context.convertToYenFormat(amount: paymentPerPerson)}',
-                    ),
+                    child: (incomeExpenseType == 'expense' &&
+                                expenseSections.isEmpty) ||
+                            (incomeExpenseType == 'income' &&
+                                incomeSections.isEmpty)
+                        ? Center(
+                            child: Text(
+                              'データがありません',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          )
+                        : PieChart(
+                            dataMap: incomeExpenseType == 'expense'
+                                ? expenseSections
+                                : incomeSections,
+                            legendOptions: LegendOptions(
+                              legendPosition: LegendPosition.left,
+                            ),
+                            chartValuesOptions: ChartValuesOptions(
+                              decimalPlaces: 0,
+                              showChartValuesInPercentage: false,
+                              showChartValuesOutside: true,
+                            ),
+                            formatChartValues: (value) {
+                              return NumberFormat.currency(
+                                      locale: 'ja_JP', symbol: '¥')
+                                  .format(value);
+                            },
+                            chartLegendSpacing: 48,
+                            chartType: ChartType.ring,
+                            centerText: pieChartCenterText,
+                          ),
                   ),
                   const SizedBox(height: 16),
                   if (!isSettlement)
@@ -536,8 +647,9 @@ class SettlementPageState extends State<SettlementPage> {
                         ),
                       ),
                     ),
-                  const SizedBox(height: 16),
-                  if (settlementData != null) ...[
+                  const SizedBox(height: 8),
+                  if (selectedDataType == 'share' &&
+                      settlementData != null) ...[
                     _buildSettlementCard(settlementData?['payer']),
                     const SizedBox(height: 8),
                     _buildSettlementCard(settlementData?['payee']),
@@ -556,7 +668,7 @@ class SettlementPageState extends State<SettlementPage> {
                           alignment: Alignment.center,
                           padding: const EdgeInsets.all(16.0),
                           child: const Text(
-                            '共有された明細',
+                            '共有明細一覧',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,

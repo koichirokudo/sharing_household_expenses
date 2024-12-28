@@ -308,6 +308,8 @@ class SettlementListPageState extends State<SettlementListPage> {
                                                             ['id'],
                                                     profile: profile,
                                                     month: settlementDate,
+                                                    selectedDataType:
+                                                        _selectedDataType,
                                                   )));
                                     },
                                     child: Container(

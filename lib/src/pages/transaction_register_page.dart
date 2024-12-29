@@ -187,7 +187,7 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
         } else {
           print('FormState is null');
         }
-        _dateController.text = DateFormat('yyyy-MM-dd').format(DateTime.now());
+        _dateController.text = DateFormat('yyyy/MM/dd').format(DateTime.now());
         _nameController.clear();
         _noteController.clear();
         _amountController.clear();
@@ -235,7 +235,7 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
       String amount = widget.transaction!['amount'].round().toString();
       DateTime dateString =
           DateTime.parse(widget.transaction!['date']).toLocal();
-      final transactionDate = DateFormat('yyyy-MM-dd').format(dateString);
+      final transactionDate = DateFormat('yyyy/MM/dd').format(dateString);
       final categories = widget.transaction!['categories'];
       selectedCategory = categories != null && categories['id'] != null
           ? categories['id'].toString()
@@ -254,7 +254,7 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
       _selectedValue = 'expense';
       _isShare = false;
       // 本日の日付を初期値として設定
-      _dateController.text = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      _dateController.text = DateFormat('yyyy/MM/dd').format(DateTime.now());
     }
     await _loadCategories();
   }
@@ -275,19 +275,24 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
       final userId = supabase.auth.currentUser!.id;
       final profile =
           await supabase.from('profiles').select().eq('id', userId).single();
-
-      await Future.delayed(Duration(milliseconds: 700));
-
+      List<Map<String, dynamic>> data = [];
       // データ取得
-      final List<Map<String, dynamic>> data = await supabase
-          .from('settlements')
-          .select('settlement_date')
-          .eq('group_id', profile['group_id']);
+      if (_isShare == true) {
+        data = await supabase
+            .from('settlements')
+            .select('settlement_date')
+            .eq('group_id', profile['group_id'])
+            .eq('visibility', 'share');
+      } else {
+        data = await supabase
+            .from('settlements')
+            .select('settlement_date')
+            .eq('group_id', profile['group_id'])
+            .eq('visibility', 'private');
+      }
 
       for (var item in data) {
-        DateTime date = DateTime.parse(item['settlement_date']).toLocal();
-        String settlementDate = DateFormat('yyyy-MM').format(date);
-        if (settlementDate == month) {
+        if (item['settlement_date'] == month) {
           // 清算済み
           return true;
         } else {
@@ -443,7 +448,7 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
                                 );
                                 if (pickedDate != null) {
                                   String formattedDate =
-                                      DateFormat('yyyy-MM-dd')
+                                      DateFormat('yyyy/MM/dd')
                                           .format(pickedDate);
                                   setState(() {
                                     _dateController.text =

@@ -37,7 +37,9 @@ class FirstGroupInvitePageState extends State<FirstGroupInvitePage> {
         if (mounted) {
           context.showSnackBar(
               message: 'グループに参加しました', backgroundColor: Colors.green);
-          Navigator.pop(context);
+          Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const App()),
+              (route) => false);
         }
       } else if (response.data['success'] == false) {
         if (mounted) {

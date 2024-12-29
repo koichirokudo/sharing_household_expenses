@@ -65,12 +65,16 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
       _isLoading = true;
     });
     await _getProfiles();
+    await _fetchTransactions();
     if (selectedDataType == 'share') {
       // 共有データ用
-      await _fetchTransactions();
+      _calcShareSettlements(transactions);
+      _calcPaymentPerPerson();
       _generateShareSettlementData();
     } else {
       // 個人データ用
+      _calcSelfSettlements(transactions);
+      _generateSelfSettlementData();
     }
     setState(() {
       _isLoading = false;
@@ -90,9 +94,6 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
       setState(() {
         transactions = data;
       });
-
-      _calcShareSettlements(transactions);
-      _calcPaymentPerPerson();
     } on PostgrestException catch (error) {
       if (mounted) {
         context.showSnackBarError(message: '$error');
@@ -147,6 +148,38 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
         if (sharedIncomeAmounts.containsKey(profileId)) {
           sharedIncomeAmounts[profileId]!['amount'] =
               sharedIncomeAmounts[profileId]!['amount'] + amount;
+          incomeTotal = incomeTotal + amount;
+        }
+      }
+    }
+  }
+
+  void _calcSelfSettlements(transactions) {
+    for (var item in transactions) {
+      if (item['type'] == 'expense') {
+        final categoryName = item['categories']['name'];
+        double doubleAmount = item['amount'];
+        int amount = doubleAmount.round();
+        if (selfExpenseAmounts.containsKey(categoryName)) {
+          selfExpenseAmounts[categoryName]!['amount'] =
+              selfExpenseAmounts[categoryName]!['amount'] + amount;
+        } else {
+          selfExpenseAmounts[categoryName] = {
+            'amount': amount,
+          };
+          expenseTotal = expenseTotal + amount;
+        }
+      } else {
+        final categoryName = item['categories']['name'];
+        double doubleAmount = item['amount'];
+        int amount = doubleAmount.round();
+        if (selfIncomeAmounts.containsKey(categoryName)) {
+          selfIncomeAmounts[categoryName]!['amount'] =
+              selfIncomeAmounts[categoryName]!['amount'] + amount;
+        } else {
+          selfIncomeAmounts[categoryName] = {
+            'amount': amount,
+          };
           incomeTotal = incomeTotal + amount;
         }
       }

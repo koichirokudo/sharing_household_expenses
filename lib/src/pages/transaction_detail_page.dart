@@ -202,7 +202,7 @@ class TransactionDetailPageState extends State<TransactionDetailPage> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text('メモ'),
-                            Text(transaction['note']),
+                            Text(transaction['note'] ?? ''),
                           ],
                         ),
                       ),

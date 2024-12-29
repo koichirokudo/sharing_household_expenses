@@ -169,6 +169,16 @@ class SettlementListPageState extends State<SettlementListPage> {
     years = years.reversed.toList();
   }
 
+  void _loadCache(selectedValue) {
+    final cachedData =
+        settlementService.loadCache(years[selectedIndex], selectedValue);
+    if (cachedData != null) {
+      setState(() {
+        settlements = cachedData;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -233,11 +243,10 @@ class SettlementListPageState extends State<SettlementListPage> {
                   ),
                 ],
                 onChanged: (value) {
-                  if (value == 'share') {
-                    // 共有データの清算一覧を表示
-                  } else {
-                    // 個人データの清算一覧を表示
-                  }
+                  setState(() {
+                    _loadCache(value);
+                    _selectedDataType = value!;
+                  });
                 },
               ),
             ]),
@@ -284,7 +293,9 @@ class SettlementListPageState extends State<SettlementListPage> {
                                 itemBuilder: (context, index) {
                                   final settlementItems =
                                       settlements[index]['settlement_items'];
-                                  double amount = 0.0;
+                                  double amount = 0;
+                                  String incomeTotal = '';
+                                  String expenseTotal = '';
                                   for (var item in settlementItems) {
                                     if (item['role'] == 'payer') {
                                       amount = item['amount'];
@@ -295,6 +306,17 @@ class SettlementListPageState extends State<SettlementListPage> {
                                           amount: amount.round());
                                   final settlementDate =
                                       settlements[index]['settlement_date'];
+                                  if (_selectedDataType == 'private') {
+                                    final incomeTotalAmount = settlements[index]
+                                        ['income_total_amount'];
+                                    final expenseTotalAmount =
+                                        settlements[index]
+                                            ['expense_total_amount'];
+                                    incomeTotal = context.convertToYenFormat(
+                                        amount: incomeTotalAmount.round());
+                                    expenseTotal = context.convertToYenFormat(
+                                        amount: expenseTotalAmount.round());
+                                  }
                                   return InkWell(
                                     onTap: () {
                                       // タップ時の処理
@@ -338,103 +360,184 @@ class SettlementListPageState extends State<SettlementListPage> {
                                             ),
                                             overflow: TextOverflow.ellipsis,
                                           ),
-                                          const SizedBox(width: 32),
-                                          Row(
-                                            children: [
-                                              Column(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: [
-                                                  // ユーザー画像
-                                                  Container(
-                                                    width: 32,
-                                                    height: 32,
-                                                    decoration:
-                                                        const BoxDecoration(
-                                                      shape: BoxShape.circle,
-                                                      image: DecorationImage(
-                                                        image: AssetImage(
-                                                            'assets/icons/user_icon.png'),
-                                                        fit: BoxFit.fill,
-                                                      ),
+                                          const SizedBox(width: 8),
+                                          _selectedDataType == 'share'
+                                              ? Row(
+                                                  children: [
+                                                    Column(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .center,
+                                                      children: [
+                                                        // ユーザー画像
+                                                        Container(
+                                                          width: 32,
+                                                          height: 32,
+                                                          decoration:
+                                                              const BoxDecoration(
+                                                            shape:
+                                                                BoxShape.circle,
+                                                            image:
+                                                                DecorationImage(
+                                                              image: AssetImage(
+                                                                  'assets/icons/user_icon.png'),
+                                                              fit: BoxFit.fill,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        const SizedBox(
+                                                            height: 4),
+                                                        // ユーザー名
+                                                        Text(
+                                                          settlements[index][
+                                                                      'settlement_items']
+                                                                  [
+                                                                  0]['profiles']
+                                                              ['username'],
+                                                          style:
+                                                              const TextStyle(
+                                                            fontSize: 10,
+                                                            color: Colors.black,
+                                                          ),
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                        ),
+                                                      ],
                                                     ),
-                                                  ),
-                                                  const SizedBox(height: 4),
-                                                  // ユーザー名
-                                                  Text(
-                                                    settlements[index][
-                                                            'settlement_items'][0]
-                                                        [
-                                                        'profiles']['username'],
-                                                    style: const TextStyle(
-                                                      fontSize: 10,
-                                                      color: Colors.black,
+                                                    const SizedBox(width: 32),
+                                                    // 金額
+                                                    Column(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .center,
+                                                      children: [
+                                                        const Icon(
+                                                            Icons
+                                                                .trending_flat_rounded,
+                                                            size: 32),
+                                                        Text(
+                                                          displayAmount,
+                                                          style:
+                                                              const TextStyle(
+                                                            fontSize: 12,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                          ),
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                        ),
+                                                      ],
                                                     ),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
-                                                ],
-                                              ),
-                                              const SizedBox(width: 32),
-                                              // 金額
-                                              Column(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: [
-                                                  const Icon(
-                                                      Icons
-                                                          .trending_flat_rounded,
-                                                      size: 32),
-                                                  Text(
-                                                    displayAmount,
-                                                    style: const TextStyle(
-                                                      fontSize: 12,
-                                                      fontWeight:
-                                                          FontWeight.bold,
+                                                    const SizedBox(width: 32),
+                                                    // カテゴリ
+                                                    Column(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .center,
+                                                      children: [
+                                                        // ユーザー画像
+                                                        Container(
+                                                          width: 32,
+                                                          height: 32,
+                                                          decoration:
+                                                              const BoxDecoration(
+                                                            shape:
+                                                                BoxShape.circle,
+                                                            image:
+                                                                DecorationImage(
+                                                              image: AssetImage(
+                                                                  'assets/icons/user_icon.png'),
+                                                              fit: BoxFit.fill,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        const SizedBox(
+                                                            height: 4),
+                                                        // ユーザー名
+                                                        Text(
+                                                          settlements[index][
+                                                                      'settlement_items']
+                                                                  [
+                                                                  1]['profiles']
+                                                              ['username'],
+                                                          style:
+                                                              const TextStyle(
+                                                            fontSize: 10,
+                                                            color: Colors.black,
+                                                          ),
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                        ),
+                                                      ],
                                                     ),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
-                                                ],
-                                              ),
-                                              const SizedBox(width: 32),
-                                              // カテゴリ
-                                              Column(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: [
-                                                  // ユーザー画像
-                                                  Container(
-                                                    width: 32,
-                                                    height: 32,
-                                                    decoration:
-                                                        const BoxDecoration(
-                                                      shape: BoxShape.circle,
-                                                      image: DecorationImage(
-                                                        image: AssetImage(
-                                                            'assets/icons/user_icon.png'),
-                                                        fit: BoxFit.fill,
-                                                      ),
+                                                  ],
+                                                )
+                                              :
+                                              // 個人データ
+                                              Row(
+                                                  children: [
+                                                    Row(
+                                                      children: [
+                                                        const Icon(
+                                                          Icons.trending_up,
+                                                          color: Colors.green,
+                                                          size: 24,
+                                                        ),
+                                                        const SizedBox(
+                                                            width: 8),
+                                                        Text(
+                                                          '収入',
+                                                          style: TextStyle(
+                                                              fontSize: 12,
+                                                              color:
+                                                                  Colors.green),
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                        ),
+                                                        const SizedBox(
+                                                            width: 8),
+                                                        Text(
+                                                          incomeTotal,
+                                                          style: TextStyle(
+                                                            fontSize: 12,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                          ),
+                                                        ),
+                                                      ],
                                                     ),
-                                                  ),
-                                                  const SizedBox(height: 4),
-                                                  // ユーザー名
-                                                  Text(
-                                                    settlements[index][
-                                                            'settlement_items'][1]
-                                                        [
-                                                        'profiles']['username'],
-                                                    style: const TextStyle(
-                                                      fontSize: 10,
-                                                      color: Colors.black,
+                                                    const SizedBox(width: 8),
+                                                    const Icon(
+                                                      Icons.trending_down,
+                                                      color: Colors.red,
+                                                      size: 24,
                                                     ),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
+                                                    const SizedBox(width: 8),
+                                                    Row(
+                                                      children: [
+                                                        Text(
+                                                          '支出',
+                                                          style: TextStyle(
+                                                              fontSize: 12,
+                                                              color:
+                                                                  Colors.red),
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                        ),
+                                                        const SizedBox(
+                                                            width: 8),
+                                                        Text(
+                                                          expenseTotal,
+                                                          style: TextStyle(
+                                                            fontSize: 12,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                          ),
+                                                        )
+                                                      ],
+                                                    ),
+                                                  ],
+                                                ),
                                         ],
                                       ),
                                     ),

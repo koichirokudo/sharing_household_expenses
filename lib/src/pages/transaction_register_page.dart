@@ -355,14 +355,16 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
                                 ), // アイコンを先頭に配置
                                 const Padding(
                                   padding:
-                                      EdgeInsets.only(left: 28.0, right: 124.0),
+                                      EdgeInsets.only(left: 24.0, right: 64.0),
                                   child: Text(
-                                    '共有する',
+                                    '共有',
                                     style: TextStyle(
                                       fontSize: 16,
                                     ),
                                   ),
                                 ),
+                                Text('しない'),
+                                const SizedBox(width: 8),
                                 Switch(
                                   value: _isShare,
                                   onChanged: (bool value) => {
@@ -371,6 +373,8 @@ class TransactionRegisterPageState extends State<TransactionRegisterPage> {
                                     }),
                                   },
                                 ),
+                                const SizedBox(width: 8),
+                                Text('する'),
                               ],
                             ),
                             const SizedBox(height: 8),

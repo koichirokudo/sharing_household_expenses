@@ -65,7 +65,7 @@ class _App extends State<App> {
           onTap: _onItemTapped,
           items: const <BottomNavigationBarItem>[
             BottomNavigationBarItem(icon: Icon(Icons.home), label: 'ホーム'),
-            BottomNavigationBarItem(icon: Icon(Icons.edit), label: '収支の登録'),
+            BottomNavigationBarItem(icon: Icon(Icons.edit), label: '登録'),
             BottomNavigationBarItem(icon: Icon(Icons.list), label: '明細一覧'),
             BottomNavigationBarItem(
                 icon: Icon(Icons.fact_check), label: '清算一覧'),

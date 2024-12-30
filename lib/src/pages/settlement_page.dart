@@ -452,7 +452,7 @@ class SettlementPageState extends State<SettlementPage> {
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   const SizedBox(width: 16),
-                  Text('立替金額'),
+                  Text('自分が支払った金額'),
                 ],
               ),
               Row(

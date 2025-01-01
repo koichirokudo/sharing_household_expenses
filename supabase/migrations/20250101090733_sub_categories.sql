@@ -1,5 +1,5 @@
 DROP SEQUENCE IF EXISTS sub_categories_id_seq;
-CREATE SEQUENCE sub_categories_id_seq;
+CREATE SEQUENCE sub_categories_id_seq START WITH 5001;
 CREATE TABLE sub_categories
 (
     id          integer PRIMARY KEY      DEFAULT nextval('sub_categories_id_seq'::regclass),

@@ -1,11 +1,9 @@
 import '../constants/transaction_type.dart';
-import '../constants/visibility.dart';
 
 class Transaction {
   final int id;
   final String profileId;
   final String groupId;
-  final Visibility visibility;
   final int? settlementId;
   final int categoryId;
   final String name;
@@ -21,7 +19,6 @@ class Transaction {
     required this.id,
     required this.profileId,
     required this.groupId,
-    required this.visibility,
     this.settlementId,
     required this.categoryId,
     required this.name,
@@ -39,8 +36,6 @@ class Transaction {
       id: map['id'],
       profileId: map['profile_id'],
       groupId: map['group_id'],
-      visibility:
-          Visibility.values.firstWhere((e) => e.name == map['visibility']),
       settlementId: map['settlement_id'],
       categoryId: map['category_id'],
       name: map['name'],
@@ -59,7 +54,6 @@ class Transaction {
       'id': id,
       'profile_id': profileId,
       'group_id': groupId,
-      'visibility': visibility.name,
       'settlement_id': settlementId,
       'category_id': categoryId,
       'name': name,

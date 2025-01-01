@@ -71,7 +71,7 @@ class SettlementListPageState extends State<SettlementListPage> {
 
       // 共有データ
       final shareData = data?.where((item) {
-        if (item['visibility'] == 'share') {
+        if (item['share'] == true) {
           return true;
         }
         return false;
@@ -79,7 +79,7 @@ class SettlementListPageState extends State<SettlementListPage> {
 
       //　個人データ
       final privateData = data?.where((item) {
-        if (item['visibility'] == 'private') {
+        if (item['share'] == false) {
           return true;
         }
         return false;
@@ -123,7 +123,7 @@ class SettlementListPageState extends State<SettlementListPage> {
 
       // 共有データ
       final shareData = freshData?.where((item) {
-        if (item['visibility'] == 'share') {
+        if (item['share'] == true) {
           return true;
         }
         return false;
@@ -131,7 +131,7 @@ class SettlementListPageState extends State<SettlementListPage> {
 
       //　個人データ
       final privateData = freshData?.where((item) {
-        if (item['visibility'] == 'private') {
+        if (item['share'] == false) {
           return true;
         }
         return false;

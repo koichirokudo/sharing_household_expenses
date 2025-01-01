@@ -4,7 +4,6 @@ CREATE TABLE transactions (
     id integer PRIMARY KEY DEFAULT nextval('transactions_id_seq'::regclass),
     profile_id uuid NOT NULL REFERENCES profiles(id),
     group_id uuid NOT NULL REFERENCES user_groups(id),
-    visibility TEXT NOT NULL CHECK (visibility IN ('shared', 'private')),
     settlement_id integer REFERENCES settlements(id),
     category_id integer NOT NULL REFERENCES categories(id),
     name TEXT NOT NULL,
@@ -31,4 +30,3 @@ CREATE INDEX "transactions_group_id_index" ON "public"."transactions" ("group_id
 CREATE INDEX "transactions_profile_id_index" ON "public"."transactions" ("profile_id");
 CREATE INDEX "transactions_settlement_id_index" ON "public"."transactions" ("settlement_id");
 CREATE INDEX "transactions_category_id_index" ON "public"."transactions" ("category_id");
-CREATE INDEX "transactions_visibility_index" ON "public"."transactions" ("visibility");

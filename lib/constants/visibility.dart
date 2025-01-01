@@ -1,0 +1,1 @@
+enum Visibility { shared, private }

@@ -1,0 +1,1 @@
+enum PlanType { premium, basic }

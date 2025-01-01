@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:pie_chart/pie_chart.dart';
-import 'package:sharing_household_expenses/src/pages/transaction_detail_page.dart';
+import 'package:sharing_household_expenses/screens/transaction/transaction_detail_page.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
 
 class SettlementPage extends StatefulWidget {

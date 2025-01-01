@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:sharing_household_expenses/services/profile_service.dart';
-import 'package:sharing_household_expenses/src/components/avatar.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
+import 'package:sharing_household_expenses/widgets/avatar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ProfileEditPage extends StatefulWidget {

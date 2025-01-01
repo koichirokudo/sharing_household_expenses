@@ -4,7 +4,7 @@ import 'package:sharing_household_expenses/services/transaction_service.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'login_page.dart';
+import '../login/login_page.dart';
 
 class AccountDeletePage extends StatefulWidget {
   const AccountDeletePage({super.key});

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:sharing_household_expenses/src/pages/home_page.dart';
-import 'package:sharing_household_expenses/src/pages/login_page.dart';
-import 'package:sharing_household_expenses/src/pages/settlement_list_page.dart';
-import 'package:sharing_household_expenses/src/pages/transaction_list_page.dart';
-import 'package:sharing_household_expenses/src/pages/transaction_register_page.dart';
+import 'package:sharing_household_expenses/screens/home/home_page.dart';
+import 'package:sharing_household_expenses/screens/login/login_page.dart';
+import 'package:sharing_household_expenses/screens/settlement/settlement_list_page.dart';
+import 'package:sharing_household_expenses/screens/transaction/transaction_list_page.dart';
+import 'package:sharing_household_expenses/screens/transaction/transaction_register_page.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
 
 class MyApp extends StatelessWidget {

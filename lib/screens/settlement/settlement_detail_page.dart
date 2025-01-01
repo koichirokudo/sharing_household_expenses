@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:pie_chart/pie_chart.dart';
-import 'package:sharing_household_expenses/src/pages/transaction_detail_page.dart';
+import 'package:sharing_household_expenses/screens/transaction/transaction_detail_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../services/transaction_service.dart';

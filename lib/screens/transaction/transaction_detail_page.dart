@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:sharing_household_expenses/screens/transaction/transaction_register_page.dart';
 import 'package:sharing_household_expenses/services/transaction_service.dart';
-import 'package:sharing_household_expenses/src/pages/transaction_register_page.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
 
 class TransactionDetailPage extends StatefulWidget {

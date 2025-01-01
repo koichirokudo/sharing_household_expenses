@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:sharing_household_expenses/src/pages/first_group_invite_page.dart';
+import 'package:sharing_household_expenses/screens/group/first_group_invite_page.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 

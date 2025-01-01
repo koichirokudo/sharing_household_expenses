@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:sharing_household_expenses/screens/settlement/settlement_detail_page.dart';
 import 'package:sharing_household_expenses/services/settlement_service.dart';
 import 'package:sharing_household_expenses/services/transaction_service.dart';
-import 'package:sharing_household_expenses/src/pages/settlement_detail_page.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 

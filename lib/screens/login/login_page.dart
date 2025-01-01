@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sharing_household_expenses/src/app.dart';
-import 'package:sharing_household_expenses/src/pages/user_register_page.dart';
+import 'package:sharing_household_expenses/app.dart';
+import 'package:sharing_household_expenses/screens/profile/user_register_page.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 

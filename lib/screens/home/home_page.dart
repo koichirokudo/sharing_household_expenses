@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:sharing_household_expenses/screens/group/first_group_invite_page.dart';
+import 'package:sharing_household_expenses/screens/profile/user_page.dart';
 import 'package:sharing_household_expenses/services/transaction_service.dart';
-import 'package:sharing_household_expenses/src/pages/first_group_invite_page.dart';
-import 'package:sharing_household_expenses/src/pages/user_page.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'login_page.dart';
+import '../login/login_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -31,20 +31,6 @@ class HomePageState extends State<HomePage> {
   String sharedExpenseAmount = '';
   String privateIncomeAmount = '';
   String privateExpenseAmount = '';
-
-  Future<void> _getProfiles() async {
-    try {
-      await Future.delayed(Duration(milliseconds: 700));
-      profiles = await supabase
-          .from('profiles')
-          .select()
-          .eq('group_id', profile['group_id']);
-    } catch (error) {
-      if (mounted) {
-        context.showSnackBarError(message: '$error');
-      }
-    }
-  }
 
   Future<void> _checkUserGroupStatus() async {
     final userId = supabase.auth.currentUser!.id;
@@ -122,7 +108,6 @@ class HomePageState extends State<HomePage> {
     _calcTotal();
   }
 
-  // TODO: サーバーからデータを取得する
   @override
   Widget build(BuildContext context) {
     return Scaffold(

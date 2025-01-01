@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:sharing_household_expenses/screens/group/group_invite_page.dart';
+import 'package:sharing_household_expenses/screens/policy/privacy_policy_page.dart';
+import 'package:sharing_household_expenses/screens/policy/terms_of_service_page.dart';
+import 'package:sharing_household_expenses/screens/profile/account_delete_page.dart';
+import 'package:sharing_household_expenses/screens/profile/email_change_page.dart';
+import 'package:sharing_household_expenses/screens/profile/password_reset_page.dart';
+import 'package:sharing_household_expenses/screens/profile/profile_edit_page.dart';
 import 'package:sharing_household_expenses/services/transaction_service.dart';
-import 'package:sharing_household_expenses/src/pages/account_delete_page.dart';
-import 'package:sharing_household_expenses/src/pages/email_change_page.dart';
-import 'package:sharing_household_expenses/src/pages/group_invite_page.dart';
-import 'package:sharing_household_expenses/src/pages/password_reset_page.dart';
-import 'package:sharing_household_expenses/src/pages/privacy_policy_page.dart';
-import 'package:sharing_household_expenses/src/pages/profile_edit_page.dart';
-import 'package:sharing_household_expenses/src/pages/terms_of_service_page.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
 
-import 'login_page.dart';
+import '../login/login_page.dart';
 
 class UserPage extends StatefulWidget {
   const UserPage({super.key});

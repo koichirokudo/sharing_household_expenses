@@ -10,6 +10,8 @@ CREATE TABLE categories (
 );
 
 ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE categories
+    ADD CONSTRAINT unique_name UNIQUE (name);
 
 CREATE POLICY "Enable access to authenticated users only"
 ON "public"."categories"

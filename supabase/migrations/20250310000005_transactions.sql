@@ -5,7 +5,7 @@ CREATE TABLE transactions (
     profile_id uuid NOT NULL REFERENCES profiles(id),
     group_id uuid NOT NULL REFERENCES user_groups(id),
     settlement_id integer REFERENCES settlements(id),
-    category_id integer NOT NULL REFERENCES categories(id),
+    sub_category_id integer NOT NULL REFERENCES sub_categories (id),
     name TEXT NOT NULL,
     date TIMESTAMP WITH TIME ZONE NOT NULL,
     type TEXT NOT NULL CHECK (type IN ('income', 'expense')), -- 'income', 'expense'
@@ -29,4 +29,4 @@ CREATE INDEX "transactions_id_index" ON "public"."transactions" ("id");
 CREATE INDEX "transactions_group_id_index" ON "public"."transactions" ("group_id");
 CREATE INDEX "transactions_profile_id_index" ON "public"."transactions" ("profile_id");
 CREATE INDEX "transactions_settlement_id_index" ON "public"."transactions" ("settlement_id");
-CREATE INDEX "transactions_category_id_index" ON "public"."transactions" ("category_id");
+CREATE INDEX "transactions_sub_category_id_index" ON "public"."transactions" ("sub_category_id");

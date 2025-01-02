@@ -355,9 +355,9 @@ class TransactionListPageState extends State<TransactionListPage> {
               },
               itemCount: months.length,
               itemBuilder: (context, index) {
-                final incomeTotal = context.convertToYenFormat(
+                final incomeTotal = convertToYenFormat(
                     amount: int.parse(_calculateTotal('income')));
-                final expenseTotal = context.convertToYenFormat(
+                final expenseTotal = convertToYenFormat(
                     amount: int.parse(_calculateTotal('expense')));
 
                 return _isLoading || _isSettlementLoading
@@ -538,7 +538,7 @@ class TransactionListPageState extends State<TransactionListPage> {
                                         double amount =
                                             transactions[index]['amount'];
                                         final displayAmount =
-                                            context.convertToYenFormat(
+                                            convertToYenFormat(
                                                 amount: amount.round());
                                         final date = DateTime.parse(
                                                 transactions[index]['date'])

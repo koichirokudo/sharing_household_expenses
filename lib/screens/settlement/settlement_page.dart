@@ -204,13 +204,13 @@ class SettlementPageState extends State<SettlementPage> {
       if (data['role'] == 'payer') {
         payer = data['username'];
         payerAvatarUrl = data['avatar_url'];
-        payerAmount = context.convertToYenFormat(amount: data['amount']);
-        payment = context.convertToYenFormat(amount: data['payments']);
+        payerAmount = convertToYenFormat(amount: data['amount']);
+        payment = convertToYenFormat(amount: data['payments']);
       } else if (data['role'] == 'payee') {
         payee = data['username'];
         payeeAvatarUrl = data['avatar_url'];
-        payeeAmount = context.convertToYenFormat(amount: data['amount']);
-        receive = context.convertToYenFormat(amount: data['payments']);
+        payeeAmount = convertToYenFormat(amount: data['amount']);
+        receive = convertToYenFormat(amount: data['payments']);
       }
     });
 
@@ -440,8 +440,7 @@ class SettlementPageState extends State<SettlementPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Text(
-                      '${context.convertToYenFormat(amount: paymentPerPerson)}'),
+                  Text(convertToYenFormat(amount: paymentPerPerson)),
                   const SizedBox(width: 16),
                 ],
               )
@@ -491,15 +490,13 @@ class SettlementPageState extends State<SettlementPage> {
     String pieChartCenterText = '';
     if (incomeExpenseType == 'expense' && selectedDataType == 'share') {
       pieChartCenterText =
-          '支払合計額: ${context.convertToYenFormat(amount: expenseTotal)}\n'
-          '割り勘金額: ${context.convertToYenFormat(amount: paymentPerPerson)}';
+          '支払合計額: ${convertToYenFormat(amount: expenseTotal)}\n'
+          '割り勘金額: ${convertToYenFormat(amount: paymentPerPerson)}';
     } else if (incomeExpenseType == 'expense' &&
         selectedDataType == 'private') {
-      pieChartCenterText =
-          '支払合計額: ${context.convertToYenFormat(amount: expenseTotal)}';
+      pieChartCenterText = '支払合計額: ${convertToYenFormat(amount: expenseTotal)}';
     } else if (incomeExpenseType == 'income') {
-      pieChartCenterText =
-          '収入合計額: ${context.convertToYenFormat(amount: incomeTotal)}';
+      pieChartCenterText = '収入合計額: ${convertToYenFormat(amount: incomeTotal)}';
     }
     return Scaffold(
       appBar: AppBar(
@@ -690,8 +687,8 @@ class SettlementPageState extends State<SettlementPage> {
                           itemCount: transactions.length,
                           itemBuilder: (context, index) {
                             double amount = transactions[index]['amount'];
-                            final displayAmount = context.convertToYenFormat(
-                                amount: amount.round());
+                            final displayAmount =
+                                convertToYenFormat(amount: amount.round());
                             final date =
                                 DateTime.parse(transactions[index]['date'])
                                     .toLocal();

@@ -301,9 +301,8 @@ class SettlementListPageState extends State<SettlementListPage> {
                                       amount = item['amount'];
                                     }
                                   }
-                                  final displayAmount =
-                                      context.convertToYenFormat(
-                                          amount: amount.round());
+                                  final displayAmount = convertToYenFormat(
+                                      amount: amount.round());
                                   final settlementDate =
                                       settlements[index]['settlement_date'];
                                   if (_selectedDataType == 'private') {
@@ -312,9 +311,9 @@ class SettlementListPageState extends State<SettlementListPage> {
                                     final expenseTotalAmount =
                                         settlements[index]
                                             ['expense_total_amount'];
-                                    incomeTotal = context.convertToYenFormat(
+                                    incomeTotal = convertToYenFormat(
                                         amount: incomeTotalAmount.round());
-                                    expenseTotal = context.convertToYenFormat(
+                                    expenseTotal = convertToYenFormat(
                                         amount: expenseTotalAmount.round());
                                   }
                                   return InkWell(

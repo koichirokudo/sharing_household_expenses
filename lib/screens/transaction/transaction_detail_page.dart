@@ -39,7 +39,7 @@ class TransactionDetailPageState extends State<TransactionDetailPage> {
     transaction = widget.transaction;
     profile = widget.profile;
     double amount = transaction['amount'];
-    displayAmount = context.convertToYenFormat(amount: amount.round());
+    displayAmount = convertToYenFormat(amount: amount.round());
     DateTime date = DateTime.parse(transaction['date']).toLocal();
     transactionDate = DateFormat('yyyy/MM/dd').format(date);
     isSettlement = widget.isSettlement;
@@ -241,9 +241,8 @@ class TransactionDetailPageState extends State<TransactionDetailPage> {
                                         isEdited = true;
                                         transaction = response;
                                         double amount = transaction['amount'];
-                                        displayAmount =
-                                            context.convertToYenFormat(
-                                                amount: amount.round());
+                                        displayAmount = convertToYenFormat(
+                                            amount: amount.round());
                                         DateTime date =
                                             DateTime.parse(transaction['date'])
                                                 .toLocal();

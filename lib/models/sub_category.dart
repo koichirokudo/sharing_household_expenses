@@ -1,16 +1,14 @@
 class SubCategory {
   final int id;
-  final int categoryId;
+  final int? parentId;
   final String name;
-  final String type;
   final DateTime createdAt;
   final DateTime updatedAt;
 
   SubCategory({
     required this.id,
-    required this.categoryId,
+    required this.parentId,
     required this.name,
-    required this.type,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -18,9 +16,8 @@ class SubCategory {
   factory SubCategory.fromMap(Map<String, dynamic> map) {
     return SubCategory(
       id: map['id'],
-      categoryId: map['category_id'],
+      parentId: map['category_id'],
       name: map['name'],
-      type: map['type'],
       createdAt: DateTime.parse(map['created_at']),
       updatedAt: DateTime.parse(map['updated_at']),
     );
@@ -29,10 +26,9 @@ class SubCategory {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
-      'category_id': categoryId,
+      'category_id': parentId,
       'name': name,
-      'type': type,
-      'created_at': createdAt.toIso8601String(),
+      'created_at': createdAt?.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
   }

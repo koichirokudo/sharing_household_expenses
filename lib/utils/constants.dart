@@ -23,6 +23,10 @@ DateTime convertYearToDateTime(String yearString) {
   return format.parse(yearString);
 }
 
+String convertToYenFormat({required int amount}) {
+  return NumberFormat.currency(locale: 'ja_JP', symbol: '¥').format(amount);
+}
+
 extension ShowSnackBar on BuildContext {
   void showSnackBar({
     required String message,
@@ -41,9 +45,5 @@ extension ShowSnackBar on BuildContext {
       message: message,
       backgroundColor: Theme.of(this).colorScheme.error,
     );
-  }
-
-  String convertToYenFormat({required int amount}) {
-    return NumberFormat.currency(locale: 'ja_JP', symbol: '¥').format(amount);
   }
 }

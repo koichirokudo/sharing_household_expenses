@@ -1,115 +1,64 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:sharing_household_expenses/screens/group/first_group_invite_page.dart';
-import 'package:sharing_household_expenses/screens/profile/user_page.dart';
-import 'package:sharing_household_expenses/services/transaction_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sharing_household_expenses/constants/transaction_type.dart';
+import 'package:sharing_household_expenses/providers/transaction_provider.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../login/login_page.dart';
-
-class HomePage extends StatefulWidget {
+class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
   @override
   HomePageState createState() => HomePageState();
 }
 
-class HomePageState extends State<HomePage> {
-  bool _isLoading = false;
-  final Session? session = supabase.auth.currentSession;
-  late TransactionService transactionService;
-  late List<Map<String, dynamic>> transactions = [];
-  late List<Map<String, dynamic>> profiles = [];
-  late Map<String, dynamic> profile = {};
-  final userId = supabase.auth.currentUser!.id;
-  double sharedIncome = 0;
-  double sharedExpense = 0;
-  double privateIncome = 0;
-  double privateExpense = 0;
-  String sharedIncomeAmount = '';
-  String sharedExpenseAmount = '';
-  String privateIncomeAmount = '';
-  String privateExpenseAmount = '';
-
-  Future<void> _checkUserGroupStatus() async {
-    final userId = supabase.auth.currentUser!.id;
-    try {
-      profile =
-          await supabase.from('profiles').select('*').eq('id', userId).single();
-
-      if (profile['group_id'] == null) {
-        if (mounted) {
-          Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const FirstGroupInvitePage()));
-        }
-      }
-    } on PostgrestException catch (error) {
-      if (mounted) {
-        context.showSnackBarError(message: '$error');
-      }
-    }
-  }
-
-  Future<void> _fetchTransactions() async {
-    try {
-      final currentMonth = DateFormat('yyyy/MM').format(DateTime.now());
-      final List<Map<String, dynamic>>? data =
-          await transactionService.fetchMonthlyData(
-              profile['group_id'], convertMonthToDateTime(currentMonth));
-      setState(() {
-        transactions = data ?? [];
-      });
-    } on PostgrestException catch (error) {
-      if (mounted) {
-        context.showSnackBarError(message: '$error');
-      }
-    }
-  }
-
-  void _calcTotal() {
-    for (var item in transactions) {
-      if (item['share'] == true) {
-        if (item['type'] == 'income') {
-          sharedIncome += item['amount'];
-        } else if (item['type'] == 'expense') {
-          sharedExpense += item['amount'];
-        }
-      } else {
-        if (item['type'] == 'income') {
-          privateIncome += item['amount'];
-        } else if (item['type'] == 'expense') {
-          privateExpense += item['amount'];
-        }
-      }
-    }
-    sharedIncomeAmount =
-        context.convertToYenFormat(amount: sharedIncome.round());
-    sharedExpenseAmount =
-        context.convertToYenFormat(amount: sharedExpense.round());
-    privateIncomeAmount =
-        context.convertToYenFormat(amount: privateIncome.round());
-    privateExpenseAmount =
-        context.convertToYenFormat(amount: privateExpense.round());
-  }
-
+class HomePageState extends ConsumerState<HomePage> {
   @override
   void initState() {
-    super.initState;
-    transactionService = TransactionService(supabase);
-    _initializeData();
+    super.initState();
+    Future.microtask(() async {
+      final userId = supabase.auth.currentUser!.id;
+      final profile =
+          await supabase.from('profiles').select('*').eq('id', userId).single();
+      final transactionNotifier = ref.watch(transactionProvider.notifier);
+      final currentMonth = DateTime.now();
+      await transactionNotifier.fetchMonthlyTransactions(
+          profile['group_id'], currentMonth);
+    });
   }
 
-  Future<void> _initializeData() async {
-    await _checkUserGroupStatus();
-    await _fetchTransactions();
-    _calcTotal();
-  }
+  // Future<void> _checkUserGroupStatus() async {
+  //   final userId = supabase.auth.currentUser!.id;
+  //   try {
+  //     profile =
+  //         await supabase.from('profiles').select('*').eq('id', userId).single();
+  //
+  //     if (profile['group_id'] == null) {
+  //       if (mounted) {
+  //         Navigator.pushReplacement(
+  //             context,
+  //             MaterialPageRoute(
+  //                 builder: (context) => const FirstGroupInvitePage()));
+  //       }
+  //     }
+  //   } on PostgrestException catch (error) {
+  //     if (mounted) {
+  //       context.showSnackBarError(message: '$error');
+  //     }
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
+    final state = ref.watch(transactionProvider);
+    final sharedIncome =
+        state.sharedTotalAmounts[TransactionType.income]!.round();
+    final sharedExpense =
+        state.sharedTotalAmounts[TransactionType.expense]!.round();
+    final privateIncome =
+        state.privateTotalAmounts[TransactionType.income]!.round();
+    final privateExpense =
+        state.privateTotalAmounts[TransactionType.expense]!.round();
+
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -117,20 +66,20 @@ class HomePageState extends State<HomePage> {
         title: const Text('シェア家計簿'),
         actions: [
           // ログイン状態によって表示を変えるアカウントボタンまたはログインボタン
-          IconButton(
-            icon: session != null
-                ? const Icon(Icons.account_circle)
-                : const Icon(Icons.login),
-            onPressed: () {
-              if (session != null) {
-                Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => const UserPage()));
-              } else {
-                Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => const LoginPage()));
-              }
-            },
-          ),
+          // IconButton(
+          //   icon: session != null
+          //       ? const Icon(Icons.account_circle)
+          //       : const Icon(Icons.login),
+          //   onPressed: () {
+          //     if (session != null) {
+          //       Navigator.of(context).push(
+          //           MaterialPageRoute(builder: (context) => const UserPage()));
+          //     } else {
+          //       Navigator.of(context).push(
+          //           MaterialPageRoute(builder: (context) => const LoginPage()));
+          //     }
+          //   },
+          // ),
         ],
       ),
       body: SingleChildScrollView(
@@ -192,7 +141,7 @@ class HomePageState extends State<HomePage> {
                       ],
                     ),
                     Text(
-                      sharedIncomeAmount,
+                      convertToYenFormat(amount: sharedIncome),
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -226,7 +175,7 @@ class HomePageState extends State<HomePage> {
                       ],
                     ),
                     Text(
-                      sharedExpenseAmount,
+                      convertToYenFormat(amount: sharedExpense),
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -287,7 +236,7 @@ class HomePageState extends State<HomePage> {
                       ],
                     ),
                     Text(
-                      privateIncomeAmount,
+                      convertToYenFormat(amount: privateIncome),
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -321,7 +270,7 @@ class HomePageState extends State<HomePage> {
                       ],
                     ),
                     Text(
-                      privateExpenseAmount,
+                      convertToYenFormat(amount: privateExpense),
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,

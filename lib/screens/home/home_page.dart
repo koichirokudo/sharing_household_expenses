@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sharing_household_expenses/constants/transaction_type.dart';
+import 'package:sharing_household_expenses/providers/auth_provider.dart';
 import 'package:sharing_household_expenses/providers/transaction_provider.dart';
+import 'package:sharing_household_expenses/screens/sign_in/sign_in.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
+
+import '../profile/user_page.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -50,6 +54,7 @@ class HomePageState extends ConsumerState<HomePage> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(transactionProvider);
+    final auth = ref.watch(authProvider);
     final sharedIncome =
         state.sharedTotalAmounts[TransactionType.income]!.round();
     final sharedExpense =
@@ -66,20 +71,20 @@ class HomePageState extends ConsumerState<HomePage> {
         title: const Text('シェア家計簿'),
         actions: [
           // ログイン状態によって表示を変えるアカウントボタンまたはログインボタン
-          // IconButton(
-          //   icon: session != null
-          //       ? const Icon(Icons.account_circle)
-          //       : const Icon(Icons.login),
-          //   onPressed: () {
-          //     if (session != null) {
-          //       Navigator.of(context).push(
-          //           MaterialPageRoute(builder: (context) => const UserPage()));
-          //     } else {
-          //       Navigator.of(context).push(
-          //           MaterialPageRoute(builder: (context) => const LoginPage()));
-          //     }
-          //   },
-          // ),
+          IconButton(
+            icon: auth.session != null
+                ? const Icon(Icons.account_circle)
+                : const Icon(Icons.login),
+            onPressed: () {
+              if (auth.session != null) {
+                Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const UserPage()));
+              } else {
+                Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => const SignInPage()));
+              }
+            },
+          ),
         ],
       ),
       body: SingleChildScrollView(

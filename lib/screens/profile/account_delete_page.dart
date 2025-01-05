@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:sharing_household_expenses/screens/sign_in/sign_in.dart';
 import 'package:sharing_household_expenses/services/profile_service.dart';
 import 'package:sharing_household_expenses/services/transaction_service.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
-import '../login/login_page.dart';
 
 class AccountDeletePage extends StatefulWidget {
   const AccountDeletePage({super.key});
@@ -52,7 +51,7 @@ class AccountDeletePageState extends State<AccountDeletePage> {
         context.showSnackBar(
             message: 'アカウントを削除しました', backgroundColor: Colors.green);
         Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const LoginPage()),
+            MaterialPageRoute(builder: (context) => const SignInPage()),
             (route) => false);
       }
     } on PostgrestException catch (error) {

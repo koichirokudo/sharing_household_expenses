@@ -1,38 +1,41 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sharing_household_expenses/app.dart';
 import 'package:sharing_household_expenses/screens/profile/user_register_page.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+import '../../providers/auth_provider.dart';
+
+class SignInPage extends ConsumerStatefulWidget {
+  const SignInPage({super.key});
 
   @override
-  LoginPageState createState() => LoginPageState();
+  SignInPageState createState() => SignInPageState();
 }
 
-class LoginPageState extends State<LoginPage> {
-  bool _isObscure = true;
-  bool _isLoading = false;
-
+class SignInPageState extends ConsumerState<SignInPage> {
   final _formKey = GlobalKey<FormState>();
-
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _isObscure = true;
+  bool _isLoading = false;
 
   Future<void> _signIn() async {
     final isValid = _formKey.currentState!.validate();
     if (!isValid) {
       return;
     }
+
     try {
       setState(() {
         _isLoading = true;
       });
       // ログイン処理
-      await supabase.auth.signInWithPassword(
-          email: _emailController.text.trim(),
-          password: _passwordController.text.trim());
+      ref.watch(authProvider.notifier).signIn(
+            email: _emailController.text.trim(),
+            password: _passwordController.text.trim(),
+          );
 
       if (mounted) {
         context.showSnackBar(

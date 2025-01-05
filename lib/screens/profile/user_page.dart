@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sharing_household_expenses/providers/auth_provider.dart';
 import 'package:sharing_household_expenses/screens/group/group_invite_page.dart';
 import 'package:sharing_household_expenses/screens/policy/privacy_policy_page.dart';
 import 'package:sharing_household_expenses/screens/policy/terms_of_service_page.dart';
@@ -6,21 +8,21 @@ import 'package:sharing_household_expenses/screens/profile/account_delete_page.d
 import 'package:sharing_household_expenses/screens/profile/email_change_page.dart';
 import 'package:sharing_household_expenses/screens/profile/password_reset_page.dart';
 import 'package:sharing_household_expenses/screens/profile/profile_edit_page.dart';
+import 'package:sharing_household_expenses/screens/sign_in/sign_in.dart';
 import 'package:sharing_household_expenses/services/transaction_service.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
 
-import '../login/login_page.dart';
-
-class UserPage extends StatefulWidget {
+class UserPage extends ConsumerStatefulWidget {
   const UserPage({super.key});
 
   @override
   UserPageState createState() => UserPageState();
 }
 
-class UserPageState extends State<UserPage> {
+class UserPageState extends ConsumerState {
   late TransactionService transactionService;
 
+  @override
   void initState() {
     super.initState;
     transactionService = TransactionService(supabase);
@@ -154,10 +156,10 @@ class UserPageState extends State<UserPage> {
                 ),
                 onPressed: () {
                   transactionService.clearAllCache();
-                  supabase.auth.signOut();
+                  ref.watch(authProvider.notifier).signOut();
                   Navigator.of(context).pushAndRemoveUntil(
                       MaterialPageRoute(
-                          builder: (context) => const LoginPage()),
+                          builder: (context) => const SignInPage()),
                       (route) => false);
                 },
                 child: const Text('ログアウト'),

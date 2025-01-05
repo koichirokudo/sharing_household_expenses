@@ -1,3 +1,4 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../utils/constants.dart';
@@ -28,5 +29,28 @@ class AuthRepository {
         .eq('id', userId)
         .select()
         .single();
+  }
+
+  // ユーザー情報更新
+  Future<UserResponse?> updateUser({String? email, String? password}) async {
+    if (email != null) {
+      return await supabase.auth.updateUser(
+        UserAttributes(email: email),
+        emailRedirectTo: '${dotenv.get('SCHEME')}://change-email/',
+      );
+    } else if (password != null) {
+      return await supabase.auth.updateUser(
+        UserAttributes(password: password),
+      );
+    }
+    return null;
+  }
+
+  // 指定したメールアドレスへリセットメールを送信
+  Future<void> sendResetPasswordEmail({required String email}) async {
+    await supabase.auth.resetPasswordForEmail(
+      email,
+      redirectTo: '${dotenv.get('SCHEME')}://reset-password/',
+    );
   }
 }

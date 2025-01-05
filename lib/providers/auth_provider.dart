@@ -13,6 +13,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   AuthNotifier(this.repository)
       : super(AuthState(
           isAuthenticated: supabase.auth.currentUser != null,
+          user: supabase.auth.currentUser,
           session: supabase.auth.currentSession,
           profile: null,
         ));
@@ -73,6 +74,30 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } catch (e) {
       throw Exception(
           'Failed to update profile:  ${e.runtimeType} - ${e.toString()}');
+    }
+  }
+
+  Future<void> updateUser({String? email, String? password}) async {
+    try {
+      final response =
+          await repository.updateUser(email: email, password: password);
+      if (response != null) {
+        state = state.copyWith(user: response.user);
+      } else {
+        throw Exception('ユーザー情報の更新に失敗しました');
+      }
+    } catch (e) {
+      throw Exception(
+          'Failed to update user:  ${e.runtimeType} - ${e.toString()}');
+    }
+  }
+
+  Future<void> sendResetPasswordEmail({required String email}) async {
+    try {
+      await repository.sendResetPasswordEmail(email: email);
+    } catch (e) {
+      throw Exception(
+          'Failed to send reset password email:  ${e.runtimeType} - ${e.toString()}');
     }
   }
 }

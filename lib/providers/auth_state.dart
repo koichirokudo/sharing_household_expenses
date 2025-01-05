@@ -8,6 +8,7 @@ class AuthState with _$AuthState {
   const factory AuthState({
     required bool isAuthenticated,
     required Session? session,
+    required User? user,
     required Map<String, dynamic>? profile,
   }) = _AuthState;
 }

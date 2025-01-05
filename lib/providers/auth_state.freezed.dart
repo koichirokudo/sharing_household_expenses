@@ -20,6 +20,8 @@ mixin _$AuthState {
 
   Session? get session => throw _privateConstructorUsedError;
 
+  User? get user => throw _privateConstructorUsedError;
+
   Map<String, dynamic>? get profile => throw _privateConstructorUsedError;
 
   /// Create a copy of AuthState
@@ -36,7 +38,10 @@ abstract class $AuthStateCopyWith<$Res> {
 
   @useResult
   $Res call(
-      {bool isAuthenticated, Session? session, Map<String, dynamic>? profile});
+      {bool isAuthenticated,
+      Session? session,
+      User? user,
+      Map<String, dynamic>? profile});
 }
 
 /// @nodoc
@@ -57,6 +62,7 @@ class _$AuthStateCopyWithImpl<$Res, $Val extends AuthState>
   $Res call({
     Object? isAuthenticated = null,
     Object? session = freezed,
+    Object? user = freezed,
     Object? profile = freezed,
   }) {
     return _then(_value.copyWith(
@@ -68,6 +74,10 @@ class _$AuthStateCopyWithImpl<$Res, $Val extends AuthState>
           ? _value.session
           : session // ignore: cast_nullable_to_non_nullable
               as Session?,
+      user: freezed == user
+          ? _value.user
+          : user // ignore: cast_nullable_to_non_nullable
+              as User?,
       profile: freezed == profile
           ? _value.profile
           : profile // ignore: cast_nullable_to_non_nullable
@@ -86,7 +96,10 @@ abstract class _$$AuthStateImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {bool isAuthenticated, Session? session, Map<String, dynamic>? profile});
+      {bool isAuthenticated,
+      Session? session,
+      User? user,
+      Map<String, dynamic>? profile});
 }
 
 /// @nodoc
@@ -104,6 +117,7 @@ class __$$AuthStateImplCopyWithImpl<$Res>
   $Res call({
     Object? isAuthenticated = null,
     Object? session = freezed,
+    Object? user = freezed,
     Object? profile = freezed,
   }) {
     return _then(_$AuthStateImpl(
@@ -115,6 +129,10 @@ class __$$AuthStateImplCopyWithImpl<$Res>
           ? _value.session
           : session // ignore: cast_nullable_to_non_nullable
               as Session?,
+      user: freezed == user
+          ? _value.user
+          : user // ignore: cast_nullable_to_non_nullable
+              as User?,
       profile: freezed == profile
           ? _value._profile
           : profile // ignore: cast_nullable_to_non_nullable
@@ -129,6 +147,7 @@ class _$AuthStateImpl implements _AuthState {
   const _$AuthStateImpl(
       {required this.isAuthenticated,
       required this.session,
+      required this.user,
       required final Map<String, dynamic>? profile})
       : _profile = profile;
 
@@ -136,6 +155,8 @@ class _$AuthStateImpl implements _AuthState {
   final bool isAuthenticated;
   @override
   final Session? session;
+  @override
+  final User? user;
   final Map<String, dynamic>? _profile;
 
   @override
@@ -149,7 +170,7 @@ class _$AuthStateImpl implements _AuthState {
 
   @override
   String toString() {
-    return 'AuthState(isAuthenticated: $isAuthenticated, session: $session, profile: $profile)';
+    return 'AuthState(isAuthenticated: $isAuthenticated, session: $session, user: $user, profile: $profile)';
   }
 
   @override
@@ -160,11 +181,12 @@ class _$AuthStateImpl implements _AuthState {
             (identical(other.isAuthenticated, isAuthenticated) ||
                 other.isAuthenticated == isAuthenticated) &&
             (identical(other.session, session) || other.session == session) &&
+            (identical(other.user, user) || other.user == user) &&
             const DeepCollectionEquality().equals(other._profile, _profile));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, isAuthenticated, session,
+  int get hashCode => Object.hash(runtimeType, isAuthenticated, session, user,
       const DeepCollectionEquality().hash(_profile));
 
   /// Create a copy of AuthState
@@ -180,6 +202,7 @@ abstract class _AuthState implements AuthState {
   const factory _AuthState(
       {required final bool isAuthenticated,
       required final Session? session,
+      required final User? user,
       required final Map<String, dynamic>? profile}) = _$AuthStateImpl;
 
   @override
@@ -187,6 +210,9 @@ abstract class _AuthState implements AuthState {
 
   @override
   Session? get session;
+
+  @override
+  User? get user;
 
   @override
   Map<String, dynamic>? get profile;

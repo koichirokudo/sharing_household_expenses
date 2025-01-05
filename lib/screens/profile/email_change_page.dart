@@ -1,29 +1,39 @@
 import 'package:app_links/app_links.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
-class EmailChangePage extends StatefulWidget {
+import '../../providers/auth_provider.dart';
+
+class EmailChangePage extends ConsumerStatefulWidget {
   const EmailChangePage({super.key});
 
   @override
   EmailChangePageState createState() => EmailChangePageState();
 }
 
-class EmailChangePageState extends State<EmailChangePage> {
+class EmailChangePageState extends ConsumerState<EmailChangePage> {
   bool _isLoading = false;
   bool _isAuthEmail = false;
   final _fromKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _confirmEmailController = TextEditingController();
 
+  @override
+  void initState() {
+    super.initState();
+    _handleIncomingLinks();
+  }
+
   Future<void> _updateEmail() async {
     final isValid = _fromKey.currentState!.validate();
     if (!isValid) {
       return;
     }
-    final user = supabase.auth.currentUser;
+
+    final auth = ref.watch(authProvider);
+    final user = auth.user;
+
     if (user == null || user.email == null) {
       context.showSnackBarError(message: 'ログインが必要です');
       return;
@@ -34,20 +44,18 @@ class EmailChangePageState extends State<EmailChangePage> {
     });
 
     try {
-      final UserResponse res = await supabase.auth.updateUser(
-          UserAttributes(
-            email: _emailController.text.trim(),
-          ),
-          emailRedirectTo: kIsWeb
-              ? null
-              : 'io.supabase.sharinghouseholdexpenses://change-email/');
+      await ref
+          .watch(authProvider.notifier)
+          .updateUser(email: _emailController.text.trim());
+
       if (mounted) {
         context.showSnackBar(
             message: '指定したメールアドレスにメールを送信しました', backgroundColor: Colors.green);
       }
-    } on AuthException catch (error) {
+    } catch (e) {
       if (mounted) {
-        context.showSnackBarError(message: '$error');
+        context.showSnackBarError(
+            message: 'メールアドレス変更中にエラーが発生しました: ${e.toString()}');
       }
     } finally {
       setState(() {
@@ -60,9 +68,7 @@ class EmailChangePageState extends State<EmailChangePage> {
     final appLinks = AppLinks();
     appLinks.uriLinkStream.listen((Uri? uri) {
       if (uri != null && uri.host == 'change-email') {
-        setState(() {
-          _isAuthEmail = true;
-        });
+        _isAuthEmail = true;
         if (mounted) {
           context.showSnackBar(
               message: 'メールアドレスを変更しました', backgroundColor: Colors.green);
@@ -70,12 +76,6 @@ class EmailChangePageState extends State<EmailChangePage> {
         }
       }
     });
-  }
-
-  @override
-  void initState() {
-    super.initState;
-    _handleIncomingLinks();
   }
 
   @override

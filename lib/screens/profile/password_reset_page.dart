@@ -1,42 +1,50 @@
 import 'package:app_links/app_links.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sharing_household_expenses/providers/auth_provider.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
-class PasswordResetPage extends StatefulWidget {
+class PasswordResetPage extends ConsumerStatefulWidget {
   const PasswordResetPage({super.key});
 
   @override
   PasswordResetPageState createState() => PasswordResetPageState();
 }
 
-class PasswordResetPageState extends State<PasswordResetPage> {
+class PasswordResetPageState extends ConsumerState<PasswordResetPage> {
   bool _isObscure = true;
   bool _isLoading = false;
   bool _isAuthEmail = false;
   final _fromKey = GlobalKey<FormState>();
   final _passwordController = TextEditingController();
 
+  @override
+  void initState() {
+    super.initState;
+    _handleIncomingLinks();
+  }
+
   Future<void> _resetPassword() async {
-    final user = supabase.auth.currentUser;
-    if (user == null || user.email == null) {
+    final auth = ref.watch(authProvider);
+    final user = auth.user;
+    final email = user?.email;
+
+    if (user == null || email == null) {
       context.showSnackBarError(message: 'ログインが必要です');
       return;
     }
-    final email = supabase.auth.currentUser!.email;
+
     try {
-      await supabase.auth.resetPasswordForEmail(email!,
-          redirectTo: kIsWeb
-              ? null
-              : 'io.supabase.sharinghouseholdexpenses://reset-password/');
+      await ref
+          .watch(authProvider.notifier)
+          .sendResetPasswordEmail(email: email);
       if (mounted) {
         context.showSnackBar(
             message: 'リセットメールを送信しました', backgroundColor: Colors.green);
       }
-    } on AuthException catch (error) {
+    } catch (e) {
       if (mounted) {
-        context.showSnackBarError(message: '$error');
+        context.showSnackBarError(message: '$e');
       }
     }
   }
@@ -52,17 +60,20 @@ class PasswordResetPageState extends State<PasswordResetPage> {
     });
 
     try {
-      await supabase.auth.updateUser(UserAttributes(
-        password: _passwordController.text.trim(),
-      ));
+      await ref
+          .watch(authProvider.notifier)
+          .updateUser(password: _passwordController.text);
       _passwordController.clear();
       if (mounted) {
         context.showSnackBar(
             message: 'パスワードを変更しました', backgroundColor: Colors.green);
         Navigator.pop(context);
       }
-    } on PostgrestException catch (error) {
-      if (mounted) context.showSnackBarError(message: '$error');
+    } catch (e) {
+      if (mounted) {
+        context.showSnackBarError(
+            message: 'パスワード変更中にエラーが発生しました: ${e.toString()}');
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -88,12 +99,6 @@ class PasswordResetPageState extends State<PasswordResetPage> {
         });
       }
     });
-  }
-
-  @override
-  void initState() {
-    super.initState;
-    _handleIncomingLinks();
   }
 
   @override

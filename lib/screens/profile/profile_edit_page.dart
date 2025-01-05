@@ -1,44 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:sharing_household_expenses/services/profile_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sharing_household_expenses/providers/auth_provider.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
 import 'package:sharing_household_expenses/widgets/avatar.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
-class ProfileEditPage extends StatefulWidget {
+class ProfileEditPage extends ConsumerStatefulWidget {
   const ProfileEditPage({super.key});
 
   @override
   ProfileEditPageState createState() => ProfileEditPageState();
 }
 
-class ProfileEditPageState extends State<ProfileEditPage> {
-  bool _isLoading = true;
-  String? _avatarUrl;
-  late final ProfileService profileService;
+class ProfileEditPageState extends ConsumerState<ProfileEditPage> {
+  bool _isLoading = false;
   final _fromKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
 
-  Future<void> _getProfile() async {
-    setState(() {
-      _isLoading = true;
-    });
-    try {
-      final data = await profileService.fetchProfile();
-      _usernameController.text = (data['username'] ?? '') as String;
-      _avatarUrl = (data['avatar_url'] ?? '') as String;
-    } on PostgrestException catch (error) {
-      if (mounted) {
-        context.showSnackBarError(message: '$error');
-      }
-    } catch (error) {
-      if (mounted) {
-        context.showSnackBarError(message: '$error');
-      }
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
+  @override
+  void initState() {
+    super.initState();
+    final auth = ref.read(authProvider);
+    _usernameController.text = auth.profile?['username'] ?? '';
   }
 
   Future<void> _updateProfile() async {
@@ -47,24 +29,53 @@ class ProfileEditPageState extends State<ProfileEditPage> {
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
-
-    final userName = _usernameController.text.trim();
-    final userId = supabase.auth.currentUser!.id;
-    final updates = {
-      'username': userName,
-      'updated_at': DateTime.now().toIso8601String(),
-    };
-
     try {
-      await profileService.updateProfile(userId, updates);
+      setState(() {
+        _isLoading = true;
+      });
+
+      final userName = _usernameController.text.trim();
+      final updates = {
+        'username': userName,
+        'updated_at': DateTime.now().toIso8601String(),
+      };
+
+      ref.watch(authProvider.notifier).updateProfile(updates);
+
       if (mounted) {
         context.showSnackBar(message: '更新しました', backgroundColor: Colors.green);
+        setState(() {
+          _isLoading = false;
+        });
       }
-    } on PostgrestException catch (error) {
-      if (mounted) context.showSnackBarError(message: '$error');
+    } catch (e) {
+      if (mounted) {
+        context.showSnackBarError(
+            message: 'プロフィール更新中にエラーが発生しました: ${e.toString()}');
+      }
+    }
+  }
+
+  Future<void> _onUpload(String imageUrl, String avatarFileName) async {
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+
+      final updates = {
+        'avatar_url': imageUrl,
+        'avatar_filename': avatarFileName,
+      };
+
+      ref.watch(authProvider.notifier).updateProfile(updates);
+
+      if (mounted) {
+        context.showSnackBar(
+            message: '画像をアップロードしました', backgroundColor: Colors.green);
+      }
+    } catch (e) {
+      context.showSnackBarError(
+          message: '画像アップロード中にエラーが発生しました:  ${e.toString()}');
     } finally {
       if (mounted) {
         setState(() {
@@ -72,43 +83,6 @@ class ProfileEditPageState extends State<ProfileEditPage> {
         });
       }
     }
-  }
-
-  Future<void> _onUpload(String imageUrl, String avatarFileName) async {
-    try {
-      final userId = supabase.auth.currentUser!.id;
-      final updates = {
-        'avatar_url': imageUrl,
-        'avatar_filename': avatarFileName,
-      };
-
-      await profileService.updateProfile(userId, updates);
-
-      if (mounted) {
-        context.showSnackBar(
-            message: '画像をアップロードしました', backgroundColor: Colors.green);
-      }
-    } on PostgrestException catch (error) {
-      if (mounted) context.showSnackBarError(message: '$error');
-    } catch (error) {
-      if (mounted) {
-        context.showSnackBarError(message: 'Unexpected error occurred');
-      }
-    }
-    if (!mounted) {
-      return;
-    }
-
-    setState(() {
-      _avatarUrl = imageUrl;
-    });
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    profileService = ProfileService(supabase);
-    _getProfile();
   }
 
   @override
@@ -119,6 +93,7 @@ class ProfileEditPageState extends State<ProfileEditPage> {
 
   @override
   Widget build(BuildContext context) {
+    final auth = ref.watch(authProvider);
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -138,7 +113,9 @@ class ProfileEditPageState extends State<ProfileEditPage> {
               child: Column(
                 children: [
                   const SizedBox(height: 16),
-                  Avatar(imageUrl: _avatarUrl, onUpload: _onUpload),
+                  Avatar(
+                      imageUrl: auth.profile?['avatar_url'],
+                      onUpload: _onUpload),
                   const SizedBox(height: 32),
                   TextFormField(
                     controller: _usernameController,

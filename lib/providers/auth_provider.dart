@@ -17,35 +17,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
           profile: null,
         ));
 
-  Future<void> fetchProfile() async {
-    try {
-      final userId = state.session?.user.id;
-      if (userId == null) {
-        throw Exception('Unable to obtain user id');
-      }
-
-      final response = await repository.fetchProfile(userId);
-
-      if (response.isEmpty) {
-        throw Exception('Not found profile');
-      }
-
-      state = state.copyWith(profile: response);
-    } catch (e) {
-      throw Exception('Failed to fetch profile: $e');
-    }
-  }
-
   Future<void> signIn({required String email, required String password}) async {
     try {
       final response = await repository.signIn(email, password);
       if (response.session != null) {
         state = state.copyWith(session: response.session);
       } else {
-        throw Exception('Session data is null');
+        throw Exception('セッションを取得できませんでした');
       }
     } catch (e) {
-      throw Exception('Failed to sign in: $e');
+      throw Exception('Failed to sign in: ${e.runtimeType} - ${e.toString()}');
     }
   }
 
@@ -55,7 +36,43 @@ class AuthNotifier extends StateNotifier<AuthState> {
       state =
           state.copyWith(isAuthenticated: false, session: null, profile: null);
     } catch (e) {
-      throw Exception('Failed to sign out: $e');
+      throw Exception('Failed to sign out: ${e.runtimeType} - ${e.toString()}');
+    }
+  }
+
+  Future<void> fetchProfile() async {
+    try {
+      final userId = state.session?.user.id;
+      if (userId == null) {
+        throw Exception('ユーザーIDが取得できませんでした');
+      }
+
+      final response = await repository.fetchProfile(userId);
+
+      if (response.isEmpty) {
+        throw Exception('プロフィールを取得できませんでした');
+      }
+
+      state = state.copyWith(profile: response);
+    } catch (e) {
+      throw Exception(
+          'Failed to fetch profile: ${e.runtimeType} - ${e.toString()}');
+    }
+  }
+
+  Future<void> updateProfile(Map<String, dynamic> data) async {
+    try {
+      final userId = state.session?.user.id;
+      if (userId == null) {
+        throw Exception('ユーザーIDが取得できませんでした');
+      }
+
+      final response = await repository.updateProfile(userId, data);
+
+      state = state.copyWith(profile: response);
+    } catch (e) {
+      throw Exception(
+          'Failed to update profile:  ${e.runtimeType} - ${e.toString()}');
     }
   }
 }

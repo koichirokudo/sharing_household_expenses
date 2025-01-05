@@ -20,13 +20,15 @@ class HomePageState extends ConsumerState<HomePage> {
   void initState() {
     super.initState();
     Future.microtask(() async {
-      final userId = supabase.auth.currentUser!.id;
-      final profile =
-          await supabase.from('profiles').select('*').eq('id', userId).single();
+      final authNotifier = ref.watch(authProvider.notifier);
+      await authNotifier.fetchProfile();
+      final auth = ref.watch(authProvider);
       final transactionNotifier = ref.watch(transactionProvider.notifier);
       final currentMonth = DateTime.now();
-      await transactionNotifier.fetchMonthlyTransactions(
-          profile['group_id'], currentMonth);
+      if (auth.profile != null) {
+        await transactionNotifier.fetchMonthlyTransactions(
+            auth.profile?['group_id'], currentMonth);
+      }
     });
   }
 

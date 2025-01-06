@@ -22,9 +22,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       final response = await repository.signIn(email, password);
       if (response.session != null) {
-        state = state.copyWith(session: response.session);
+        state = state.copyWith(session: response.session, user: response.user);
       } else {
-        throw Exception('セッションを取得できませんでした');
+        throw Exception('セッションを取得できません');
       }
     } catch (e) {
       throw Exception('Failed to sign in: ${e.runtimeType} - ${e.toString()}');
@@ -34,8 +34,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> signOut() async {
     try {
       await repository.signOut();
-      state =
-          state.copyWith(isAuthenticated: false, session: null, profile: null);
+      state = state.copyWith(
+          isAuthenticated: false, session: null, profile: null, user: null);
     } catch (e) {
       throw Exception('Failed to sign out: ${e.runtimeType} - ${e.toString()}');
     }
@@ -43,15 +43,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> fetchProfile() async {
     try {
-      final userId = state.session?.user.id;
+      final userId = state.user?.id;
       if (userId == null) {
-        throw Exception('ユーザーIDが取得できませんでした');
+        throw Exception('ユーザーIDが取得できません');
       }
 
       final response = await repository.fetchProfile(userId);
 
       if (response.isEmpty) {
-        throw Exception('プロフィールを取得できませんでした');
+        throw Exception('プロフィールを取得できません');
       }
 
       state = state.copyWith(profile: response);
@@ -63,9 +63,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> updateProfile(Map<String, dynamic> data) async {
     try {
-      final userId = state.session?.user.id;
+      final userId = state.user?.id;
       if (userId == null) {
-        throw Exception('ユーザーIDが取得できませんでした');
+        throw Exception('ユーザーIDが取得できません');
       }
 
       final response = await repository.updateProfile(userId, data);

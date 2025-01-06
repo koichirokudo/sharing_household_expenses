@@ -32,7 +32,7 @@ class SignInPageState extends ConsumerState<SignInPage> {
         _isLoading = true;
       });
       // ログイン処理
-      ref.watch(authProvider.notifier).signIn(
+      await ref.watch(authProvider.notifier).signIn(
             email: _emailController.text.trim(),
             password: _passwordController.text.trim(),
           );

@@ -46,6 +46,16 @@ class AuthRepository {
     return null;
   }
 
+  // ユーザーの削除
+  Future<bool> deleteUser() async {
+    final response = await supabase.functions.invoke('delete-user');
+    if (response.data['success'] == true) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   // 指定したメールアドレスへリセットメールを送信
   Future<void> sendResetPasswordEmail({required String email}) async {
     await supabase.auth.resetPasswordForEmail(

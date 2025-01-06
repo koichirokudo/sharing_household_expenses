@@ -92,6 +92,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  Future<bool> deleteUser() async {
+    try {
+      final response = await repository.deleteUser();
+      return response;
+    } catch (e) {
+      throw Exception(
+          'Failed to delete user:  ${e.runtimeType} - ${e.toString()}');
+    }
+  }
+
   Future<void> sendResetPasswordEmail({required String email}) async {
     try {
       await repository.sendResetPasswordEmail(email: email);

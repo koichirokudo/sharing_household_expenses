@@ -1,72 +1,52 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sharing_household_expenses/providers/auth_provider.dart';
 import 'package:sharing_household_expenses/screens/sign_in/sign_in.dart';
-import 'package:sharing_household_expenses/services/profile_service.dart';
-import 'package:sharing_household_expenses/services/transaction_service.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
-class AccountDeletePage extends StatefulWidget {
+class AccountDeletePage extends ConsumerStatefulWidget {
   const AccountDeletePage({super.key});
 
   @override
   AccountDeletePageState createState() => AccountDeletePageState();
 }
 
-class AccountDeletePageState extends State<AccountDeletePage> {
+class AccountDeletePageState extends ConsumerState<AccountDeletePage> {
   bool _isLoading = false;
   late Map<String, dynamic> profile;
-  late final ProfileService profileService;
-  late final TransactionService transactionService;
 
-  Future<void> _getProfile() async {
+  Future<void> _accountDelete() async {
+    final authNotifier = ref.watch(authProvider.notifier);
     setState(() {
       _isLoading = true;
     });
+
     try {
-      profile = await profileService.fetchProfile();
-    } on PostgrestException catch (error) {
-      if (mounted) {
-        context.showSnackBarError(message: '$error');
+      final response = await authNotifier.deleteUser();
+      if (response == true) {
+        await authNotifier.signOut();
+      } else {
+        throw Exception('アカウントの削除に失敗しました');
       }
-    } catch (error) {
+
       if (mounted) {
-        context.showSnackBarError(message: '$error');
+        context.showSnackBar(
+          message: 'アカウントを削除しました。ご利用ありがとうございました',
+          backgroundColor: Colors.green,
+        );
+        Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const SignInPage()),
+            (route) => false);
+      }
+    } catch (e) {
+      if (mounted) {
+        context.showSnackBar(message: 'アカウント削除中にエラーが発生しました: ${e.toString()}');
       }
     } finally {
       setState(() {
         _isLoading = false;
       });
     }
-  }
-
-  Future<void> _accountDelete() async {
-    try {
-      transactionService.clearAllCache();
-      final response = await supabase.functions.invoke("delete-user");
-      if (response.data['success'] == true) {
-        await supabase.auth.signOut();
-      }
-
-      if (mounted) {
-        context.showSnackBar(
-            message: 'アカウントを削除しました', backgroundColor: Colors.green);
-        Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (context) => const SignInPage()),
-            (route) => false);
-      }
-    } on PostgrestException catch (error) {
-      if (mounted) {
-        context.showSnackBar(message: '$error');
-      }
-    }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    profileService = ProfileService(supabase);
-    transactionService = TransactionService(supabase);
-    _getProfile();
   }
 
   @override
@@ -77,48 +57,51 @@ class AccountDeletePageState extends State<AccountDeletePage> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text('アカウント削除'),
       ),
-      body: Center(
-        child: Column(
-          children: [
-            const SizedBox(height: 16.0),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                fixedSize: const Size(400, double.infinity),
-                minimumSize: Size(400, 50),
+      body: _isLoading
+          ? circularIndicator
+          : Center(
+              child: Column(
+                children: [
+                  const SizedBox(height: 16.0),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      fixedSize: const Size(400, double.infinity),
+                      minimumSize: Size(400, 50),
+                    ),
+                    onPressed: () {
+                      showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: Text('アカウントを削除します'),
+                              content:
+                                  Text('本アプリ上にあるすべてのデータが削除されます。本当によろしいですか？'),
+                              actions: [
+                                TextButton(
+                                  child: Text('はい'),
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                    _accountDelete();
+                                  },
+                                ),
+                                TextButton(
+                                  child: Text('いいえ'),
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                ),
+                              ],
+                            );
+                          });
+                    },
+                    child: const Text('アカウントを削除する'),
+                  ),
+                ],
               ),
-              onPressed: () {
-                showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return AlertDialog(
-                        title: Text('アカウントを削除します'),
-                        content: Text('本アプリ上にあるすべてのデータが削除されます。本当によろしいですか？'),
-                        actions: [
-                          TextButton(
-                            child: Text('はい'),
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                              _accountDelete();
-                            },
-                          ),
-                          TextButton(
-                            child: Text('いいえ'),
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                            },
-                          ),
-                        ],
-                      );
-                    });
-              },
-              child: const Text('アカウントを削除する'),
             ),
-          ],
-        ),
-      ),
     );
   }
 }

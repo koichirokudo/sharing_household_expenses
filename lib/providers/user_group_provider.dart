@@ -25,7 +25,8 @@ class UserGroupNotifier extends StateNotifier<UserGroupState> {
         state = state.copyWith(inviteCode: response.data['inviteCode']);
       }
     } catch (e) {
-      throw Exception('Failed to generate invite code: $e');
+      throw Exception(
+          'Failed to generate invite code: ${e.runtimeType} - ${e.toString()}');
     }
   }
 
@@ -34,7 +35,8 @@ class UserGroupNotifier extends StateNotifier<UserGroupState> {
       final response = await repository.joinGroup(inviteCode);
       return response;
     } catch (e) {
-      throw Exception('Failed to submit invite code: $e');
+      throw Exception(
+          'Failed to submit invite code: ${e.runtimeType} - ${e.toString()}');
     }
   }
 

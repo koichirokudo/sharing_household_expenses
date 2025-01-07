@@ -16,8 +16,6 @@ final _privateConstructorUsedError = UnsupportedError(
 
 /// @nodoc
 mixin _$SettlementState {
-  bool get isSettlement => throw _privateConstructorUsedError;
-
   List<Settlement> get settlements => throw _privateConstructorUsedError;
 
   /// Create a copy of SettlementState
@@ -34,7 +32,7 @@ abstract class $SettlementStateCopyWith<$Res> {
       _$SettlementStateCopyWithImpl<$Res, SettlementState>;
 
   @useResult
-  $Res call({bool isSettlement, List<Settlement> settlements});
+  $Res call({List<Settlement> settlements});
 }
 
 /// @nodoc
@@ -53,14 +51,9 @@ class _$SettlementStateCopyWithImpl<$Res, $Val extends SettlementState>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? isSettlement = null,
     Object? settlements = null,
   }) {
     return _then(_value.copyWith(
-      isSettlement: null == isSettlement
-          ? _value.isSettlement
-          : isSettlement // ignore: cast_nullable_to_non_nullable
-              as bool,
       settlements: null == settlements
           ? _value.settlements
           : settlements // ignore: cast_nullable_to_non_nullable
@@ -78,7 +71,7 @@ abstract class _$$SettlementStateImplCopyWith<$Res>
 
   @override
   @useResult
-  $Res call({bool isSettlement, List<Settlement> settlements});
+  $Res call({List<Settlement> settlements});
 }
 
 /// @nodoc
@@ -94,14 +87,9 @@ class __$$SettlementStateImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? isSettlement = null,
     Object? settlements = null,
   }) {
     return _then(_$SettlementStateImpl(
-      isSettlement: null == isSettlement
-          ? _value.isSettlement
-          : isSettlement // ignore: cast_nullable_to_non_nullable
-              as bool,
       settlements: null == settlements
           ? _value._settlements
           : settlements // ignore: cast_nullable_to_non_nullable
@@ -113,12 +101,9 @@ class __$$SettlementStateImplCopyWithImpl<$Res>
 /// @nodoc
 
 class _$SettlementStateImpl implements _SettlementState {
-  const _$SettlementStateImpl(
-      {required this.isSettlement, required final List<Settlement> settlements})
+  const _$SettlementStateImpl({required final List<Settlement> settlements})
       : _settlements = settlements;
 
-  @override
-  final bool isSettlement;
   final List<Settlement> _settlements;
 
   @override
@@ -130,7 +115,7 @@ class _$SettlementStateImpl implements _SettlementState {
 
   @override
   String toString() {
-    return 'SettlementState(isSettlement: $isSettlement, settlements: $settlements)';
+    return 'SettlementState(settlements: $settlements)';
   }
 
   @override
@@ -138,15 +123,13 @@ class _$SettlementStateImpl implements _SettlementState {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$SettlementStateImpl &&
-            (identical(other.isSettlement, isSettlement) ||
-                other.isSettlement == isSettlement) &&
             const DeepCollectionEquality()
                 .equals(other._settlements, _settlements));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, isSettlement,
-      const DeepCollectionEquality().hash(_settlements));
+  int get hashCode => Object.hash(
+      runtimeType, const DeepCollectionEquality().hash(_settlements));
 
   /// Create a copy of SettlementState
   /// with the given fields replaced by the non-null parameter values.
@@ -160,11 +143,7 @@ class _$SettlementStateImpl implements _SettlementState {
 
 abstract class _SettlementState implements SettlementState {
   const factory _SettlementState(
-      {required final bool isSettlement,
-      required final List<Settlement> settlements}) = _$SettlementStateImpl;
-
-  @override
-  bool get isSettlement;
+      {required final List<Settlement> settlements}) = _$SettlementStateImpl;
 
   @override
   List<Settlement> get settlements;

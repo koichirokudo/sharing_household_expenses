@@ -17,9 +17,7 @@ final _privateConstructorUsedError = UnsupportedError(
 /// @nodoc
 mixin _$CategoryState {
   List<Category> get incomeCategories => throw _privateConstructorUsedError;
-
   List<Category> get expenseCategories => throw _privateConstructorUsedError;
-
   List<Category> get categories => throw _privateConstructorUsedError;
 
   /// Create a copy of CategoryState
@@ -34,7 +32,6 @@ abstract class $CategoryStateCopyWith<$Res> {
   factory $CategoryStateCopyWith(
           CategoryState value, $Res Function(CategoryState) then) =
       _$CategoryStateCopyWithImpl<$Res, CategoryState>;
-
   @useResult
   $Res call(
       {List<Category> incomeCategories,
@@ -49,7 +46,6 @@ class _$CategoryStateCopyWithImpl<$Res, $Val extends CategoryState>
 
   // ignore: unused_field
   final $Val _value;
-
   // ignore: unused_field
   final $Res Function($Val) _then;
 
@@ -85,7 +81,6 @@ abstract class _$$CategoryStateImplCopyWith<$Res>
   factory _$$CategoryStateImplCopyWith(
           _$CategoryStateImpl value, $Res Function(_$CategoryStateImpl) then) =
       __$$CategoryStateImplCopyWithImpl<$Res>;
-
   @override
   @useResult
   $Res call(
@@ -140,7 +135,6 @@ class _$CategoryStateImpl implements _CategoryState {
         _categories = categories;
 
   final List<Category> _incomeCategories;
-
   @override
   List<Category> get incomeCategories {
     if (_incomeCategories is EqualUnmodifiableListView)
@@ -150,7 +144,6 @@ class _$CategoryStateImpl implements _CategoryState {
   }
 
   final List<Category> _expenseCategories;
-
   @override
   List<Category> get expenseCategories {
     if (_expenseCategories is EqualUnmodifiableListView)
@@ -160,7 +153,6 @@ class _$CategoryStateImpl implements _CategoryState {
   }
 
   final List<Category> _categories;
-
   @override
   List<Category> get categories {
     if (_categories is EqualUnmodifiableListView) return _categories;
@@ -210,10 +202,8 @@ abstract class _CategoryState implements CategoryState {
 
   @override
   List<Category> get incomeCategories;
-
   @override
   List<Category> get expenseCategories;
-
   @override
   List<Category> get categories;
 

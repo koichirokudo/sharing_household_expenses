@@ -13,7 +13,6 @@ class SettlementNotifier extends StateNotifier<SettlementState> {
   SettlementNotifier(this.repository)
       : super(
           SettlementState(
-            isSettlement: false,
             settlements: [],
           ),
         );

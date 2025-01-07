@@ -24,24 +24,14 @@ class TransactionRepository {
 
   // トランザクションを追加
   Future<void> insert(Transaction transaction) async {
-    final data = transaction.toMap();
-    final response = await supabase.from('transactions').insert(data);
-
-    if (response.error != null) {
-      throw Exception(
-          'Failed to insert transaction: ${response.error!.message}');
-    }
+    final data = transaction.toMapForInsert();
+    await supabase.from('transactions').insert(data);
   }
 
   // トランザクションを更新
   Future<void> update(Transaction transaction) async {
-    final data = transaction.toMap();
-    final response = await supabase.from('transactions').update(data);
-
-    if (response.error != null) {
-      throw Exception(
-          'Failed to update transaction: ${response.error!.message}');
-    }
+    final data = transaction.toMapForUpdate();
+    await supabase.from('transactions').update(data);
   }
 
   // トランザクションを削除

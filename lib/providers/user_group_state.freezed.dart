@@ -17,7 +17,6 @@ final _privateConstructorUsedError = UnsupportedError(
 /// @nodoc
 mixin _$UserGroupState {
   String? get inviteCode => throw _privateConstructorUsedError;
-
   Map<String, dynamic>? get group => throw _privateConstructorUsedError;
 
   /// Create a copy of UserGroupState
@@ -32,7 +31,6 @@ abstract class $UserGroupStateCopyWith<$Res> {
   factory $UserGroupStateCopyWith(
           UserGroupState value, $Res Function(UserGroupState) then) =
       _$UserGroupStateCopyWithImpl<$Res, UserGroupState>;
-
   @useResult
   $Res call({String? inviteCode, Map<String, dynamic>? group});
 }
@@ -44,7 +42,6 @@ class _$UserGroupStateCopyWithImpl<$Res, $Val extends UserGroupState>
 
   // ignore: unused_field
   final $Val _value;
-
   // ignore: unused_field
   final $Res Function($Val) _then;
 
@@ -75,7 +72,6 @@ abstract class _$$UserGroupStateImplCopyWith<$Res>
   factory _$$UserGroupStateImplCopyWith(_$UserGroupStateImpl value,
           $Res Function(_$UserGroupStateImpl) then) =
       __$$UserGroupStateImplCopyWithImpl<$Res>;
-
   @override
   @useResult
   $Res call({String? inviteCode, Map<String, dynamic>? group});
@@ -120,7 +116,6 @@ class _$UserGroupStateImpl implements _UserGroupState {
   @override
   final String? inviteCode;
   final Map<String, dynamic>? _group;
-
   @override
   Map<String, dynamic>? get group {
     final value = _group;
@@ -166,7 +161,6 @@ abstract class _UserGroupState implements UserGroupState {
 
   @override
   String? get inviteCode;
-
   @override
   Map<String, dynamic>? get group;
 

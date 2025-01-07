@@ -15,18 +15,20 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
   final TransactionRepository repository;
 
   TransactionNotifier(this.repository)
-      : super(TransactionState(
-          isLoading: false,
-          transactions: [],
-          sharedTotalAmounts: {
-            TransactionType.income: 0.0,
-            TransactionType.expense: 0.0
-          },
-          privateTotalAmounts: {
-            TransactionType.income: 0.0,
-            TransactionType.expense: 0.0
-          },
-        ));
+      : super(
+          TransactionState(
+            isLoading: false,
+            transactions: [],
+            sharedTotalAmounts: {
+              TransactionType.income: 0.0,
+              TransactionType.expense: 0.0
+            },
+            privateTotalAmounts: {
+              TransactionType.income: 0.0,
+              TransactionType.expense: 0.0
+            },
+          ),
+        );
 
   Future<void> fetchMonthlyTransactions(String groupId, DateTime month) async {
     try {
@@ -64,7 +66,11 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
 
   Future<void> deleteTransaction(Transaction transaction) async {
     try {
-      await repository.delete(transaction.id);
+      final id = transaction.id;
+      if (id == null) {
+        throw Exception('transaction id is null');
+      }
+      await repository.delete(id);
       final updatedTransactions =
           state.transactions.where((t) => t.id != transaction.id).toList();
       state = state.copyWith(transactions: updatedTransactions);

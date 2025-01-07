@@ -4,7 +4,7 @@ import 'package:sharing_household_expenses/models/sub_category.dart';
 import '../constants/transaction_type.dart';
 
 class Transaction {
-  final int id;
+  final int? id;
   final String profileId;
   final String groupId;
   final int? settlementId;
@@ -21,7 +21,7 @@ class Transaction {
   final Profile? profile;
 
   Transaction({
-    required this.id,
+    this.id,
     required this.profileId,
     required this.groupId,
     this.settlementId,
@@ -78,6 +78,41 @@ class Transaction {
       'updated_at': updatedAt.toIso8601String(),
       'subCategories': subCategory?.toMap(),
       'profiles': profile?.toMap(),
+    };
+  }
+
+  Map<String, dynamic> toMapForInsert() {
+    return {
+      'profile_id': profileId,
+      'group_id': groupId,
+      'settlement_id': settlementId,
+      'sub_category_id': subCategoryId,
+      'name': name,
+      'date': date.toIso8601String(),
+      'type': type.name,
+      'amount': amount,
+      'share': share,
+      'note': note,
+      'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt.toIso8601String(),
+    };
+  }
+
+  Map<String, dynamic> toMapForUpdate() {
+    return {
+      'id': id,
+      'profile_id': profileId,
+      'group_id': groupId,
+      'settlement_id': settlementId,
+      'sub_category_id': subCategoryId,
+      'name': name,
+      'date': date.toIso8601String(),
+      'type': type.name,
+      'amount': amount,
+      'share': share,
+      'note': note,
+      'created_at': createdAt.toIso8601String(),
+      'updated_at': updatedAt.toIso8601String(),
     };
   }
 }

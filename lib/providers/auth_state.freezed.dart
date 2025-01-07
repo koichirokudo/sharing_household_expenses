@@ -17,11 +17,8 @@ final _privateConstructorUsedError = UnsupportedError(
 /// @nodoc
 mixin _$AuthState {
   bool get isAuthenticated => throw _privateConstructorUsedError;
-
   Session? get session => throw _privateConstructorUsedError;
-
   User? get user => throw _privateConstructorUsedError;
-
   Map<String, dynamic>? get profile => throw _privateConstructorUsedError;
 
   /// Create a copy of AuthState
@@ -35,7 +32,6 @@ mixin _$AuthState {
 abstract class $AuthStateCopyWith<$Res> {
   factory $AuthStateCopyWith(AuthState value, $Res Function(AuthState) then) =
       _$AuthStateCopyWithImpl<$Res, AuthState>;
-
   @useResult
   $Res call(
       {bool isAuthenticated,
@@ -51,7 +47,6 @@ class _$AuthStateCopyWithImpl<$Res, $Val extends AuthState>
 
   // ignore: unused_field
   final $Val _value;
-
   // ignore: unused_field
   final $Res Function($Val) _then;
 
@@ -92,7 +87,6 @@ abstract class _$$AuthStateImplCopyWith<$Res>
   factory _$$AuthStateImplCopyWith(
           _$AuthStateImpl value, $Res Function(_$AuthStateImpl) then) =
       __$$AuthStateImplCopyWithImpl<$Res>;
-
   @override
   @useResult
   $Res call(
@@ -158,7 +152,6 @@ class _$AuthStateImpl implements _AuthState {
   @override
   final User? user;
   final Map<String, dynamic>? _profile;
-
   @override
   Map<String, dynamic>? get profile {
     final value = _profile;
@@ -207,13 +200,10 @@ abstract class _AuthState implements AuthState {
 
   @override
   bool get isAuthenticated;
-
   @override
   Session? get session;
-
   @override
   User? get user;
-
   @override
   Map<String, dynamic>? get profile;
 

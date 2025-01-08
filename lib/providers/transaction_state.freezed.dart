@@ -17,11 +17,22 @@ final _privateConstructorUsedError = UnsupportedError(
 /// @nodoc
 mixin _$TransactionState {
   bool get isLoading => throw _privateConstructorUsedError;
+
   List<Transaction> get transactions => throw _privateConstructorUsedError;
+
+  List<Transaction> get sharedTransactions =>
+      throw _privateConstructorUsedError;
+
+  List<Transaction> get privateTransactions =>
+      throw _privateConstructorUsedError;
+
   Map<TransactionType, double> get sharedTotalAmounts =>
       throw _privateConstructorUsedError;
+
   Map<TransactionType, double> get privateTotalAmounts =>
       throw _privateConstructorUsedError;
+
+  List<String> get months => throw _privateConstructorUsedError;
 
   /// Create a copy of TransactionState
   /// with the given fields replaced by the non-null parameter values.
@@ -35,12 +46,16 @@ abstract class $TransactionStateCopyWith<$Res> {
   factory $TransactionStateCopyWith(
           TransactionState value, $Res Function(TransactionState) then) =
       _$TransactionStateCopyWithImpl<$Res, TransactionState>;
+
   @useResult
   $Res call(
       {bool isLoading,
       List<Transaction> transactions,
+      List<Transaction> sharedTransactions,
+      List<Transaction> privateTransactions,
       Map<TransactionType, double> sharedTotalAmounts,
-      Map<TransactionType, double> privateTotalAmounts});
+      Map<TransactionType, double> privateTotalAmounts,
+      List<String> months});
 }
 
 /// @nodoc
@@ -50,6 +65,7 @@ class _$TransactionStateCopyWithImpl<$Res, $Val extends TransactionState>
 
   // ignore: unused_field
   final $Val _value;
+
   // ignore: unused_field
   final $Res Function($Val) _then;
 
@@ -60,8 +76,11 @@ class _$TransactionStateCopyWithImpl<$Res, $Val extends TransactionState>
   $Res call({
     Object? isLoading = null,
     Object? transactions = null,
+    Object? sharedTransactions = null,
+    Object? privateTransactions = null,
     Object? sharedTotalAmounts = null,
     Object? privateTotalAmounts = null,
+    Object? months = null,
   }) {
     return _then(_value.copyWith(
       isLoading: null == isLoading
@@ -72,6 +91,14 @@ class _$TransactionStateCopyWithImpl<$Res, $Val extends TransactionState>
           ? _value.transactions
           : transactions // ignore: cast_nullable_to_non_nullable
               as List<Transaction>,
+      sharedTransactions: null == sharedTransactions
+          ? _value.sharedTransactions
+          : sharedTransactions // ignore: cast_nullable_to_non_nullable
+              as List<Transaction>,
+      privateTransactions: null == privateTransactions
+          ? _value.privateTransactions
+          : privateTransactions // ignore: cast_nullable_to_non_nullable
+              as List<Transaction>,
       sharedTotalAmounts: null == sharedTotalAmounts
           ? _value.sharedTotalAmounts
           : sharedTotalAmounts // ignore: cast_nullable_to_non_nullable
@@ -80,6 +107,10 @@ class _$TransactionStateCopyWithImpl<$Res, $Val extends TransactionState>
           ? _value.privateTotalAmounts
           : privateTotalAmounts // ignore: cast_nullable_to_non_nullable
               as Map<TransactionType, double>,
+      months: null == months
+          ? _value.months
+          : months // ignore: cast_nullable_to_non_nullable
+              as List<String>,
     ) as $Val);
   }
 }
@@ -90,13 +121,17 @@ abstract class _$$TransactionStateImplCopyWith<$Res>
   factory _$$TransactionStateImplCopyWith(_$TransactionStateImpl value,
           $Res Function(_$TransactionStateImpl) then) =
       __$$TransactionStateImplCopyWithImpl<$Res>;
+
   @override
   @useResult
   $Res call(
       {bool isLoading,
       List<Transaction> transactions,
+      List<Transaction> sharedTransactions,
+      List<Transaction> privateTransactions,
       Map<TransactionType, double> sharedTotalAmounts,
-      Map<TransactionType, double> privateTotalAmounts});
+      Map<TransactionType, double> privateTotalAmounts,
+      List<String> months});
 }
 
 /// @nodoc
@@ -114,8 +149,11 @@ class __$$TransactionStateImplCopyWithImpl<$Res>
   $Res call({
     Object? isLoading = null,
     Object? transactions = null,
+    Object? sharedTransactions = null,
+    Object? privateTransactions = null,
     Object? sharedTotalAmounts = null,
     Object? privateTotalAmounts = null,
+    Object? months = null,
   }) {
     return _then(_$TransactionStateImpl(
       isLoading: null == isLoading
@@ -126,6 +164,14 @@ class __$$TransactionStateImplCopyWithImpl<$Res>
           ? _value._transactions
           : transactions // ignore: cast_nullable_to_non_nullable
               as List<Transaction>,
+      sharedTransactions: null == sharedTransactions
+          ? _value._sharedTransactions
+          : sharedTransactions // ignore: cast_nullable_to_non_nullable
+              as List<Transaction>,
+      privateTransactions: null == privateTransactions
+          ? _value._privateTransactions
+          : privateTransactions // ignore: cast_nullable_to_non_nullable
+              as List<Transaction>,
       sharedTotalAmounts: null == sharedTotalAmounts
           ? _value._sharedTotalAmounts
           : sharedTotalAmounts // ignore: cast_nullable_to_non_nullable
@@ -134,6 +180,10 @@ class __$$TransactionStateImplCopyWithImpl<$Res>
           ? _value._privateTotalAmounts
           : privateTotalAmounts // ignore: cast_nullable_to_non_nullable
               as Map<TransactionType, double>,
+      months: null == months
+          ? _value._months
+          : months // ignore: cast_nullable_to_non_nullable
+              as List<String>,
     ));
   }
 }
@@ -144,15 +194,22 @@ class _$TransactionStateImpl implements _TransactionState {
   const _$TransactionStateImpl(
       {required this.isLoading,
       required final List<Transaction> transactions,
+      required final List<Transaction> sharedTransactions,
+      required final List<Transaction> privateTransactions,
       required final Map<TransactionType, double> sharedTotalAmounts,
-      required final Map<TransactionType, double> privateTotalAmounts})
+      required final Map<TransactionType, double> privateTotalAmounts,
+      required final List<String> months})
       : _transactions = transactions,
+        _sharedTransactions = sharedTransactions,
+        _privateTransactions = privateTransactions,
         _sharedTotalAmounts = sharedTotalAmounts,
-        _privateTotalAmounts = privateTotalAmounts;
+        _privateTotalAmounts = privateTotalAmounts,
+        _months = months;
 
   @override
   final bool isLoading;
   final List<Transaction> _transactions;
+
   @override
   List<Transaction> get transactions {
     if (_transactions is EqualUnmodifiableListView) return _transactions;
@@ -160,7 +217,28 @@ class _$TransactionStateImpl implements _TransactionState {
     return EqualUnmodifiableListView(_transactions);
   }
 
+  final List<Transaction> _sharedTransactions;
+
+  @override
+  List<Transaction> get sharedTransactions {
+    if (_sharedTransactions is EqualUnmodifiableListView)
+      return _sharedTransactions;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_sharedTransactions);
+  }
+
+  final List<Transaction> _privateTransactions;
+
+  @override
+  List<Transaction> get privateTransactions {
+    if (_privateTransactions is EqualUnmodifiableListView)
+      return _privateTransactions;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_privateTransactions);
+  }
+
   final Map<TransactionType, double> _sharedTotalAmounts;
+
   @override
   Map<TransactionType, double> get sharedTotalAmounts {
     if (_sharedTotalAmounts is EqualUnmodifiableMapView)
@@ -170,6 +248,7 @@ class _$TransactionStateImpl implements _TransactionState {
   }
 
   final Map<TransactionType, double> _privateTotalAmounts;
+
   @override
   Map<TransactionType, double> get privateTotalAmounts {
     if (_privateTotalAmounts is EqualUnmodifiableMapView)
@@ -178,9 +257,18 @@ class _$TransactionStateImpl implements _TransactionState {
     return EqualUnmodifiableMapView(_privateTotalAmounts);
   }
 
+  final List<String> _months;
+
+  @override
+  List<String> get months {
+    if (_months is EqualUnmodifiableListView) return _months;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_months);
+  }
+
   @override
   String toString() {
-    return 'TransactionState(isLoading: $isLoading, transactions: $transactions, sharedTotalAmounts: $sharedTotalAmounts, privateTotalAmounts: $privateTotalAmounts)';
+    return 'TransactionState(isLoading: $isLoading, transactions: $transactions, sharedTransactions: $sharedTransactions, privateTransactions: $privateTransactions, sharedTotalAmounts: $sharedTotalAmounts, privateTotalAmounts: $privateTotalAmounts, months: $months)';
   }
 
   @override
@@ -193,9 +281,14 @@ class _$TransactionStateImpl implements _TransactionState {
             const DeepCollectionEquality()
                 .equals(other._transactions, _transactions) &&
             const DeepCollectionEquality()
+                .equals(other._sharedTransactions, _sharedTransactions) &&
+            const DeepCollectionEquality()
+                .equals(other._privateTransactions, _privateTransactions) &&
+            const DeepCollectionEquality()
                 .equals(other._sharedTotalAmounts, _sharedTotalAmounts) &&
             const DeepCollectionEquality()
-                .equals(other._privateTotalAmounts, _privateTotalAmounts));
+                .equals(other._privateTotalAmounts, _privateTotalAmounts) &&
+            const DeepCollectionEquality().equals(other._months, _months));
   }
 
   @override
@@ -203,8 +296,11 @@ class _$TransactionStateImpl implements _TransactionState {
       runtimeType,
       isLoading,
       const DeepCollectionEquality().hash(_transactions),
+      const DeepCollectionEquality().hash(_sharedTransactions),
+      const DeepCollectionEquality().hash(_privateTransactions),
       const DeepCollectionEquality().hash(_sharedTotalAmounts),
-      const DeepCollectionEquality().hash(_privateTotalAmounts));
+      const DeepCollectionEquality().hash(_privateTotalAmounts),
+      const DeepCollectionEquality().hash(_months));
 
   /// Create a copy of TransactionState
   /// with the given fields replaced by the non-null parameter values.
@@ -218,20 +314,34 @@ class _$TransactionStateImpl implements _TransactionState {
 
 abstract class _TransactionState implements TransactionState {
   const factory _TransactionState(
-          {required final bool isLoading,
-          required final List<Transaction> transactions,
-          required final Map<TransactionType, double> sharedTotalAmounts,
-          required final Map<TransactionType, double> privateTotalAmounts}) =
-      _$TransactionStateImpl;
+      {required final bool isLoading,
+      required final List<Transaction> transactions,
+      required final List<Transaction> sharedTransactions,
+      required final List<Transaction> privateTransactions,
+      required final Map<TransactionType, double> sharedTotalAmounts,
+      required final Map<TransactionType, double> privateTotalAmounts,
+      required final List<String> months}) = _$TransactionStateImpl;
 
   @override
   bool get isLoading;
+
   @override
   List<Transaction> get transactions;
+
+  @override
+  List<Transaction> get sharedTransactions;
+
+  @override
+  List<Transaction> get privateTransactions;
+
   @override
   Map<TransactionType, double> get sharedTotalAmounts;
+
   @override
   Map<TransactionType, double> get privateTotalAmounts;
+
+  @override
+  List<String> get months;
 
   /// Create a copy of TransactionState
   /// with the given fields replaced by the non-null parameter values.

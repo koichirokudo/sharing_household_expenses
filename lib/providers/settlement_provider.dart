@@ -17,9 +17,9 @@ class SettlementNotifier extends StateNotifier<SettlementState> {
           ),
         );
 
-  Future<bool> checkSettlement(bool share, String month) async {
+  Future<bool> checkSettlement(String visibility, String month) async {
     try {
-      final response = await repository.checkSettlement(share, month);
+      final response = await repository.checkSettlement(visibility, month);
       return response;
     } catch (e) {
       throw Exception('Failed to check settlement: $e');

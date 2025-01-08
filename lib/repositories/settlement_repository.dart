@@ -1,11 +1,11 @@
 import '../utils/constants.dart';
 
 class SettlementRepository {
-  Future<bool> checkSettlement(bool share, String month) async {
+  Future<bool> checkSettlement(String visibility, String month) async {
     final response = await supabase.functions.invoke(
       'check-settlement',
       body: {
-        'share': share.toString(),
+        'visibility': visibility,
         'month': month.isNotEmpty ? month : null,
       },
     );

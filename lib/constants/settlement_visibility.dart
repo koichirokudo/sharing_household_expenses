@@ -1,0 +1,1 @@
+enum SettlementVisibility { shared, private }

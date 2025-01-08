@@ -1,10 +1,10 @@
 import '../constants/settlement_status.dart';
-import '../constants/visibility.dart';
+import '../constants/settlement_visibility.dart';
 
 class Settlement {
   final int id;
   final String groupId;
-  final Visibility visibility;
+  final SettlementVisibility visibility;
   final String settlementDate;
   final double incomeTotalAmount;
   final double expenseTotalAmount;
@@ -30,8 +30,8 @@ class Settlement {
     return Settlement(
       id: map['id'],
       groupId: map['group_id'],
-      visibility:
-          Visibility.values.firstWhere((e) => e.name == map['visibility']),
+      visibility: SettlementVisibility.values
+          .firstWhere((e) => e.name == map['visibility']),
       settlementDate: map['settlement_date'],
       incomeTotalAmount: map['income_total_amount'],
       expenseTotalAmount: map['expense_total_amount'],

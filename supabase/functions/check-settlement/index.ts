@@ -11,7 +11,7 @@ serve(async (request) => {
   }
 
   const body = await request.json();
-  const { share, month } = body;
+  const { visibility, month } = body;
 
   if (!month) {
     return new Response(
@@ -49,21 +49,21 @@ serve(async (request) => {
     }
 
     // Get settlements
-    const { data: settlements, error: settlementsError } = await supabaseClient
+    const { data: settlement, error: settlementsError } = await supabaseClient
       .from("settlements")
       .select("*")
       .eq("group_id", profile.group_id)
-      .eq("visibility", share);
-    if (settlementsError || !settlements) {
+      .eq("visibility", visibility)
+      .eq("status", "completed")
+      .eq("settlement_date", month)
+      .single();
+    if (settlementsError || !settlement) {
       throw new Error("Error fetching settlements.");
     }
 
-    // TODO: 修正する
     let isSettlement = false;
-    for (const item in settlements) {
-      if (item["0"] == month) {
-        isSettlement = true;
-      }
+    if (settlement.length > 0) {
+      isSettlement = true;
     }
 
     return new Response(

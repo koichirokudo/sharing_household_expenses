@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:sharing_household_expenses/constants/settlement_visibility.dart';
 import 'package:sharing_household_expenses/constants/transaction_type.dart';
 import 'package:sharing_household_expenses/models/transaction.dart';
 import 'package:sharing_household_expenses/providers/auth_provider.dart';
@@ -189,9 +190,13 @@ class TransactionRegisterPageState
         throw Exception('Profile is not available');
       }
 
-      final response = await ref
-          .watch(settlementProvider.notifier)
-          .checkSettlement(_share, month);
+      final response =
+          await ref.watch(settlementProvider.notifier).checkSettlement(
+                _share
+                    ? SettlementVisibility.shared.toString()
+                    : SettlementVisibility.private.toString(),
+                month,
+              );
 
       return response;
     } catch (error) {

@@ -32,7 +32,9 @@ class HomePageState extends ConsumerState<HomePage> {
       final currentMonth = DateTime.now();
       if (auth.profile != null) {
         await transactionNotifier.fetchMonthlyTransactions(
-            auth.profile?['group_id'], currentMonth);
+          auth.profile?['group_id'],
+          currentMonth,
+        );
       }
       setState(() {
         _isLoading = false;

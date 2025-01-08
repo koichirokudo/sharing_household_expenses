@@ -18,6 +18,9 @@ final _privateConstructorUsedError = UnsupportedError(
 mixin _$SettlementState {
   List<Settlement> get settlements => throw _privateConstructorUsedError;
 
+  List<SettlementItem> get settlementItems =>
+      throw _privateConstructorUsedError;
+
   /// Create a copy of SettlementState
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -32,7 +35,8 @@ abstract class $SettlementStateCopyWith<$Res> {
       _$SettlementStateCopyWithImpl<$Res, SettlementState>;
 
   @useResult
-  $Res call({List<Settlement> settlements});
+  $Res call(
+      {List<Settlement> settlements, List<SettlementItem> settlementItems});
 }
 
 /// @nodoc
@@ -52,12 +56,17 @@ class _$SettlementStateCopyWithImpl<$Res, $Val extends SettlementState>
   @override
   $Res call({
     Object? settlements = null,
+    Object? settlementItems = null,
   }) {
     return _then(_value.copyWith(
       settlements: null == settlements
           ? _value.settlements
           : settlements // ignore: cast_nullable_to_non_nullable
               as List<Settlement>,
+      settlementItems: null == settlementItems
+          ? _value.settlementItems
+          : settlementItems // ignore: cast_nullable_to_non_nullable
+              as List<SettlementItem>,
     ) as $Val);
   }
 }
@@ -71,7 +80,8 @@ abstract class _$$SettlementStateImplCopyWith<$Res>
 
   @override
   @useResult
-  $Res call({List<Settlement> settlements});
+  $Res call(
+      {List<Settlement> settlements, List<SettlementItem> settlementItems});
 }
 
 /// @nodoc
@@ -88,12 +98,17 @@ class __$$SettlementStateImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? settlements = null,
+    Object? settlementItems = null,
   }) {
     return _then(_$SettlementStateImpl(
       settlements: null == settlements
           ? _value._settlements
           : settlements // ignore: cast_nullable_to_non_nullable
               as List<Settlement>,
+      settlementItems: null == settlementItems
+          ? _value._settlementItems
+          : settlementItems // ignore: cast_nullable_to_non_nullable
+              as List<SettlementItem>,
     ));
   }
 }
@@ -101,8 +116,11 @@ class __$$SettlementStateImplCopyWithImpl<$Res>
 /// @nodoc
 
 class _$SettlementStateImpl implements _SettlementState {
-  const _$SettlementStateImpl({required final List<Settlement> settlements})
-      : _settlements = settlements;
+  const _$SettlementStateImpl(
+      {required final List<Settlement> settlements,
+      required final List<SettlementItem> settlementItems})
+      : _settlements = settlements,
+        _settlementItems = settlementItems;
 
   final List<Settlement> _settlements;
 
@@ -113,9 +131,18 @@ class _$SettlementStateImpl implements _SettlementState {
     return EqualUnmodifiableListView(_settlements);
   }
 
+  final List<SettlementItem> _settlementItems;
+
+  @override
+  List<SettlementItem> get settlementItems {
+    if (_settlementItems is EqualUnmodifiableListView) return _settlementItems;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_settlementItems);
+  }
+
   @override
   String toString() {
-    return 'SettlementState(settlements: $settlements)';
+    return 'SettlementState(settlements: $settlements, settlementItems: $settlementItems)';
   }
 
   @override
@@ -124,12 +151,16 @@ class _$SettlementStateImpl implements _SettlementState {
         (other.runtimeType == runtimeType &&
             other is _$SettlementStateImpl &&
             const DeepCollectionEquality()
-                .equals(other._settlements, _settlements));
+                .equals(other._settlements, _settlements) &&
+            const DeepCollectionEquality()
+                .equals(other._settlementItems, _settlementItems));
   }
 
   @override
   int get hashCode => Object.hash(
-      runtimeType, const DeepCollectionEquality().hash(_settlements));
+      runtimeType,
+      const DeepCollectionEquality().hash(_settlements),
+      const DeepCollectionEquality().hash(_settlementItems));
 
   /// Create a copy of SettlementState
   /// with the given fields replaced by the non-null parameter values.
@@ -143,10 +174,15 @@ class _$SettlementStateImpl implements _SettlementState {
 
 abstract class _SettlementState implements SettlementState {
   const factory _SettlementState(
-      {required final List<Settlement> settlements}) = _$SettlementStateImpl;
+          {required final List<Settlement> settlements,
+          required final List<SettlementItem> settlementItems}) =
+      _$SettlementStateImpl;
 
   @override
   List<Settlement> get settlements;
+
+  @override
+  List<SettlementItem> get settlementItems;
 
   /// Create a copy of SettlementState
   /// with the given fields replaced by the non-null parameter values.

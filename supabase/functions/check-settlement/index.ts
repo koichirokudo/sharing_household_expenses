@@ -49,7 +49,7 @@ serve(async (request) => {
     }
 
     // Get settlements
-    const { data: settlement, error: settlementsError } = await supabaseClient
+    const { data: settlement } = await supabaseClient
       .from("settlements")
       .select("*")
       .eq("group_id", profile.group_id)
@@ -57,12 +57,9 @@ serve(async (request) => {
       .eq("status", "completed")
       .eq("settlement_date", month)
       .single();
-    if (settlementsError || !settlement) {
-      throw new Error("Error fetching settlements.");
-    }
 
     let isSettlement = false;
-    if (settlement.length > 0) {
+    if (settlement !== null) {
       isSettlement = true;
     }
 

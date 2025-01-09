@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:sharing_household_expenses/constants/settlement_visibility.dart';
 import 'package:sharing_household_expenses/constants/transaction_type.dart';
 import 'package:sharing_household_expenses/screens/transaction/transaction_detail_page.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
@@ -21,7 +20,6 @@ class TransactionListPage extends ConsumerStatefulWidget {
 }
 
 class TransactionListPageState extends ConsumerState<TransactionListPage> {
-  bool _isLoading = false;
   bool _isSettlementLoading = false;
   bool _isSettlement = false;
   List<String> months = [];
@@ -30,15 +28,13 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
   late Profile profile;
   late int selectedIndex = 1;
   late final PageController _pageController;
-  late String _selectedDataType = 'shared';
+  final List<bool> _selectedType = <bool>[true, false];
+  String sharedPrivateType = 'shared';
 
   @override
   void initState() {
     super.initState();
     Future.microtask(() async {
-      setState(() {
-        _isLoading = true;
-      });
       final authNotifier = ref.watch(authProvider.notifier);
       await authNotifier.fetchProfile();
       final auth = ref.watch(authProvider);
@@ -61,28 +57,21 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
             viewportFraction: 1,
           );
         });
-        await _checkSettlement();
+        _isSettlement = await _checkSettlement();
       }
-      setState(() {
-        _isLoading = false;
-      });
     });
   }
 
   Future<bool> _checkSettlement() async {
+    setState(() {
+      _isSettlementLoading = true;
+    });
     try {
-      setState(() {
-        _isSettlementLoading = true;
-      });
-
       final response =
           await ref.watch(settlementProvider.notifier).checkSettlement(
-                _selectedDataType == SettlementVisibility.shared
-                    ? SettlementVisibility.shared.toString()
-                    : SettlementVisibility.private.toString(),
+                sharedPrivateType == 'shared' ? 'shared' : 'private',
                 months[selectedIndex],
               );
-
       return response;
     } catch (error) {
       if (mounted) {
@@ -158,14 +147,14 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
 
     final incomeTotal = convertToYenFormat(
       amount: int.parse(
-        _selectedDataType == 'shared'
+        sharedPrivateType == 'shared'
             ? sharedIncomeTotalAmounts.toString()
             : sharedExpenseTotalAmounts.toString(),
       ),
     );
     final expenseTotal = convertToYenFormat(
       amount: int.parse(
-        _selectedDataType == 'shared'
+        sharedPrivateType == 'shared'
             ? privateIncomeTotalAmounts.toString()
             : privateExpenseTotalAmounts.toString(),
       ),
@@ -201,7 +190,7 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
               incomeTotal,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                fontSize: 24,
+                fontSize: 20,
               ),
             ),
           ],
@@ -234,7 +223,7 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
               expenseTotal,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                fontSize: 24,
+                fontSize: 20,
               ),
             ),
           ],
@@ -243,28 +232,51 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
     );
   }
 
-  Widget _buildSelectedType() {
-    return DropdownButton<String>(
-      value: _selectedDataType,
-      items: [
-        DropdownMenuItem(
-          value: 'shared',
-          child: Text('共有データ'),
-        ),
-        DropdownMenuItem(
-          value: 'private',
-          child: Text('個人データ'),
-        ),
-      ],
-      onChanged: (value) {
-        _selectedDataType = value!;
+  Widget _buildToggleButtons() {
+    return ToggleButtons(
+      onPressed: (int index) async {
+        for (int i = 0; i < _selectedType.length; i++) {
+          _selectedType[i] = i == index;
+        }
+
+        if (index == 0) {
+          sharedPrivateType = 'shared';
+        } else {
+          sharedPrivateType = 'expense';
+        }
         // 清算済みかをチェックする
-        _checkSettlement();
+        _isSettlement = await _checkSettlement();
       },
+      borderRadius: const BorderRadius.all(
+        Radius.circular(8),
+      ),
+      constraints: const BoxConstraints(
+        minHeight: 40.0,
+        minWidth: 80.0,
+      ),
+      isSelected: _selectedType,
+      children: [
+        Text('共有'),
+        Text('個人'),
+      ],
     );
   }
 
   Widget _buildSettlementButton() {
+    if (_isSettlementLoading == true) {
+      return ElevatedButton.icon(
+        onPressed: null,
+        label: Text('確認中...'),
+        icon: const SizedBox(
+          width: 12,
+          height: 12,
+          child: CircularProgressIndicator(
+            strokeWidth: 2.0,
+          ),
+        ),
+      );
+    }
+
     return ElevatedButton.icon(
       onPressed: _isSettlement || transactions.isEmpty
           ? null
@@ -277,10 +289,26 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
                     transactions: transactions,
                     profile: profile,
                     isSettlement: false,
-                    selectedDataType: _selectedDataType,
+                    selectedDataType: sharedPrivateType,
                   ),
                 ),
               );
+
+              if (response == true) {
+                final auth = ref.watch(authProvider);
+                final groupId = auth.profile?.groupId;
+                if (groupId != null) {
+                  await ref
+                      .watch(transactionProvider.notifier)
+                      .fetchMonthlyTransactions(
+                        groupId,
+                        convertMonthToDateTime(months[selectedIndex]),
+                      );
+                }
+                setState(() {
+                  _isSettlement = true;
+                });
+              }
             },
       label: Text(_isSettlement ? '清算済み' : '清算する'),
       icon: const Icon(Icons.check_circle),
@@ -317,7 +345,7 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
               .watch(transactionProvider.notifier)
               .fetchMonthlyTransactions(
                 groupId,
-                DateTime.parse(months[selectedIndex]),
+                convertMonthToDateTime(months[selectedIndex]),
               );
         }
       },
@@ -347,6 +375,21 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
                         ),
                       ),
                     );
+                    if (response == true) {
+                      final auth = ref.watch(authProvider);
+                      final groupId = auth.profile?.groupId;
+                      if (groupId != null) {
+                        await ref
+                            .watch(transactionProvider.notifier)
+                            .fetchMonthlyTransactions(
+                              groupId,
+                              convertMonthToDateTime(months[selectedIndex]),
+                            );
+                      }
+                      setState(() {
+                        _isSettlement = true;
+                      });
+                    }
                   },
                   child: Container(
                     height: 80,
@@ -463,7 +506,9 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
     final transactionNotifier = ref.watch(transactionProvider.notifier);
     final transactionState = ref.watch(transactionProvider);
     final groupId = ref.watch(authProvider).profile?.groupId;
-    transactions = _selectedDataType == 'shared'
+    final isLoading = transactionState.isLoading;
+
+    transactions = sharedPrivateType == 'shared'
         ? transactionState.sharedTransactions
         : transactionState.privateTransactions;
 
@@ -501,14 +546,16 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
                   selectedIndex = index;
                 });
                 // 選択された月のデータを取得する
-                transactionNotifier.fetchMonthlyTransactions(
-                  groupId,
-                  DateTime.parse(months[selectedIndex]),
-                );
+                Future.delayed(Duration(milliseconds: 100), () {
+                  transactionNotifier.fetchMonthlyTransactions(
+                    groupId,
+                    convertMonthToDateTime(months[selectedIndex]),
+                  );
+                });
               },
               itemCount: months.length,
               itemBuilder: (context, index) {
-                return _isLoading || _isSettlementLoading
+                return isLoading
                     ? circularIndicator
                     : Column(
                         children: [
@@ -518,9 +565,7 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               children: [
-                                // filter
-                                const SizedBox(width: 8),
-                                _buildSelectedType(),
+                                _buildToggleButtons(),
                                 _buildSettlementButton(),
                               ],
                             ),

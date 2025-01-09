@@ -3,7 +3,7 @@ CREATE SEQUENCE settlements_id_seq;
 CREATE TABLE settlements (
     id integer PRIMARY KEY DEFAULT nextval('settlements_id_seq'::regclass),
     group_id uuid NOT NULL REFERENCES user_groups(id),
-    visibility TEXT NOT NULL CHECK (visibility IN ('share', 'private')),
+    visibility TEXT NOT NULL CHECK (visibility IN ('shared', 'private')),
     settlement_date TEXT NOT NULL,
     income_total_amount  NUMERIC(10, 2) NOT NULL DEFAULT 0,
     expense_total_amount NUMERIC(10, 2) NOT NULL DEFAULT 0,

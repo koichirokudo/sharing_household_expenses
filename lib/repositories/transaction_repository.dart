@@ -41,9 +41,9 @@ class TransactionRepository {
         .toList();
   }
 
-  Future<List<Transaction>> updateMultiple(transactions) async {
+  Future<List<Transaction>> upsert(transactions) async {
     final response =
-        await supabase.from('transactions').update(transactions).select();
+        await supabase.from('transactions').upsert(transactions).select();
     return (response as List<dynamic>)
         .map((transaction) => Transaction.fromMap(transaction))
         .toList();

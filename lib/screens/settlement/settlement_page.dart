@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:pie_chart/pie_chart.dart';
-import 'package:sharing_household_expenses/constants/settlement_visibility.dart';
 import 'package:sharing_household_expenses/constants/transaction_type.dart';
 import 'package:sharing_household_expenses/providers/auth_provider.dart';
 import 'package:sharing_household_expenses/providers/auth_state.dart';
@@ -37,18 +36,11 @@ class SettlementPage extends ConsumerStatefulWidget {
 class SettlementPageState extends ConsumerState<SettlementPage> {
   bool _isLoading = false;
   late List<Transaction> transactions;
-  late List<Map<String, dynamic>> expenses;
   late String month;
   late String selectedDataType;
   String incomeExpenseType = 'expense';
-  int paymentPerPerson = 0;
   int expenseTotal = 0;
   int incomeTotal = 0;
-  Map<String, Map<String, dynamic>> sharedExpenseAmounts = {};
-  Map<String, Map<String, dynamic>> sharedIncomeAmounts = {};
-  Map<String, Map<String, dynamic>> selfExpenseAmounts = {};
-  Map<String, Map<String, dynamic>> selfIncomeAmounts = {};
-  int colorValue = 0;
   late bool isSettlement;
   Map<String, double> expenseSections = {};
   Map<String, double> incomeSections = {};
@@ -84,21 +76,21 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
     });
   }
 
-  Future<void> _settlementConfirm() async {
+  Future<void> _sharedSettlementConfirm() async {
     try {
       setState(() {
         _isLoading = true;
       });
 
+      final state = ref.watch(settlementProvider);
+
       final settlementData = {
         'group_id': profile.groupId,
-        'visibility': selectedDataType == 'shared'
-            ? SettlementVisibility.shared
-            : SettlementVisibility.private,
+        'visibility': 'shared',
         'settlement_date': month,
-        'income_total_amount': incomeTotal,
-        'expense_total_amount': expenseTotal,
-        'amount_per_person': paymentPerPerson,
+        'income_total_amount': state.incomeTotal,
+        'expense_total_amount': state.expenseTotal,
+        'amount_per_person': state.amountPerPerson,
         'status': 'completed',
         'created_at': DateTime.now().toIso8601String(),
         'updated_at': DateTime.now().toIso8601String(),
@@ -110,7 +102,7 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
       final settlementId = ref.watch(settlementProvider).settlement?.id;
 
       List<Map<String, dynamic>> settlementItems = [];
-      sharedExpenseAmounts.forEach((profileId, item) {
+      state.sharedExpenseAmounts.forEach((profileId, item) {
         settlementItems.add({
           'settlement_id': settlementId,
           'profile_id': profileId,
@@ -155,22 +147,22 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
     }
   }
 
-  // todo: settlement_provider
-  Future<void> _selfSettlementConfirm() async {
+  Future<void> _privateSettlementConfirm() async {
     try {
       setState(() {
         _isLoading = true;
       });
 
+      final state = ref.watch(settlementProvider);
       DateTime now = DateTime.now();
       final settlementDate = DateFormat('yyyy/MM').format(now);
       final settlementData = {
         'group_id': profile.groupId,
         'visibility': 'private',
         'settlement_date': settlementDate,
-        'income_total_amount': incomeTotal,
-        'expense_total_amount': expenseTotal,
-        'amount_per_person': expenseTotal,
+        'income_total_amount': state.incomeTotal,
+        'expense_total_amount': state.expenseTotal,
+        'amount_per_person': state.expenseTotal,
         'status': 'completed',
         'created_at': DateTime.now().toIso8601String(),
         'updated_at': DateTime.now().toIso8601String(),
@@ -186,7 +178,7 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
         'settlement_id': settlementId,
         'profile_id': profile.id,
         'role': 'self',
-        'amount': expenseTotal,
+        'amount': state.expenseTotal,
         'percentage': 100,
         'created_at': DateTime.now().toIso8601String(),
         'updated_at': DateTime.now().toIso8601String(),
@@ -225,6 +217,8 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
   }
 
   Widget _buildSettlementCard(data) {
+    final state = ref.watch(settlementProvider);
+    final amountPerPerson = state.amountPerPerson;
     return Card(
       elevation: 1.0,
       shape: RoundedRectangleBorder(
@@ -269,7 +263,7 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   Text(
-                    convertToYenFormat(amount: paymentPerPerson),
+                    convertToYenFormat(amount: amountPerPerson),
                   ),
                   const SizedBox(width: 16),
                 ],
@@ -318,6 +312,9 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(settlementProvider);
+    final expenseTotal = state.expenseTotal;
+    final incomeTotal = state.incomeTotal;
+    final amountPerPerson = state.amountPerPerson;
     if (selectedDataType == 'shared') {
       incomeSections = state.sharedIncomeSections;
       expenseSections = state.sharedExpenseSections;
@@ -329,7 +326,7 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
     if (incomeExpenseType == 'expense' && selectedDataType == 'share') {
       pieChartCenterText =
           '支払合計額: ${convertToYenFormat(amount: expenseTotal)}\n'
-          '割り勘金額: ${convertToYenFormat(amount: paymentPerPerson)}';
+          '割り勘金額: ${convertToYenFormat(amount: amountPerPerson)}';
     } else if (incomeExpenseType == 'expense' &&
         selectedDataType == 'private') {
       pieChartCenterText = '支払合計額: ${convertToYenFormat(amount: expenseTotal)}';
@@ -401,11 +398,10 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
                       )
                     ],
                   ),
-                  const SizedBox(height: 16),
                   // グラフ
                   SizedBox(
-                    width: 200,
-                    height: 200,
+                    width: 400,
+                    height: 400,
                     child: (incomeExpenseType == 'expense' &&
                                 expenseSections.isEmpty) ||
                             (incomeExpenseType == 'income' &&
@@ -425,19 +421,35 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
                                 ? expenseSections
                                 : incomeSections,
                             legendOptions: LegendOptions(
-                              legendPosition: LegendPosition.left,
+                              showLegends: true,
+                              showLegendsInRow: true,
+                              legendPosition: LegendPosition.top,
+                              legendTextStyle: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
+                            chartRadius:
+                                MediaQuery.of(context).size.width / 1.2,
+                            chartLegendSpacing: 16,
                             chartValuesOptions: ChartValuesOptions(
-                              decimalPlaces: 0,
+                              showChartValues: true,
+                              showChartValuesOutside: false,
                               showChartValuesInPercentage: false,
-                              showChartValuesOutside: true,
+                              showChartValueBackground: false,
+                              decimalPlaces: 0,
+                              chartValueStyle: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
                             ),
+                            // 半径を調整
                             formatChartValues: (value) {
                               return NumberFormat.currency(
                                       locale: 'ja_JP', symbol: '¥')
                                   .format(value);
                             },
-                            chartLegendSpacing: 48,
                             chartType: ChartType.ring,
                             centerText: pieChartCenterText,
                           ),
@@ -460,10 +472,10 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
                                       onPressed: () {
                                         Navigator.of(dialogContext)
                                             .pop(); // Dismiss alert dialog
-                                        if (selectedDataType == 'share') {
-                                          _settlementConfirm();
+                                        if (selectedDataType == 'shared') {
+                                          _sharedSettlementConfirm();
                                         } else {
-                                          _selfSettlementConfirm();
+                                          _privateSettlementConfirm();
                                         }
                                       },
                                     ),

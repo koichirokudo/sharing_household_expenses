@@ -91,10 +91,16 @@ class HomePageState extends ConsumerState<HomePage> {
             onPressed: () {
               if (auth.session != null) {
                 Navigator.of(context).push(
-                    MaterialPageRoute(builder: (context) => const UserPage()));
+                  MaterialPageRoute(
+                    builder: (context) => const UserPage(),
+                  ),
+                );
               } else {
-                Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => const SignInPage()));
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const SignInPage(),
+                  ),
+                );
               }
             },
           ),

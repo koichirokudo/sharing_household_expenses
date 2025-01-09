@@ -35,6 +35,7 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
         );
 
   Future<void> fetchMonthlyTransactions(String groupId, DateTime month) async {
+    state = state.copyWith(isLoading: true);
     try {
       final transactions = await repository.fetchMonthly(groupId, month);
       state = state.copyWith(transactions: transactions);
@@ -43,10 +44,13 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
       generateMonths();
     } catch (e) {
       throw Exception('Failed to fetch monthly transactions: $e');
+    } finally {
+      state = state.copyWith(isLoading: false);
     }
   }
 
   Future<void> insertTransaction(Map<String, dynamic> transaction) async {
+    state = state.copyWith(isLoading: true);
     try {
       final response = await repository.insert(transaction);
       final updateTransactions = [...state.transactions, response];
@@ -54,31 +58,39 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
       calculateTotalAmounts();
     } catch (e) {
       throw Exception('Failed to insert transaction: $e');
+    } finally {
+      state = state.copyWith(isLoading: false);
     }
   }
 
   Future<void> updateTransaction(Map<String, dynamic> transaction) async {
+    state = state.copyWith(isLoading: true);
     try {
       final response = await repository.update(transaction);
       state = state.copyWith(transactions: response);
       calculateTotalAmounts();
     } catch (e) {
       throw Exception('Failed to update transaction: $e');
+    } finally {
+      state = state.copyWith(isLoading: false);
     }
   }
 
-  Future<void> updateMultipleTransaction(
-      List<Map<String, dynamic>> transactions) async {
+  Future<void> updateMultipleTransaction(transactions) async {
+    state = state.copyWith(isLoading: true);
     try {
-      final response = await repository.updateMultiple(transactions);
+      final response = await repository.upsert(transactions);
       state = state.copyWith(transactions: response);
       calculateTotalAmounts();
     } catch (e) {
       throw Exception('Failed to update transaction: $e');
+    } finally {
+      state = state.copyWith(isLoading: false);
     }
   }
 
   Future<void> deleteTransaction(Transaction transaction) async {
+    state = state.copyWith(isLoading: true);
     try {
       final id = transaction.id;
       if (id == null) {
@@ -91,10 +103,13 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
       calculateTotalAmounts();
     } catch (e) {
       throw Exception('Failed to delete transaction: $e');
+    } finally {
+      state = state.copyWith(isLoading: false);
     }
   }
 
   Future<void> deleteTransactionsByProfile(Profile profile) async {
+    state = state.copyWith(isLoading: true);
     try {
       await repository.deleteByProfile(profile.id);
       final updatedTransactions =
@@ -103,6 +118,8 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
       calculateTotalAmounts();
     } catch (e) {
       throw Exception('Failed to update transaction: $e');
+    } finally {
+      state = state.copyWith(isLoading: false);
     }
   }
 

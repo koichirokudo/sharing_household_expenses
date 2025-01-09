@@ -1,12 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:pie_chart/pie_chart.dart';
+import 'package:sharing_household_expenses/constants/settlement_visibility.dart';
+import 'package:sharing_household_expenses/constants/transaction_type.dart';
+import 'package:sharing_household_expenses/providers/auth_provider.dart';
+import 'package:sharing_household_expenses/providers/auth_state.dart';
+import 'package:sharing_household_expenses/providers/settlement_provider.dart';
+import 'package:sharing_household_expenses/providers/transaction_provider.dart';
 import 'package:sharing_household_expenses/screens/transaction/transaction_detail_page.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
 
-class SettlementPage extends StatefulWidget {
-  final List<Map<String, dynamic>> transactions;
-  final Map<String, dynamic> profile;
+import '../../models/profile.dart';
+import '../../models/transaction.dart';
+
+class SettlementPage extends ConsumerStatefulWidget {
+  final List<Transaction> transactions;
+  final Profile profile;
   final String month;
   final bool isSettlement;
   final String selectedDataType;
@@ -24,12 +34,10 @@ class SettlementPage extends StatefulWidget {
   SettlementPageState createState() => SettlementPageState();
 }
 
-class SettlementPageState extends State<SettlementPage> {
+class SettlementPageState extends ConsumerState<SettlementPage> {
   bool _isLoading = false;
-  late List<Map<String, dynamic>> transactions;
-  late List<Map<String, dynamic>> profiles;
+  late List<Transaction> transactions;
   late List<Map<String, dynamic>> expenses;
-  late Map<String, dynamic> profile;
   late String month;
   late String selectedDataType;
   String incomeExpenseType = 'expense';
@@ -45,7 +53,11 @@ class SettlementPageState extends State<SettlementPage> {
   Map<String, double> expenseSections = {};
   Map<String, double> incomeSections = {};
   Map<String, Map<String, dynamic>>? settlementData = {};
-  List<bool> _selectedType = <bool>[false, true];
+
+  final List<bool> _selectedType = <bool>[false, true];
+  late Profile profile;
+  late List<Profile>? profiles;
+  late AuthState auth;
 
   @override
   void initState() {
@@ -56,200 +68,19 @@ class SettlementPageState extends State<SettlementPage> {
     month = widget.month;
     isSettlement = widget.isSettlement;
     selectedDataType = widget.selectedDataType;
-    _initializeData();
-  }
 
-  Future<void> _initializeData() async {
-    setState(() {
-      _isLoading = true;
-    });
-    await _getProfiles();
-    if (selectedDataType == 'share') {
-      // 共有データ用の処理
-      _calcShareSettlements(transactions);
-      _calcPaymentPerPerson();
-      _generateShareSettlementData();
-    } else {
-      // 個人データ用の処理
-      // カテゴリごとに計算したものをグラフに表示する？
-      _calcSelfSettlements(transactions);
-      _generateSelfSettlementData();
-    }
-    setState(() {
-      _isLoading = false;
-    });
-  }
-
-  Future<void> _getProfiles() async {
-    try {
-      await Future.delayed(Duration(milliseconds: 700));
-      profiles = await supabase
-          .from('profiles')
-          .select()
-          .eq('group_id', profile['group_id']);
-    } catch (error) {
-      if (mounted) {
-        context.showSnackBarError(message: '$error');
+    Future.microtask(() async {
+      final authNotifier = ref.watch(authProvider.notifier);
+      await authNotifier.fetchProfile();
+      await authNotifier.fetchProfiles();
+      auth = ref.watch(authProvider);
+      profiles = auth.profiles;
+      final settlementNotifier = ref.watch(settlementProvider.notifier);
+      if (selectedDataType == 'shared') {
+        await settlementNotifier.initializeShared(transactions, profiles);
+      } else if (selectedDataType == 'private') {
+        settlementNotifier.initializePrivate(transactions);
       }
-    }
-  }
-
-  void _calcShareSettlements(List<Map<String, dynamic>> transactions) async {
-    // グループ全員のデータを初期化
-    for (var item in profiles) {
-      sharedExpenseAmounts[item['id']] = {
-        'username': item['username'],
-        'avatar_url': item['avatar_url'],
-        'amount': 0,
-      };
-      sharedIncomeAmounts[item['id']] = {
-        'username': item['username'],
-        'avatar_url': item['avatar_url'],
-        'amount': 0,
-      };
-    }
-
-    // 共有データから支出額を計算する
-    for (var item in transactions) {
-      if (item['type'] == 'expense') {
-        String profileId = item['profile_id'];
-        double doubleAmount = item['amount'];
-        int amount = doubleAmount.round();
-        if (sharedExpenseAmounts.containsKey(profileId)) {
-          sharedExpenseAmounts[profileId]!['amount'] =
-              sharedExpenseAmounts[profileId]!['amount'] + amount;
-          expenseTotal = expenseTotal + amount;
-        }
-      } else {
-        String profileId = item['profile_id'];
-        double doubleAmount = item['amount'];
-        int amount = doubleAmount.round();
-        if (sharedIncomeAmounts.containsKey(profileId)) {
-          sharedIncomeAmounts[profileId]!['amount'] =
-              sharedIncomeAmounts[profileId]!['amount'] + amount;
-          incomeTotal = incomeTotal + amount;
-        }
-      }
-    }
-  }
-
-  // 共有支出のみの計算処理
-  void _calcPaymentPerPerson() {
-    paymentPerPerson = (expenseTotal / sharedExpenseAmounts.length).round();
-    sharedExpenseAmounts.forEach((profileId, item) {
-      // 1人当たりの支払額との差を計算
-      num difference = paymentPerPerson - item['amount'];
-      if (difference < 0) {
-        // 基準より多く支払っている
-        item['payments'] = -difference; // 正の値に変換
-        // 受取人
-        item['role'] = 'payee';
-      } else if (difference > 0) {
-        // 基準より少ない額を支払っている
-        item['payments'] = difference;
-        // 支払人
-        item['role'] = 'payer';
-      } else {
-        item['payments'] = 0;
-        item['role'] = 'neutral';
-      }
-    });
-  }
-
-  void _calcSelfSettlements(transactions) {
-    for (var item in transactions) {
-      if (item['type'] == 'expense') {
-        final categoryName = item['categories']['name'];
-        double doubleAmount = item['amount'];
-        int amount = doubleAmount.round();
-        if (selfExpenseAmounts.containsKey(categoryName)) {
-          selfExpenseAmounts[categoryName]!['amount'] =
-              selfExpenseAmounts[categoryName]!['amount'] + amount;
-        } else {
-          selfExpenseAmounts[categoryName] = {
-            'amount': amount,
-          };
-          expenseTotal = expenseTotal + amount;
-        }
-      } else {
-        final categoryName = item['categories']['name'];
-        double doubleAmount = item['amount'];
-        int amount = doubleAmount.round();
-        if (selfIncomeAmounts.containsKey(categoryName)) {
-          selfIncomeAmounts[categoryName]!['amount'] =
-              selfIncomeAmounts[categoryName]!['amount'] + amount;
-        } else {
-          selfIncomeAmounts[categoryName] = {
-            'amount': amount,
-          };
-          incomeTotal = incomeTotal + amount;
-        }
-      }
-    }
-  }
-
-  void _generateShareSettlementData() {
-    String? payer,
-        payee,
-        payment,
-        receive,
-        payerAmount,
-        payeeAmount,
-        payerAvatarUrl,
-        payeeAvatarUrl;
-
-    sharedExpenseAmounts.forEach((profileId, data) {
-      expenseSections['${data['username']}'] =
-          double.parse(data['amount'].toString());
-      if (data['role'] == 'payer') {
-        payer = data['username'];
-        payerAvatarUrl = data['avatar_url'];
-        payerAmount = convertToYenFormat(amount: data['amount']);
-        payment = convertToYenFormat(amount: data['payments']);
-      } else if (data['role'] == 'payee') {
-        payee = data['username'];
-        payeeAvatarUrl = data['avatar_url'];
-        payeeAmount = convertToYenFormat(amount: data['amount']);
-        receive = convertToYenFormat(amount: data['payments']);
-      }
-    });
-
-    sharedIncomeAmounts.forEach((profileId, data) {
-      incomeSections['${data['username']}'] =
-          double.parse(data['amount'].toString());
-    });
-
-    // どちらも null でなければ SettlementData 作成
-    if (payer != null && payee != null && payment != null && receive != null) {
-      settlementData?['payer'] = {
-        'role': 'payer',
-        'username': payer!,
-        'avatarUrl': payerAvatarUrl,
-        'advancePayment': payerAmount ?? '0',
-        'payment': payment!,
-      };
-      settlementData?['payee'] = {
-        'role': 'payee',
-        'username': payee!,
-        'avatarUrl': payeeAvatarUrl,
-        'advancePayment': payeeAmount ?? '0',
-        'payment': receive!,
-      };
-    } else {
-      // 受け渡し情報が無い場合は null のまま
-      settlementData = null;
-    }
-  }
-
-  void _generateSelfSettlementData() {
-    selfExpenseAmounts.forEach((categoryName, data) {
-      expenseSections['${categoryName}'] =
-          double.parse(data['amount'].toString());
-    });
-
-    selfIncomeAmounts.forEach((categoryName, data) {
-      incomeSections['${categoryName}'] =
-          double.parse(data['amount'].toString());
     });
   }
 
@@ -259,16 +90,11 @@ class SettlementPageState extends State<SettlementPage> {
         _isLoading = true;
       });
 
-      await Future.delayed(Duration(milliseconds: 700));
-      final userId = supabase.auth.currentUser!.id;
-      final profiles = await supabase
-          .from('profiles')
-          .select('group_id')
-          .eq('id', userId)
-          .single();
       final settlementData = {
-        'group_id': profiles['group_id'],
-        'visibility': selectedDataType == 'share' ? 'share' : 'private',
+        'group_id': profile.groupId,
+        'visibility': selectedDataType == 'shared'
+            ? SettlementVisibility.shared
+            : SettlementVisibility.private,
         'settlement_date': month,
         'income_total_amount': incomeTotal,
         'expense_total_amount': expenseTotal,
@@ -277,16 +103,16 @@ class SettlementPageState extends State<SettlementPage> {
         'created_at': DateTime.now().toIso8601String(),
         'updated_at': DateTime.now().toIso8601String(),
       };
-      final settlement = await supabase
-          .from('settlements')
-          .insert(settlementData)
-          .select()
-          .single();
 
-      List<Map<String, dynamic>> settlementItem = [];
+      await ref
+          .watch(settlementProvider.notifier)
+          .saveSettlement(settlementData);
+      final settlementId = ref.watch(settlementProvider).settlement?.id;
+
+      List<Map<String, dynamic>> settlementItems = [];
       sharedExpenseAmounts.forEach((profileId, item) {
-        settlementItem.add({
-          'settlement_id': settlement['id'],
+        settlementItems.add({
+          'settlement_id': settlementId,
           'profile_id': profileId,
           'role': item['role'],
           'amount': item['payments'],
@@ -295,19 +121,23 @@ class SettlementPageState extends State<SettlementPage> {
           'updated_at': DateTime.now().toIso8601String(),
         });
       });
-      await supabase.from('settlement_items').insert(settlementItem);
+
+      await ref
+          .watch(settlementProvider.notifier)
+          .saveSettlementItems(settlementItems);
 
       List<Map<String, dynamic>> transactionIds = [];
       for (var transaction in transactions) {
-        transaction.remove('profiles');
-        transaction.remove('categories');
         transactionIds.add({
-          ...transaction,
-          'settlement_id': settlement['id'],
+          ...transaction.toMapForUpdate(),
+          'settlement_id': settlementId,
           'updated_at': DateTime.now().toIso8601String(),
         });
       }
-      await supabase.from('transactions').upsert(transactionIds);
+
+      await ref
+          .watch(transactionProvider.notifier)
+          .updateMultipleTransaction(transactionIds);
 
       if (mounted) {
         context.showSnackBar(
@@ -325,23 +155,17 @@ class SettlementPageState extends State<SettlementPage> {
     }
   }
 
+  // todo: settlement_provider
   Future<void> _selfSettlementConfirm() async {
     try {
       setState(() {
         _isLoading = true;
       });
 
-      await Future.delayed(Duration(milliseconds: 700));
-      final userId = supabase.auth.currentUser!.id;
-      final profiles = await supabase
-          .from('profiles')
-          .select('group_id')
-          .eq('id', userId)
-          .single();
       DateTime now = DateTime.now();
       final settlementDate = DateFormat('yyyy/MM').format(now);
       final settlementData = {
-        'group_id': profiles['group_id'],
+        'group_id': profile.groupId,
         'visibility': 'private',
         'settlement_date': settlementDate,
         'income_total_amount': incomeTotal,
@@ -351,35 +175,38 @@ class SettlementPageState extends State<SettlementPage> {
         'created_at': DateTime.now().toIso8601String(),
         'updated_at': DateTime.now().toIso8601String(),
       };
-      final settlement = await supabase
-          .from('settlements')
-          .insert(settlementData)
-          .select()
-          .single();
 
-      List<Map<String, dynamic>> settlementItem = [];
-      settlementItem.add({
-        'settlement_id': settlement['id'],
-        'profile_id': profile['id'],
+      await ref
+          .watch(settlementProvider.notifier)
+          .saveSettlement(settlementData);
+      final settlementId = ref.watch(settlementProvider).settlement?.id;
+
+      List<Map<String, dynamic>> settlementItems = [];
+      settlementItems.add({
+        'settlement_id': settlementId,
+        'profile_id': profile.id,
         'role': 'self',
         'amount': expenseTotal,
         'percentage': 100,
         'created_at': DateTime.now().toIso8601String(),
         'updated_at': DateTime.now().toIso8601String(),
       });
-      await supabase.from('settlement_items').insert(settlementItem);
+
+      await ref
+          .watch(settlementProvider.notifier)
+          .saveSettlementItems(settlementItems);
 
       List<Map<String, dynamic>> transactionIds = [];
       for (var transaction in transactions) {
-        transaction.remove('profiles');
-        transaction.remove('categories');
         transactionIds.add({
-          ...transaction,
-          'settlement_id': settlement['id'],
+          ...transaction.toMapForUpdate(),
+          'settlement_id': settlementId,
           'updated_at': DateTime.now().toIso8601String(),
         });
       }
-      await supabase.from('transactions').upsert(transactionIds);
+      await ref
+          .watch(transactionProvider.notifier)
+          .updateMultipleTransaction(transactionIds);
 
       if (mounted) {
         context.showSnackBar(
@@ -415,13 +242,14 @@ class SettlementPageState extends State<SettlementPage> {
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      image: DecorationImage(
-                        fit: BoxFit.fill,
-                        image: data['avatarUrl'] != null
-                            ? NetworkImage(data['avatarUrl'])
-                            : AssetImage('assets/icons/user_icon.png'),
-                      )),
+                    shape: BoxShape.circle,
+                    image: DecorationImage(
+                      fit: BoxFit.fill,
+                      image: data['avatarUrl'] != null
+                          ? NetworkImage(data['avatarUrl'])
+                          : AssetImage('assets/icons/user_icon.png'),
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 8),
                 // 支払人
@@ -440,7 +268,9 @@ class SettlementPageState extends State<SettlementPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Text(convertToYenFormat(amount: paymentPerPerson)),
+                  Text(
+                    convertToYenFormat(amount: paymentPerPerson),
+                  ),
                   const SizedBox(width: 16),
                 ],
               )
@@ -487,6 +317,14 @@ class SettlementPageState extends State<SettlementPage> {
 
   @override
   Widget build(BuildContext context) {
+    final state = ref.watch(settlementProvider);
+    if (selectedDataType == 'shared') {
+      incomeSections = state.sharedIncomeSections;
+      expenseSections = state.sharedExpenseSections;
+    } else {
+      incomeSections = state.privateIncomeSections;
+      expenseSections = state.privateExpenseSections;
+    }
     String pieChartCenterText = '';
     if (incomeExpenseType == 'expense' && selectedDataType == 'share') {
       pieChartCenterText =
@@ -548,17 +386,18 @@ class SettlementPageState extends State<SettlementPage> {
                             }
                           });
                         },
-                        children: [
-                          Text('収入'),
-                          Text('支出'),
-                        ],
                         isSelected: _selectedType,
-                        borderRadius:
-                            const BorderRadius.all(Radius.circular(8)),
+                        borderRadius: const BorderRadius.all(
+                          Radius.circular(8),
+                        ),
                         constraints: const BoxConstraints(
                           minHeight: 40.0,
                           minWidth: 80.0,
                         ),
+                        children: [
+                          Text('収入'),
+                          Text('支出'),
+                        ],
                       )
                     ],
                   ),
@@ -686,21 +525,22 @@ class SettlementPageState extends State<SettlementPage> {
                           padding: const EdgeInsets.all(16.0),
                           itemCount: transactions.length,
                           itemBuilder: (context, index) {
-                            double amount = transactions[index]['amount'];
-                            final displayAmount =
-                                convertToYenFormat(amount: amount.round());
-                            final date =
-                                DateTime.parse(transactions[index]['date'])
-                                    .toLocal();
+                            double amount = transactions[index].amount;
+                            final displayAmount = convertToYenFormat(
+                              amount: amount.round(),
+                            );
+                            final date = DateTime.parse(
+                              transactions[index].date.toString(),
+                            ).toLocal();
                             final transactionDate =
                                 DateFormat('yyyy/MM/dd').format(date);
-                            final profileData = transactions[index]['profiles'];
                             final username =
-                                profileData?['username'] ?? '(No username)';
-                            final categoryData =
-                                transactions[index]['categories'];
+                                transactions[index].profile?.username;
                             final categoryName =
-                                categoryData?['name'] ?? '(No category name)';
+                                transactions[index].subCategory?.name;
+                            if (username == null || categoryName == null) {
+                              return Text('データがありません');
+                            }
                             return InkWell(
                               onTap: () {
                                 Navigator.push(
@@ -737,7 +577,7 @@ class SettlementPageState extends State<SettlementPage> {
                                         Row(
                                           children: [
                                             Text(
-                                              transactions[index]['name'],
+                                              transactions[index].name,
                                               style: const TextStyle(
                                                 fontSize: 12,
                                                 fontWeight: FontWeight.bold,
@@ -745,12 +585,14 @@ class SettlementPageState extends State<SettlementPage> {
                                               ),
                                             ),
                                             const SizedBox(width: 8),
-                                            Text('- ${username}',
-                                                style: const TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.black,
-                                                )),
+                                            Text(
+                                              '- $username',
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.black,
+                                              ),
+                                            ),
                                           ],
                                         ),
                                         Row(
@@ -772,8 +614,8 @@ class SettlementPageState extends State<SettlementPage> {
                                               decoration: BoxDecoration(
                                                 border: Border.all(
                                                   color: transactions[index]
-                                                              ['type'] ==
-                                                          'income'
+                                                              .type ==
+                                                          TransactionType.income
                                                       ? Colors.green
                                                       : Colors.red,
                                                   width: 0.5,
@@ -782,15 +624,15 @@ class SettlementPageState extends State<SettlementPage> {
                                                     BorderRadius.circular(4.0),
                                               ),
                                               child: Text(
-                                                transactions[index]['type'] ==
-                                                        'income'
+                                                transactions[index].type ==
+                                                        TransactionType.income
                                                     ? '収入'
                                                     : '支出',
                                                 style: TextStyle(
                                                   fontSize: 12,
                                                   color: transactions[index]
-                                                              ['type'] ==
-                                                          'income'
+                                                              .type ==
+                                                          TransactionType.income
                                                       ? Colors.green
                                                       : Colors.red,
                                                 ),

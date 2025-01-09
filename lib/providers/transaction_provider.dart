@@ -46,10 +46,10 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
     }
   }
 
-  Future<void> insertTransaction(Transaction transaction) async {
+  Future<void> insertTransaction(Map<String, dynamic> transaction) async {
     try {
-      await repository.insert(transaction);
-      final updateTransactions = [...state.transactions, transaction];
+      final response = await repository.insert(transaction);
+      final updateTransactions = [...state.transactions, response];
       state = state.copyWith(transactions: updateTransactions);
       calculateTotalAmounts();
     } catch (e) {
@@ -57,13 +57,21 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
     }
   }
 
-  Future<void> updateTransaction(Transaction transaction) async {
+  Future<void> updateTransaction(Map<String, dynamic> transaction) async {
     try {
-      await repository.update(transaction);
-      final updatedTransactions = state.transactions.map((t) {
-        return t.id == transaction.id ? transaction : t;
-      }).toList();
-      state = state.copyWith(transactions: updatedTransactions);
+      final response = await repository.update(transaction);
+      state = state.copyWith(transactions: response);
+      calculateTotalAmounts();
+    } catch (e) {
+      throw Exception('Failed to update transaction: $e');
+    }
+  }
+
+  Future<void> updateMultipleTransaction(
+      List<Map<String, dynamic>> transactions) async {
+    try {
+      final response = await repository.updateMultiple(transactions);
+      state = state.copyWith(transactions: response);
       calculateTotalAmounts();
     } catch (e) {
       throw Exception('Failed to update transaction: $e');

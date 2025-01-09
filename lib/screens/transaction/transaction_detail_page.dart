@@ -4,9 +4,13 @@ import 'package:sharing_household_expenses/screens/transaction/transaction_regis
 import 'package:sharing_household_expenses/services/transaction_service.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
 
+import '../../constants/transaction_type.dart';
+import '../../models/profile.dart';
+import '../../models/transaction.dart';
+
 class TransactionDetailPage extends StatefulWidget {
-  final Map<String, dynamic> transaction;
-  final Map<String, dynamic> profile;
+  final Transaction transaction;
+  final Profile profile;
   final bool isSettlement;
 
   const TransactionDetailPage({
@@ -25,8 +29,8 @@ class TransactionDetailPageState extends State<TransactionDetailPage> {
   bool isEdited = false;
   bool isEditable = false;
   late final TransactionService transactionService;
-  late Map<String, dynamic> transaction;
-  late Map<String, dynamic> profile;
+  late Transaction transaction;
+  late Profile profile;
   late String displayAmount;
   late String transactionDate;
   late bool isSettlement;
@@ -38,9 +42,9 @@ class TransactionDetailPageState extends State<TransactionDetailPage> {
     // initState 内で widget.transaction を初期化
     transaction = widget.transaction;
     profile = widget.profile;
-    double amount = transaction['amount'];
+    double amount = transaction.amount;
     displayAmount = convertToYenFormat(amount: amount.round());
-    DateTime date = DateTime.parse(transaction['date']).toLocal();
+    DateTime date = DateTime.parse(transaction.date.toString()).toLocal();
     transactionDate = DateFormat('yyyy/MM/dd').format(date);
     isSettlement = widget.isSettlement;
   }
@@ -53,7 +57,11 @@ class TransactionDetailPageState extends State<TransactionDetailPage> {
 
       await Future.delayed(Duration(milliseconds: 700));
 
-      await transactionService.deleteData(transaction['id']);
+      final transactionId = transaction.id;
+      if (transactionId == null) {
+        throw Exception('トランザクションIDがありません');
+      }
+      await transactionService.deleteData(transactionId);
 
       if (mounted) {
         context.showSnackBar(message: '削除しました', backgroundColor: Colors.green);
@@ -72,7 +80,7 @@ class TransactionDetailPageState extends State<TransactionDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (transaction['profile_id'] == profile['id']) {
+    if (transaction.profileId == profile.id) {
       isEditable = true;
     } else {
       isEditable = false;
@@ -108,7 +116,7 @@ class TransactionDetailPageState extends State<TransactionDetailPage> {
                         child: Center(
                           child: Column(
                             children: [
-                              Text(transaction['name'],
+                              Text(transaction.name,
                                   style: TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.bold)),
@@ -132,7 +140,7 @@ class TransactionDetailPageState extends State<TransactionDetailPage> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             const Text('支払人'),
-                            Text(transaction['profiles']['username']),
+                            Text(transaction.profile!.username),
                           ],
                         ),
                       ),
@@ -146,7 +154,7 @@ class TransactionDetailPageState extends State<TransactionDetailPage> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             const Text('共有設定'),
-                            Text(transaction['share'] ? '共有する' : '共有しない'),
+                            Text(transaction.share ? '共有する' : '共有しない'),
                           ],
                         ),
                       ),
@@ -160,7 +168,9 @@ class TransactionDetailPageState extends State<TransactionDetailPage> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text('収支'),
-                            Text(transaction['type'] == 'income' ? '収入' : '支出'),
+                            Text(transaction.type == TransactionType.income
+                                ? '収入'
+                                : '支出'),
                           ],
                         ),
                       ),
@@ -188,7 +198,7 @@ class TransactionDetailPageState extends State<TransactionDetailPage> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text('カテゴリ'),
-                            Text(transaction['categories']['name']),
+                            Text(transaction.subCategory!.name),
                           ],
                         ),
                       ),
@@ -202,7 +212,7 @@ class TransactionDetailPageState extends State<TransactionDetailPage> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text('メモ'),
-                            Text(transaction['note'] ?? ''),
+                            Text(transaction.note ?? ''),
                           ],
                         ),
                       ),
@@ -240,12 +250,12 @@ class TransactionDetailPageState extends State<TransactionDetailPage> {
                                       setState(() {
                                         isEdited = true;
                                         transaction = response;
-                                        double amount = transaction['amount'];
+                                        double amount = transaction.amount;
                                         displayAmount = convertToYenFormat(
                                             amount: amount.round());
-                                        DateTime date =
-                                            DateTime.parse(transaction['date'])
-                                                .toLocal();
+                                        DateTime date = DateTime.parse(
+                                                transaction.date.toString())
+                                            .toLocal();
                                         transactionDate =
                                             DateFormat('yyyy/MM/dd')
                                                 .format(date);

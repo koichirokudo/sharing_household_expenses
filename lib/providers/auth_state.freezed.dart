@@ -16,10 +16,19 @@ final _privateConstructorUsedError = UnsupportedError(
 
 /// @nodoc
 mixin _$AuthState {
+  bool get isLoading => throw _privateConstructorUsedError;
+
   bool get isAuthenticated => throw _privateConstructorUsedError;
+
   Session? get session => throw _privateConstructorUsedError;
+
   User? get user => throw _privateConstructorUsedError;
-  Map<String, dynamic>? get profile => throw _privateConstructorUsedError;
+
+  Profile? get profile => throw _privateConstructorUsedError;
+
+  List<Profile>? get profiles => throw _privateConstructorUsedError;
+
+  String? get errorMessage => throw _privateConstructorUsedError;
 
   /// Create a copy of AuthState
   /// with the given fields replaced by the non-null parameter values.
@@ -32,12 +41,16 @@ mixin _$AuthState {
 abstract class $AuthStateCopyWith<$Res> {
   factory $AuthStateCopyWith(AuthState value, $Res Function(AuthState) then) =
       _$AuthStateCopyWithImpl<$Res, AuthState>;
+
   @useResult
   $Res call(
-      {bool isAuthenticated,
+      {bool isLoading,
+      bool isAuthenticated,
       Session? session,
       User? user,
-      Map<String, dynamic>? profile});
+      Profile? profile,
+      List<Profile>? profiles,
+      String? errorMessage});
 }
 
 /// @nodoc
@@ -47,6 +60,7 @@ class _$AuthStateCopyWithImpl<$Res, $Val extends AuthState>
 
   // ignore: unused_field
   final $Val _value;
+
   // ignore: unused_field
   final $Res Function($Val) _then;
 
@@ -55,12 +69,19 @@ class _$AuthStateCopyWithImpl<$Res, $Val extends AuthState>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? isLoading = null,
     Object? isAuthenticated = null,
     Object? session = freezed,
     Object? user = freezed,
     Object? profile = freezed,
+    Object? profiles = freezed,
+    Object? errorMessage = freezed,
   }) {
     return _then(_value.copyWith(
+      isLoading: null == isLoading
+          ? _value.isLoading
+          : isLoading // ignore: cast_nullable_to_non_nullable
+              as bool,
       isAuthenticated: null == isAuthenticated
           ? _value.isAuthenticated
           : isAuthenticated // ignore: cast_nullable_to_non_nullable
@@ -76,7 +97,15 @@ class _$AuthStateCopyWithImpl<$Res, $Val extends AuthState>
       profile: freezed == profile
           ? _value.profile
           : profile // ignore: cast_nullable_to_non_nullable
-              as Map<String, dynamic>?,
+              as Profile?,
+      profiles: freezed == profiles
+          ? _value.profiles
+          : profiles // ignore: cast_nullable_to_non_nullable
+              as List<Profile>?,
+      errorMessage: freezed == errorMessage
+          ? _value.errorMessage
+          : errorMessage // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 }
@@ -87,13 +116,17 @@ abstract class _$$AuthStateImplCopyWith<$Res>
   factory _$$AuthStateImplCopyWith(
           _$AuthStateImpl value, $Res Function(_$AuthStateImpl) then) =
       __$$AuthStateImplCopyWithImpl<$Res>;
+
   @override
   @useResult
   $Res call(
-      {bool isAuthenticated,
+      {bool isLoading,
+      bool isAuthenticated,
       Session? session,
       User? user,
-      Map<String, dynamic>? profile});
+      Profile? profile,
+      List<Profile>? profiles,
+      String? errorMessage});
 }
 
 /// @nodoc
@@ -109,12 +142,19 @@ class __$$AuthStateImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? isLoading = null,
     Object? isAuthenticated = null,
     Object? session = freezed,
     Object? user = freezed,
     Object? profile = freezed,
+    Object? profiles = freezed,
+    Object? errorMessage = freezed,
   }) {
     return _then(_$AuthStateImpl(
+      isLoading: null == isLoading
+          ? _value.isLoading
+          : isLoading // ignore: cast_nullable_to_non_nullable
+              as bool,
       isAuthenticated: null == isAuthenticated
           ? _value.isAuthenticated
           : isAuthenticated // ignore: cast_nullable_to_non_nullable
@@ -128,9 +168,17 @@ class __$$AuthStateImplCopyWithImpl<$Res>
           : user // ignore: cast_nullable_to_non_nullable
               as User?,
       profile: freezed == profile
-          ? _value._profile
+          ? _value.profile
           : profile // ignore: cast_nullable_to_non_nullable
-              as Map<String, dynamic>?,
+              as Profile?,
+      profiles: freezed == profiles
+          ? _value._profiles
+          : profiles // ignore: cast_nullable_to_non_nullable
+              as List<Profile>?,
+      errorMessage: freezed == errorMessage
+          ? _value.errorMessage
+          : errorMessage // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -139,31 +187,42 @@ class __$$AuthStateImplCopyWithImpl<$Res>
 
 class _$AuthStateImpl implements _AuthState {
   const _$AuthStateImpl(
-      {required this.isAuthenticated,
+      {required this.isLoading,
+      required this.isAuthenticated,
       required this.session,
       required this.user,
-      required final Map<String, dynamic>? profile})
-      : _profile = profile;
+      required this.profile,
+      required final List<Profile>? profiles,
+      this.errorMessage})
+      : _profiles = profiles;
 
+  @override
+  final bool isLoading;
   @override
   final bool isAuthenticated;
   @override
   final Session? session;
   @override
   final User? user;
-  final Map<String, dynamic>? _profile;
   @override
-  Map<String, dynamic>? get profile {
-    final value = _profile;
+  final Profile? profile;
+  final List<Profile>? _profiles;
+
+  @override
+  List<Profile>? get profiles {
+    final value = _profiles;
     if (value == null) return null;
-    if (_profile is EqualUnmodifiableMapView) return _profile;
+    if (_profiles is EqualUnmodifiableListView) return _profiles;
     // ignore: implicit_dynamic_type
-    return EqualUnmodifiableMapView(value);
+    return EqualUnmodifiableListView(value);
   }
 
   @override
+  final String? errorMessage;
+
+  @override
   String toString() {
-    return 'AuthState(isAuthenticated: $isAuthenticated, session: $session, user: $user, profile: $profile)';
+    return 'AuthState(isLoading: $isLoading, isAuthenticated: $isAuthenticated, session: $session, user: $user, profile: $profile, profiles: $profiles, errorMessage: $errorMessage)';
   }
 
   @override
@@ -171,16 +230,28 @@ class _$AuthStateImpl implements _AuthState {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$AuthStateImpl &&
+            (identical(other.isLoading, isLoading) ||
+                other.isLoading == isLoading) &&
             (identical(other.isAuthenticated, isAuthenticated) ||
                 other.isAuthenticated == isAuthenticated) &&
             (identical(other.session, session) || other.session == session) &&
             (identical(other.user, user) || other.user == user) &&
-            const DeepCollectionEquality().equals(other._profile, _profile));
+            (identical(other.profile, profile) || other.profile == profile) &&
+            const DeepCollectionEquality().equals(other._profiles, _profiles) &&
+            (identical(other.errorMessage, errorMessage) ||
+                other.errorMessage == errorMessage));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, isAuthenticated, session, user,
-      const DeepCollectionEquality().hash(_profile));
+  int get hashCode => Object.hash(
+      runtimeType,
+      isLoading,
+      isAuthenticated,
+      session,
+      user,
+      profile,
+      const DeepCollectionEquality().hash(_profiles),
+      errorMessage);
 
   /// Create a copy of AuthState
   /// with the given fields replaced by the non-null parameter values.
@@ -193,19 +264,34 @@ class _$AuthStateImpl implements _AuthState {
 
 abstract class _AuthState implements AuthState {
   const factory _AuthState(
-      {required final bool isAuthenticated,
+      {required final bool isLoading,
+      required final bool isAuthenticated,
       required final Session? session,
       required final User? user,
-      required final Map<String, dynamic>? profile}) = _$AuthStateImpl;
+      required final Profile? profile,
+      required final List<Profile>? profiles,
+      final String? errorMessage}) = _$AuthStateImpl;
+
+  @override
+  bool get isLoading;
 
   @override
   bool get isAuthenticated;
+
   @override
   Session? get session;
+
   @override
   User? get user;
+
   @override
-  Map<String, dynamic>? get profile;
+  Profile? get profile;
+
+  @override
+  List<Profile>? get profiles;
+
+  @override
+  String? get errorMessage;
 
   /// Create a copy of AuthState
   /// with the given fields replaced by the non-null parameter values.

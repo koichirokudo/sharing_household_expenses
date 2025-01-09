@@ -14,7 +14,7 @@ import '../../providers/category_provider.dart';
 
 class TransactionRegisterPage extends ConsumerStatefulWidget {
   // 画面遷移時に渡されるデータ
-  final Map<String, dynamic>? transaction;
+  final Transaction? transaction;
 
   const TransactionRegisterPage({super.key, this.transaction});
 
@@ -28,7 +28,7 @@ class TransactionRegisterPageState
   bool _isSettlementLoading = false;
   int? _id;
   bool _share = false;
-  String? _selectedType = 'expense';
+  String _selectedType = 'expense';
   String? _selectedCategory;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _dateController = TextEditingController();
@@ -66,15 +66,15 @@ class TransactionRegisterPageState
     final transaction = widget.transaction;
     if (transaction != null) {
       // 編集データがある場合の初期値設定
-      _id = transaction['id'];
-      _selectedType = transaction['type'];
-      _selectedCategory = transaction['categories']['id'].toString();
-      _share = transaction['share'];
+      _id = transaction.id;
+      _selectedType = transaction.type as String;
+      _selectedCategory = transaction.subCategory!.id.toString();
+      _share = transaction.share;
       _dateController.text = DateFormat('yyyy/MM/dd')
-          .format(DateTime.parse(transaction['date']).toLocal());
-      _nameController.text = transaction['name'];
-      _amountController.text = transaction['amount'].round().toString();
-      _noteController.text = transaction['note'];
+          .format(DateTime.parse(transaction.date.toString()).toLocal());
+      _nameController.text = transaction.name;
+      _amountController.text = transaction.amount.round().toString();
+      _noteController.text = transaction.note ?? '';
     } else {
       // 編集データがない場合の初期設定
       _selectedType = 'expense';
@@ -96,6 +96,8 @@ class TransactionRegisterPageState
       });
 
       final auth = ref.watch(authProvider);
+      final profileId = auth.profile?.id;
+      final groupId = auth.profile?.groupId;
 
       final bool isSettlement =
           await _checkSettlement(_dateController.text.substring(0, 7));
@@ -107,31 +109,30 @@ class TransactionRegisterPageState
         return;
       }
 
-      if (_selectedCategory == null) {
+      if (_selectedCategory == null || profileId == null || groupId == null) {
         return;
       }
 
-      final data = Transaction(
-        id: _id,
-        profileId: auth.profile?['id'],
-        groupId: auth.profile?['group_id'],
-        subCategoryId: int.parse(_selectedCategory!),
-        name: _nameController.text.trim(),
-        date: DateTime.parse(_dateController.text.trim().replaceAll('/', '-')),
-        type: _selectedType == 'income'
+      final data = {
+        if (_id != null) 'id': _id,
+        'profile_id': profileId,
+        'group_id': groupId,
+        'sub_category_id': int.tryParse(_selectedCategory!),
+        'amount': int.tryParse(_amountController.text.trim()),
+        'share': _share,
+        'type': _selectedType == 'income'
             ? TransactionType.income
             : TransactionType.expense,
-        amount: double.parse(_amountController.text.trim()),
-        note: _noteController.text.trim(),
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      );
-
+        'date': _dateController.text.trim(),
+        'name': _nameController.text.trim(),
+        'note': _noteController.text.trim(),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      };
       await Future.delayed(Duration(milliseconds: 350));
 
-      if (data.id != null) {
+      if (data['id'] != null) {
         await ref.watch(transactionProvider.notifier).updateTransaction(data);
-      } else if (data.id == null) {
+      } else if (data['id'] == null) {
         await ref.watch(transactionProvider.notifier).insertTransaction(data);
       }
 
@@ -289,13 +290,13 @@ class TransactionRegisterPageState
                                 child: Icon(Icons.done),
                               ), // アイコンを先頭に配置
                               Expanded(
-                                child: RadioListTile<String>(
+                                child: RadioListTile(
                                   title: const Text('収入'),
                                   value: 'income',
                                   groupValue: _selectedType,
                                   onChanged: (String? value) {
                                     setState(() {
-                                      _selectedType = value;
+                                      _selectedType = 'income';
                                       _selectedCategory = '5102';
                                     });
                                   },
@@ -308,7 +309,7 @@ class TransactionRegisterPageState
                                   groupValue: _selectedType,
                                   onChanged: (String? value) {
                                     setState(() {
-                                      _selectedType = value;
+                                      _selectedType = 'expense';
                                       _selectedCategory = '5001';
                                     });
                                   },

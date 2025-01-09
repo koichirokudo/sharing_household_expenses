@@ -28,11 +28,12 @@ class HomePageState extends ConsumerState<HomePage> {
       final authNotifier = ref.watch(authProvider.notifier);
       await authNotifier.fetchProfile();
       final auth = ref.watch(authProvider);
+      final groupId = auth.profile?.groupId;
       final transactionNotifier = ref.watch(transactionProvider.notifier);
       final currentMonth = DateTime.now();
-      if (auth.profile != null) {
+      if (groupId != null) {
         await transactionNotifier.fetchMonthlyTransactions(
-          auth.profile?['group_id'],
+          groupId,
           currentMonth,
         );
       }

@@ -20,7 +20,7 @@ class ProfileEditPageState extends ConsumerState<ProfileEditPage> {
   void initState() {
     super.initState();
     final auth = ref.read(authProvider);
-    _usernameController.text = auth.profile?['username'] ?? '';
+    _usernameController.text = auth.profile?.username ?? '';
   }
 
   Future<void> _updateProfile() async {
@@ -114,8 +114,7 @@ class ProfileEditPageState extends ConsumerState<ProfileEditPage> {
                 children: [
                   const SizedBox(height: 16),
                   Avatar(
-                      imageUrl: auth.profile?['avatar_url'],
-                      onUpload: _onUpload),
+                      imageUrl: auth.profile?.avatarUrl, onUpload: _onUpload),
                   const SizedBox(height: 32),
                   TextFormField(
                     controller: _usernameController,

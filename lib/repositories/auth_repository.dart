@@ -1,6 +1,7 @@
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../models/profile.dart';
 import '../utils/constants.dart';
 
 class AuthRepository {
@@ -16,19 +17,41 @@ class AuthRepository {
   }
 
   // プロフィール取得
-  Future<Map<String, dynamic>> fetchProfile(String userId) async {
-    return await supabase.from('profiles').select().eq('id', userId).single();
+  Future<Profile> fetchProfile(String userId) async {
+    final response =
+        await supabase.from('profiles').select().eq('id', userId).single();
+
+    if (response.isEmpty) {
+      throw Exception('プロフィールが取得できません');
+    }
+
+    return Profile.fromMap(response);
+  }
+
+  // グループ全員のプロフィール情報を取得
+  Future<List<Profile>> fetchProfiles(String groupId) async {
+    final response =
+        await supabase.from('profiles').select().eq('group_id', groupId);
+
+    if (response.isEmpty) {
+      throw Exception('プロフィールが取得できません');
+    }
+
+    return (response as List<dynamic>)
+        .map((profile) => Profile.fromMap(profile))
+        .toList();
   }
 
   // プロフィール更新
-  Future<Map<String, dynamic>> updateProfile(
+  Future<Profile> updateProfile(
       String userId, Map<String, dynamic> data) async {
-    return await supabase
+    final response = await supabase
         .from('profiles')
         .update(data)
         .eq('id', userId)
         .select()
         .single();
+    return Profile.fromMap(response);
   }
 
   // ユーザー情報更新

@@ -6,6 +6,7 @@ import 'package:sharing_household_expenses/constants/transaction_type.dart';
 import 'package:sharing_household_expenses/screens/transaction/transaction_detail_page.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
 
+import '../../models/profile.dart';
 import '../../models/transaction.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/settlement_provider.dart';
@@ -26,7 +27,7 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
   List<String> months = [];
   List<Transaction> transactions = [];
   List<Map<String, dynamic>> settlements = [];
-  Map<String, dynamic> profile = {};
+  late Profile profile;
   late int selectedIndex = 1;
   late final PageController _pageController;
   late String _selectedDataType = 'shared';
@@ -41,12 +42,15 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
       final authNotifier = ref.watch(authProvider.notifier);
       await authNotifier.fetchProfile();
       final auth = ref.watch(authProvider);
+      // TODO: ! はやめたい
+      profile = auth.profile!;
+      final groupId = auth.profile?.groupId;
       final transactionNotifier = ref.watch(transactionProvider.notifier);
       final transactionState = ref.watch(transactionProvider);
       final currentMonth = DateTime.now();
-      if (auth.profile != null) {
+      if (groupId != null) {
         await transactionNotifier.fetchMonthlyTransactions(
-          auth.profile?['group_id'],
+          groupId,
           currentMonth,
         );
         setState(() {
@@ -71,16 +75,9 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
         _isSettlementLoading = true;
       });
 
-      final auth = ref.watch(authProvider);
-      final profile = auth.profile;
-
-      if (profile == null) {
-        throw Exception('Profile is not available');
-      }
-
       final response =
           await ref.watch(settlementProvider.notifier).checkSettlement(
-                _selectedDataType == 'shared'
+                _selectedDataType == SettlementVisibility.shared
                     ? SettlementVisibility.shared.toString()
                     : SettlementVisibility.private.toString(),
                 months[selectedIndex],
@@ -272,20 +269,18 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
       onPressed: _isSettlement || transactions.isEmpty
           ? null
           : () async {
-              if (profile.isNotEmpty) {
-                final response = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => SettlementPage(
-                      month: months[selectedIndex],
-                      transactions: transactions,
-                      profile: profile,
-                      isSettlement: false,
-                      selectedDataType: _selectedDataType,
-                    ),
+              final response = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SettlementPage(
+                    month: months[selectedIndex],
+                    transactions: transactions,
+                    profile: profile,
+                    isSettlement: false,
+                    selectedDataType: _selectedDataType,
                   ),
-                );
-              }
+                ),
+              );
             },
       label: Text(_isSettlement ? '清算済み' : '清算する'),
       icon: const Icon(Icons.check_circle),
@@ -316,10 +311,15 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
     return RefreshIndicator(
       onRefresh: () async {
         final auth = ref.watch(authProvider);
-        await ref.watch(transactionProvider.notifier).fetchMonthlyTransactions(
-              auth.profile?['group_id'],
-              DateTime.parse(months[selectedIndex]),
-            );
+        final groupId = auth.profile?.groupId;
+        if (groupId != null) {
+          await ref
+              .watch(transactionProvider.notifier)
+              .fetchMonthlyTransactions(
+                groupId,
+                DateTime.parse(months[selectedIndex]),
+              );
+        }
       },
       child: transactions.isEmpty
           ? _buildNotFoundData()
@@ -337,22 +337,16 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
 
                 return InkWell(
                   onTap: () async {
-                    if (profile.isNotEmpty) {
-                      final response = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => TransactionDetailPage(
-                            transaction: transactions[index],
-                            profile: profile,
-                            isSettlement: _isSettlement,
-                          ),
+                    final response = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => TransactionDetailPage(
+                          transaction: transactions[index],
+                          profile: profile,
+                          isSettlement: _isSettlement,
                         ),
-                      );
-                    } else {
-                      if (mounted) {
-                        context.showSnackBarError(message: 'エラー: 画面を更新してください');
-                      }
-                    }
+                      ),
+                    );
                   },
                   child: Container(
                     height: 80,
@@ -468,11 +462,12 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
   Widget build(BuildContext context) {
     final transactionNotifier = ref.watch(transactionProvider.notifier);
     final transactionState = ref.watch(transactionProvider);
+    final groupId = ref.watch(authProvider).profile?.groupId;
     transactions = _selectedDataType == 'shared'
         ? transactionState.sharedTransactions
         : transactionState.privateTransactions;
 
-    if (months.isEmpty) {
+    if (months.isEmpty || groupId == null) {
       return Scaffold(
         appBar: AppBar(
           centerTitle: true,
@@ -507,7 +502,7 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
                 });
                 // 選択された月のデータを取得する
                 transactionNotifier.fetchMonthlyTransactions(
-                  profile['group_id'],
+                  groupId,
                   DateTime.parse(months[selectedIndex]),
                 );
               },

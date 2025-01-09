@@ -23,15 +23,30 @@ class TransactionRepository {
   }
 
   // トランザクションを追加
-  Future<void> insert(Transaction transaction) async {
-    final data = transaction.toMapForInsert();
-    await supabase.from('transactions').insert(data);
+  Future<Transaction> insert(Map<String, dynamic> transaction) async {
+    final response = await supabase
+        .from('transactions')
+        .insert(transaction)
+        .select()
+        .single();
+    return Transaction.fromMap(response);
   }
 
   // トランザクションを更新
-  Future<void> update(Transaction transaction) async {
-    final data = transaction.toMapForUpdate();
-    await supabase.from('transactions').update(data);
+  Future<List<Transaction>> update(transaction) async {
+    final response =
+        await supabase.from('transactions').update(transaction).select();
+    return (response as List<dynamic>)
+        .map((transaction) => Transaction.fromMap(transaction))
+        .toList();
+  }
+
+  Future<List<Transaction>> updateMultiple(transactions) async {
+    final response =
+        await supabase.from('transactions').update(transactions).select();
+    return (response as List<dynamic>)
+        .map((transaction) => Transaction.fromMap(transaction))
+        .toList();
   }
 
   // トランザクションを削除

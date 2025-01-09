@@ -1,19 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:sharing_household_expenses/providers/auth_provider.dart';
 import 'package:sharing_household_expenses/screens/settlement/settlement_detail_page.dart';
 import 'package:sharing_household_expenses/services/settlement_service.dart';
 import 'package:sharing_household_expenses/services/transaction_service.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class SettlementListPage extends StatefulWidget {
+import '../../models/profile.dart';
+
+class SettlementListPage extends ConsumerStatefulWidget {
   const SettlementListPage({super.key});
 
   @override
   SettlementListPageState createState() => SettlementListPageState();
 }
 
-class SettlementListPageState extends State<SettlementListPage> {
+class SettlementListPageState extends ConsumerState<SettlementListPage> {
   bool _isLoading = false;
   late DateTime _now;
   List<String> years = [];
@@ -22,7 +26,7 @@ class SettlementListPageState extends State<SettlementListPage> {
   late int selectedIndex = years.length - 1;
   List<Map<String, dynamic>> settlements = [];
   List<Map<String, dynamic>> settlementItems = [];
-  Map<String, dynamic> profile = {};
+  late Profile profile;
   late final PageController _pageController =
       PageController(initialPage: years.length - 1, viewportFraction: 1);
   double payerAmount = 0.0;
@@ -60,14 +64,16 @@ class SettlementListPageState extends State<SettlementListPage> {
       }
 
       final userId = supabase.auth.currentUser!.id;
-      profile =
-          await supabase.from('profiles').select().eq('id', userId).single();
+      final auth = ref.watch(authProvider);
+      // TODO: ! やめたい
+      profile = auth.profile!;
+      final groupId = profile.groupId;
 
       await Future.delayed(Duration(milliseconds: 700));
 
       // 選択された年の清算情報一覧を取得する
       final List<Map<String, dynamic>>? data = await settlementService
-          .fetchYearlyData(profile['group_id'], convertYearToDateTime(year));
+          .fetchYearlyData(groupId!, convertYearToDateTime(year));
 
       // 共有データ
       final shareData = data?.where((item) {
@@ -111,15 +117,13 @@ class SettlementListPageState extends State<SettlementListPage> {
       });
 
       final userId = supabase.auth.currentUser!.id;
-      profile =
-          await supabase.from('profiles').select().eq('id', userId).single();
 
       await Future.delayed(Duration(milliseconds: 700));
 
       // 選択された年の清算情報一覧を取得する
       final List<Map<String, dynamic>>? freshData =
           await settlementService.fetchYearlyData(
-              profile['group_id'], convertYearToDateTime(years[selectedIndex]));
+              profile.groupId!, convertYearToDateTime(years[selectedIndex]));
 
       // 共有データ
       final shareData = freshData?.where((item) {

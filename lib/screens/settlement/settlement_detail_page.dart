@@ -4,13 +4,16 @@ import 'package:pie_chart/pie_chart.dart';
 import 'package:sharing_household_expenses/screens/transaction/transaction_detail_page.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../constants/transaction_type.dart';
+import '../../models/profile.dart';
+import '../../models/transaction.dart';
 import '../../services/transaction_service.dart';
 import '../../utils/constants.dart';
 
 class SettlementDetailPage extends StatefulWidget {
   final int settlementId;
   final String month;
-  final Map<String, dynamic> profile;
+  final Profile profile;
   final String selectedDataType;
 
   const SettlementDetailPage({
@@ -32,8 +35,8 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
   late String selectedDataType;
   late int settlementId;
   late List<Map<String, dynamic>> profiles;
-  List<Map<String, dynamic>> transactions = [];
-  Map<String, dynamic> profile = {};
+  late List<Transaction> transactions;
+  late Profile profile;
   int paymentPerPerson = 0;
   String incomeExpenseType = 'expense';
   Map<String, Map<String, dynamic>> sharedExpenseAmounts = {};
@@ -68,7 +71,7 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
     await _fetchTransactions();
     if (selectedDataType == 'share') {
       // 共有データ用
-      _calcShareSettlements(transactions);
+      // _calcShareSettlements(transactions);
       _calcPaymentPerPerson();
       _generateShareSettlementData();
     } else {
@@ -92,7 +95,7 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
           .eq('settlement_id', settlementId);
 
       setState(() {
-        transactions = data;
+        transactions = data as List<Transaction>;
       });
     } on PostgrestException catch (error) {
       if (mounted) {
@@ -107,7 +110,7 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
       profiles = await supabase
           .from('profiles')
           .select()
-          .eq('group_id', profile['group_id']);
+          .eq('group_id', profile.groupId as String);
     } catch (error) {
       if (mounted) {
         context.showSnackBarError(message: '$error');
@@ -534,12 +537,13 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
                     padding: const EdgeInsets.all(16.0),
                     itemCount: transactions.length,
                     itemBuilder: (context, index) {
-                      double amount = transactions[index]['amount'];
+                      double amount = transactions[index].amount;
                       final displayAmount =
                           convertToYenFormat(amount: amount.round());
 
                       final date =
-                          DateTime.parse(transactions[index]['date']).toLocal();
+                          DateTime.parse(transactions[index].date.toString())
+                              .toLocal();
                       final transactionDate =
                           DateFormat('yyyy/MM/dd').format(date);
                       return InkWell(
@@ -575,7 +579,7 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
                                   Row(
                                     children: [
                                       Text(
-                                        transactions[index]['name'],
+                                        transactions[index].name,
                                         style: const TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.bold,
@@ -584,7 +588,7 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
                                       ),
                                       const SizedBox(width: 8),
                                       Text(
-                                          '- ${transactions[index]['profiles']['username']}',
+                                          '- ${transactions[index].profile?.username}',
                                           style: const TextStyle(
                                             fontSize: 12,
                                             fontWeight: FontWeight.bold,
@@ -609,9 +613,8 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
                                         ),
                                         decoration: BoxDecoration(
                                           border: Border.all(
-                                            color: transactions[index]
-                                                        ['type'] ==
-                                                    'income'
+                                            color: transactions[index].type ==
+                                                    TransactionType.income
                                                 ? Colors.green
                                                 : Colors.red,
                                             width: 0.5,
@@ -620,15 +623,14 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
                                               BorderRadius.circular(4.0),
                                         ),
                                         child: Text(
-                                          transactions[index]['type'] ==
-                                                  'income'
+                                          transactions[index].type ==
+                                                  TransactionType.income
                                               ? '収入'
                                               : '支出',
                                           style: TextStyle(
                                             fontSize: 12,
-                                            color: transactions[index]
-                                                        ['type'] ==
-                                                    'income'
+                                            color: transactions[index].type ==
+                                                    TransactionType.income
                                                 ? Colors.green
                                                 : Colors.red,
                                           ),
@@ -636,8 +638,7 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
                                       ),
                                       const SizedBox(width: 8),
                                       Text(
-                                        transactions[index]['categories']
-                                            ['name'],
+                                        transactions[index].subCategory!.name,
                                         style: const TextStyle(
                                           fontSize: 12,
                                           color: Colors.black,

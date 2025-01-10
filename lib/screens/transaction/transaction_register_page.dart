@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:sharing_household_expenses/constants/transaction_type.dart';
 import 'package:sharing_household_expenses/models/transaction.dart';
 import 'package:sharing_household_expenses/providers/auth_provider.dart';
 import 'package:sharing_household_expenses/providers/settlement_provider.dart';
@@ -9,6 +8,7 @@ import 'package:sharing_household_expenses/providers/transaction_provider.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../constants/transaction_type.dart';
 import '../../providers/category_provider.dart';
 
 class TransactionRegisterPage extends ConsumerStatefulWidget {
@@ -66,7 +66,8 @@ class TransactionRegisterPageState
     if (transaction != null) {
       // 編集データがある場合の初期値設定
       _id = transaction.id;
-      _selectedType = transaction.type as String;
+      _selectedType =
+          transaction.type == TransactionType.income ? 'income' : 'expense';
       _selectedCategory = transaction.subCategory!.id.toString();
       _share = transaction.share;
       _dateController.text = DateFormat('yyyy/MM/dd').format(DateTime.parse(
@@ -120,9 +121,7 @@ class TransactionRegisterPageState
         'sub_category_id': int.tryParse(_selectedCategory!),
         'amount': int.tryParse(_amountController.text.trim()),
         'share': _share,
-        'type': _selectedType == 'income'
-            ? TransactionType.income
-            : TransactionType.expense,
+        'type': _selectedType == 'income' ? 'income' : 'expense',
         'date': _dateController.text.trim(),
         'name': _nameController.text.trim(),
         'note': _noteController.text.trim(),
@@ -131,8 +130,11 @@ class TransactionRegisterPageState
 
       await Future.delayed(Duration(milliseconds: 350));
 
+      late Transaction? updatedTransaction;
       if (data['id'] != null) {
-        await ref.watch(transactionProvider.notifier).updateTransaction(data);
+        updatedTransaction = await ref
+            .watch(transactionProvider.notifier)
+            .updateTransaction(data);
       } else if (data['id'] == null) {
         await ref.watch(transactionProvider.notifier).insertTransaction(data);
       }
@@ -148,11 +150,11 @@ class TransactionRegisterPageState
         _amountController.clear();
         _selectedType = 'expense';
         _share = false;
-        _selectedCategory = '';
+        _selectedCategory = '5001';
       } else {
         // 更新
         if (mounted) {
-          Navigator.pop(context);
+          Navigator.pop(context, updatedTransaction);
         }
       }
 

@@ -1,6 +1,6 @@
 import {serve} from "https://deno.land/std@0.182.0/http/server.ts";
 import {createClient} from "https://esm.sh/@supabase/supabase-js@2.14.0";
-import {corsHeaders} from "../_shared/cors.ts"; // Setup type definitions for built-in Supabase Runtime APIs
+import {corsHeaders} from "../_shared/cors.ts";
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 console.log("Generate group invite code function");

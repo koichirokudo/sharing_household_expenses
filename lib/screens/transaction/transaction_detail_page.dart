@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:sharing_household_expenses/providers/transaction_provider.dart';
 import 'package:sharing_household_expenses/screens/transaction/transaction_register_page.dart';
-import 'package:sharing_household_expenses/services/transaction_service.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
 
 import '../../constants/transaction_type.dart';
 import '../../models/profile.dart';
 import '../../models/transaction.dart';
 
-class TransactionDetailPage extends StatefulWidget {
+class TransactionDetailPage extends ConsumerStatefulWidget {
   final Transaction transaction;
   final Profile profile;
   final bool isSettlement;
@@ -24,11 +25,9 @@ class TransactionDetailPage extends StatefulWidget {
   TransactionDetailPageState createState() => TransactionDetailPageState();
 }
 
-class TransactionDetailPageState extends State<TransactionDetailPage> {
-  bool isLoading = false;
+class TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
   bool isEdited = false;
   bool isEditable = false;
-  late final TransactionService transactionService;
   late Transaction transaction;
   late Profile profile;
   late String displayAmount;
@@ -38,7 +37,6 @@ class TransactionDetailPageState extends State<TransactionDetailPage> {
   @override
   void initState() {
     super.initState();
-    transactionService = TransactionService(supabase);
     // initState 内で widget.transaction を初期化
     transaction = widget.transaction;
     profile = widget.profile;
@@ -51,17 +49,16 @@ class TransactionDetailPageState extends State<TransactionDetailPage> {
 
   Future<void> _delete() async {
     try {
-      setState(() {
-        isLoading = true;
-      });
-
       await Future.delayed(Duration(milliseconds: 700));
 
       final transactionId = transaction.id;
       if (transactionId == null) {
         throw Exception('トランザクションIDがありません');
       }
-      await transactionService.deleteData(transactionId);
+
+      await ref
+          .watch(transactionProvider.notifier)
+          .deleteTransaction(transaction);
 
       if (mounted) {
         context.showSnackBar(message: '削除しました', backgroundColor: Colors.green);
@@ -71,20 +68,112 @@ class TransactionDetailPageState extends State<TransactionDetailPage> {
       if (mounted) {
         context.showSnackBarError(message: '$error');
       }
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildButtons() {
     if (transaction.profileId == profile.id) {
       isEditable = true;
     } else {
       isEditable = false;
     }
+
+    return Padding(
+      padding: const EdgeInsets.all(32.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          if (isEditable)
+            ElevatedButton(
+              onPressed: () {
+                if (isEdited == true) {
+                  Navigator.pop(context, true);
+                } else {
+                  Navigator.pop(context);
+                }
+              },
+              child: const Text('戻る'),
+            ),
+          if (isEditable)
+            ElevatedButton(
+              onPressed: () async {
+                final response = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => TransactionRegisterPage(
+                      transaction: transaction,
+                    ),
+                  ),
+                );
+
+                if (response != null) {
+                  setState(() {
+                    isEdited = true;
+                    transaction = response;
+                    double amount = transaction.amount;
+                    displayAmount = convertToYenFormat(
+                      amount: amount.round(),
+                    );
+                    DateTime date = DateTime.parse(
+                      transaction.date.toString(),
+                    ).toLocal();
+                    transactionDate = DateFormat('yyyy/MM/dd').format(date);
+                  });
+                }
+              },
+              child: const Text('編集'),
+            ),
+          if (isEditable)
+            ElevatedButton(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text('明細データの削除'),
+                      content: Text(
+                        'データを削除すると二度と復元することができません。削除しますか？',
+                      ),
+                      actions: [
+                        TextButton(
+                          child: Text('はい'),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            _delete();
+                          },
+                        ),
+                        TextButton(
+                          child: Text('いいえ'),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+              child: const Text('削除'),
+            ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final state = ref.watch(transactionProvider);
+    final profile = transaction.profile;
+    final subCategory = transaction.subCategory;
+
+    if (profile == null || subCategory == null) {
+      return circularIndicator;
+    }
+
+    if (state.isLoading == true) {
+      return circularIndicator;
+    }
+
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -116,15 +205,20 @@ class TransactionDetailPageState extends State<TransactionDetailPage> {
                         child: Center(
                           child: Column(
                             children: [
-                              Text(transaction.name,
-                                  style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold)),
+                              Text(
+                                transaction.name,
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                               SizedBox(height: 8),
                               Text(
                                 displayAmount,
                                 style: TextStyle(
-                                    fontSize: 32, fontWeight: FontWeight.bold),
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ],
                           ),
@@ -132,23 +226,27 @@ class TransactionDetailPageState extends State<TransactionDetailPage> {
                       ),
                       Container(
                         decoration: const BoxDecoration(
-                            border: Border(
-                          bottom: BorderSide(color: Colors.black, width: 0.25),
-                        )),
+                          border: Border(
+                            bottom:
+                                BorderSide(color: Colors.black, width: 0.25),
+                          ),
+                        ),
                         padding: const EdgeInsets.all(8.0),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             const Text('支払人'),
-                            Text(transaction.profile!.username),
+                            Text(profile.username),
                           ],
                         ),
                       ),
                       Container(
                         decoration: const BoxDecoration(
-                            border: Border(
-                          bottom: BorderSide(color: Colors.black, width: 0.25),
-                        )),
+                          border: Border(
+                            bottom:
+                                BorderSide(color: Colors.black, width: 0.25),
+                          ),
+                        ),
                         padding: const EdgeInsets.all(8.0),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -160,25 +258,31 @@ class TransactionDetailPageState extends State<TransactionDetailPage> {
                       ),
                       Container(
                         decoration: const BoxDecoration(
-                            border: Border(
-                          bottom: BorderSide(color: Colors.black, width: 0.25),
-                        )),
+                          border: Border(
+                            bottom:
+                                BorderSide(color: Colors.black, width: 0.25),
+                          ),
+                        ),
                         padding: const EdgeInsets.all(8.0),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text('収支'),
-                            Text(transaction.type == TransactionType.income
-                                ? '収入'
-                                : '支出'),
+                            Text(
+                              transaction.type == TransactionType.income
+                                  ? '収入'
+                                  : '支出',
+                            ),
                           ],
                         ),
                       ),
                       Container(
                         decoration: const BoxDecoration(
-                            border: Border(
-                          bottom: BorderSide(color: Colors.black, width: 0.25),
-                        )),
+                          border: Border(
+                            bottom:
+                                BorderSide(color: Colors.black, width: 0.25),
+                          ),
+                        ),
                         padding: const EdgeInsets.all(8.0),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -190,23 +294,27 @@ class TransactionDetailPageState extends State<TransactionDetailPage> {
                       ),
                       Container(
                         decoration: const BoxDecoration(
-                            border: Border(
-                          bottom: BorderSide(color: Colors.black, width: 0.25),
-                        )),
+                          border: Border(
+                            bottom:
+                                BorderSide(color: Colors.black, width: 0.25),
+                          ),
+                        ),
                         padding: const EdgeInsets.all(8.0),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text('カテゴリ'),
-                            Text(transaction.subCategory!.name),
+                            Text(subCategory.name),
                           ],
                         ),
                       ),
                       Container(
                         decoration: const BoxDecoration(
-                            border: Border(
-                          bottom: BorderSide(color: Colors.black, width: 0.25),
-                        )),
+                          border: Border(
+                            bottom:
+                                BorderSide(color: Colors.black, width: 0.25),
+                          ),
+                        ),
                         padding: const EdgeInsets.all(8.0),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -216,87 +324,7 @@ class TransactionDetailPageState extends State<TransactionDetailPage> {
                           ],
                         ),
                       ),
-                      if (!isSettlement)
-                        Padding(
-                          padding: const EdgeInsets.all(32.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              if (isEditable)
-                                ElevatedButton(
-                                  onPressed: () {
-                                    if (isEdited == true) {
-                                      Navigator.pop(context, true);
-                                    } else {
-                                      Navigator.pop(context);
-                                    }
-                                  },
-                                  child: const Text('戻る'),
-                                ),
-                              if (isEditable)
-                                ElevatedButton(
-                                  onPressed: () async {
-                                    final response = await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            TransactionRegisterPage(
-                                          transaction: transaction,
-                                        ),
-                                      ),
-                                    );
-
-                                    if (response != null) {
-                                      setState(() {
-                                        isEdited = true;
-                                        transaction = response;
-                                        double amount = transaction.amount;
-                                        displayAmount = convertToYenFormat(
-                                            amount: amount.round());
-                                        DateTime date = DateTime.parse(
-                                                transaction.date.toString())
-                                            .toLocal();
-                                        transactionDate =
-                                            DateFormat('yyyy/MM/dd')
-                                                .format(date);
-                                      });
-                                    }
-                                  },
-                                  child: const Text('編集'),
-                                ),
-                              if (isEditable)
-                                ElevatedButton(
-                                  onPressed: () {
-                                    showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return AlertDialog(
-                                            title: Text('明細データの削除'),
-                                            content: Text(
-                                                'データを削除すると二度と復元することができません。削除しますか？'),
-                                            actions: [
-                                              TextButton(
-                                                child: Text('はい'),
-                                                onPressed: () {
-                                                  Navigator.of(context).pop();
-                                                  _delete();
-                                                },
-                                              ),
-                                              TextButton(
-                                                child: Text('いいえ'),
-                                                onPressed: () {
-                                                  Navigator.of(context).pop();
-                                                },
-                                              ),
-                                            ],
-                                          );
-                                        });
-                                  },
-                                  child: const Text('削除'),
-                                ),
-                            ],
-                          ),
-                        ),
+                      if (!isSettlement) _buildButtons(),
                     ],
                   ),
                 ),

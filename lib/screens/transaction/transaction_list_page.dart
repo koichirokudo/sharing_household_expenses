@@ -386,9 +386,6 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
                               convertMonthToDateTime(months[selectedIndex]),
                             );
                       }
-                      setState(() {
-                        _isSettlement = true;
-                      });
                     }
                   },
                   child: Container(

@@ -63,12 +63,17 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
     }
   }
 
-  Future<void> updateTransaction(Map<String, dynamic> transaction) async {
+  Future<Transaction> updateTransaction(transaction) async {
     state = state.copyWith(isLoading: true);
     try {
       final response = await repository.update(transaction);
-      state = state.copyWith(transactions: response);
+      if (response == null) {
+        throw Exception('トランザクションの更新に失敗しました');
+      }
+      final updateTransactions = [...state.transactions, response];
+      state = state.copyWith(transactions: updateTransactions);
       calculateTotalAmounts();
+      return response;
     } catch (e) {
       throw Exception('Failed to update transaction: $e');
     } finally {
@@ -76,10 +81,10 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
     }
   }
 
-  Future<void> updateMultipleTransaction(transactions) async {
+  Future<void> upsertTransaction(transaction) async {
     state = state.copyWith(isLoading: true);
     try {
-      final response = await repository.upsert(transactions);
+      final response = await repository.upsert(transaction);
       state = state.copyWith(transactions: response);
       calculateTotalAmounts();
     } catch (e) {

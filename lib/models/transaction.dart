@@ -17,8 +17,8 @@ class Transaction {
   final String? note;
   final DateTime createdAt;
   final DateTime updatedAt;
-  final SubCategory? subCategory;
-  final Profile? profile;
+  late final SubCategory? subCategory;
+  late final Profile? profile;
 
   Transaction({
     this.id,
@@ -48,7 +48,9 @@ class Transaction {
       name: map['name'],
       date: DateTime.parse(map['date']),
       type: TransactionType.values.firstWhere((e) => e.name == map['type']),
-      amount: map['amount'],
+      amount: map['amount'] is int
+          ? (map['amount'] as int).toDouble()
+          : map['amount'] as double,
       share: map['share'],
       note: map['note'],
       createdAt: DateTime.parse(map['created_at']),

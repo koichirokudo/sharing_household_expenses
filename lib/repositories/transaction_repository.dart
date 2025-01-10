@@ -32,15 +32,20 @@ class TransactionRepository {
     return Transaction.fromMap(response);
   }
 
-  // トランザクションを更新
-  Future<List<Transaction>> update(transaction) async {
+  Future<Transaction?> update(transaction) async {
     final response =
-        await supabase.from('transactions').update(transaction).select();
-    return (response as List<dynamic>)
-        .map((transaction) => Transaction.fromMap(transaction))
-        .toList();
+        await supabase.functions.invoke('update-transaction', body: {
+      'transaction': transaction,
+    });
+
+    Map<String, dynamic> updatedTransaction = {};
+    if (response.data['success'] == true) {
+      updatedTransaction = response.data['transaction'];
+    }
+    return Transaction.fromMap(updatedTransaction);
   }
 
+  // トランザクションを更新
   Future<List<Transaction>> upsert(transactions) async {
     final response =
         await supabase.from('transactions').upsert(transactions).select();
@@ -51,12 +56,7 @@ class TransactionRepository {
 
   // トランザクションを削除
   Future<void> delete(int id) async {
-    final response = await supabase.from('transactions').delete().eq('id', id);
-
-    if (response.error != null) {
-      throw Exception(
-          'Failed to delete transaction: ${response.error!.message}');
-    }
+    await supabase.from('transactions').delete().eq('id', id);
   }
 
   // ユーザーに紐づくトランザクションを削除

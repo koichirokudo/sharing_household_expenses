@@ -129,7 +129,7 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
 
       await ref
           .watch(transactionProvider.notifier)
-          .updateMultipleTransaction(transactionIds);
+          .upsertTransaction(transactionIds);
 
       if (mounted) {
         context.showSnackBar(
@@ -198,7 +198,7 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
       }
       await ref
           .watch(transactionProvider.notifier)
-          .updateMultipleTransaction(transactionIds);
+          .upsertTransaction(transactionIds);
 
       if (mounted) {
         context.showSnackBar(

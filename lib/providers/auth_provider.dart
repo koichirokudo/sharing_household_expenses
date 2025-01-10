@@ -108,6 +108,23 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  Future<void> signUpUser(
+      {required String username,
+      required String email,
+      required String password}) async {
+    state = state.copyWith(isLoading: true);
+    try {
+      final response = await repository.signUpUser(
+          username: username, email: email, password: password);
+      state = state.copyWith(session: response.session, user: response.user);
+    } catch (e) {
+      throw Exception(
+          'Failed to update user:  ${e.runtimeType} - ${e.toString()}');
+    } finally {
+      state = state.copyWith(isLoading: false);
+    }
+  }
+
   Future<void> updateUser({String? email, String? password}) async {
     state = state.copyWith(isLoading: true);
     try {

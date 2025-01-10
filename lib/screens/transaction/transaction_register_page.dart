@@ -69,8 +69,9 @@ class TransactionRegisterPageState
       _selectedType = transaction.type as String;
       _selectedCategory = transaction.subCategory!.id.toString();
       _share = transaction.share;
-      _dateController.text = DateFormat('yyyy/MM/dd')
-          .format(DateTime.parse(transaction.date.toString()).toLocal());
+      _dateController.text = DateFormat('yyyy/MM/dd').format(DateTime.parse(
+        transaction.date.toString(),
+      ).toLocal());
       _nameController.text = transaction.name;
       _amountController.text = transaction.amount.round().toString();
       _noteController.text = transaction.note ?? '';
@@ -127,6 +128,7 @@ class TransactionRegisterPageState
         'note': _noteController.text.trim(),
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       };
+
       await Future.delayed(Duration(milliseconds: 350));
 
       if (data['id'] != null) {
@@ -219,233 +221,235 @@ class TransactionRegisterPageState
           : categoryState.expenseCategories;
 
       return categories
-          .expand((category) => category.subCategories.map((subCategory) {
+          .expand(
+            (category) => category.subCategories.map(
+              (subCategory) {
                 return DropdownMenuItem<String>(
                   value: subCategory.id.toString(),
                   child: Text(subCategory.name),
                 );
-              }))
+              },
+            ),
+          )
           .toList();
     }
 
     return Scaffold(
-        appBar: AppBar(
-          centerTitle: true,
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-          title: Text(widget.transaction == null ? '収支の登録' : '収支の編集'),
-        ),
-        body: _isLoading
-            ? circularIndicator
-            : Form(
-                key: _formKey,
-                child: SingleChildScrollView(
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(32.0),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // 共有設定
-                          Row(
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.only(left: 10.0),
-                                child: Image.asset(
-                                    'assets/icons/share_icon.png',
-                                    width: 24),
-                              ), // アイコンを先頭に配置
-                              const Padding(
-                                padding:
-                                    EdgeInsets.only(left: 24.0, right: 64.0),
-                                child: Text(
-                                  '共有',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                  ),
+      appBar: AppBar(
+        centerTitle: true,
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: Text(widget.transaction == null ? '収支の登録' : '収支の編集'),
+      ),
+      body: _isLoading
+          ? circularIndicator
+          : Form(
+              key: _formKey,
+              child: SingleChildScrollView(
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // 共有設定
+                        Row(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(left: 10.0),
+                              child: Image.asset('assets/icons/share_icon.png',
+                                  width: 24),
+                            ), // アイコンを先頭に配置
+                            const Padding(
+                              padding: EdgeInsets.only(left: 24.0, right: 64.0),
+                              child: Text(
+                                '共有',
+                                style: TextStyle(
+                                  fontSize: 16,
                                 ),
                               ),
-                              Text('しない'),
-                              const SizedBox(width: 8),
-                              Switch(
-                                value: _share,
-                                onChanged: (bool value) => {
+                            ),
+                            Text('しない'),
+                            const SizedBox(width: 8),
+                            Switch(
+                              value: _share,
+                              onChanged: (bool value) => {
+                                setState(() {
+                                  _share = value;
+                                }),
+                              },
+                            ),
+                            const SizedBox(width: 8),
+                            Text('する'),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        // 収入・支出選択
+                        Row(
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.only(left: 10.0),
+                              child: Icon(Icons.done),
+                            ), // アイコンを先頭に配置
+                            Expanded(
+                              child: RadioListTile(
+                                title: const Text('収入'),
+                                value: 'income',
+                                groupValue: _selectedType,
+                                onChanged: (String? value) {
                                   setState(() {
-                                    _share = value;
-                                  }),
+                                    _selectedType = 'income';
+                                    _selectedCategory = '5102';
+                                  });
                                 },
                               ),
-                              const SizedBox(width: 8),
-                              Text('する'),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          // 収入・支出選択
-                          Row(
-                            children: [
-                              const Padding(
-                                padding: EdgeInsets.only(left: 10.0),
-                                child: Icon(Icons.done),
-                              ), // アイコンを先頭に配置
-                              Expanded(
-                                child: RadioListTile(
-                                  title: const Text('収入'),
-                                  value: 'income',
-                                  groupValue: _selectedType,
-                                  onChanged: (String? value) {
-                                    setState(() {
-                                      _selectedType = 'income';
-                                      _selectedCategory = '5102';
-                                    });
-                                  },
-                                ),
+                            ),
+                            Expanded(
+                              child: RadioListTile<String>(
+                                title: const Text('支出'),
+                                value: 'expense',
+                                groupValue: _selectedType,
+                                onChanged: (String? value) {
+                                  setState(() {
+                                    _selectedType = 'expense';
+                                    _selectedCategory = '5001';
+                                  });
+                                },
                               ),
-                              Expanded(
-                                child: RadioListTile<String>(
-                                  title: const Text('支出'),
-                                  value: 'expense',
-                                  groupValue: _selectedType,
-                                  onChanged: (String? value) {
-                                    setState(() {
-                                      _selectedType = 'expense';
-                                      _selectedCategory = '5001';
-                                    });
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                          // 明細名
-                          TextFormField(
-                            controller: _nameController,
-                            decoration: const InputDecoration(
-                              labelText: '明細名',
-                              prefixIcon: Icon(Icons.list_alt),
                             ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return '明細名を入力してください';
-                              }
-                              if (value.length > 50) {
-                                return '明細名は50文字以下で入力してください';
-                              }
-                              return null;
-                            },
+                          ],
+                        ),
+                        // 明細名
+                        TextFormField(
+                          controller: _nameController,
+                          decoration: const InputDecoration(
+                            labelText: '明細名',
+                            prefixIcon: Icon(Icons.list_alt),
                           ),
-                          const SizedBox(height: 24),
-                          // 利用日
-                          TextFormField(
-                            controller: _dateController,
-                            decoration: const InputDecoration(
-                              prefixIcon: Icon(Icons.calendar_today),
-                              // Optional: adds a calendar icon
-                              labelText: '利用日',
-                            ),
-                            readOnly: true,
-                            // Prevents manual input
-                            onTap: () async {
-                              DateTime? pickedDate = await showDatePicker(
-                                context: context,
-                                initialDate: DateTime.now(),
-                                firstDate: DateTime(2000),
-                                lastDate: DateTime(2101),
-                                locale: const Locale('ja', 'JP'),
-                                barrierDismissible: true,
-                              );
-                              if (pickedDate != null) {
-                                String formattedDate =
-                                    DateFormat('yyyy/MM/dd').format(pickedDate);
-                                setState(() {
-                                  _dateController.text =
-                                      formattedDate; // Updates the TextFormField
-                                });
-                              }
-                            },
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return '利用日を入力してください';
-                              }
-                              return null;
-                            },
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return '明細名を入力してください';
+                            }
+                            if (value.length > 50) {
+                              return '明細名は50文字以下で入力してください';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 24),
+                        // 利用日
+                        TextFormField(
+                          controller: _dateController,
+                          decoration: const InputDecoration(
+                            prefixIcon: Icon(Icons.calendar_today),
+                            // Optional: adds a calendar icon
+                            labelText: '利用日',
                           ),
-                          const SizedBox(height: 24),
-                          // カテゴリ選択
-                          DropdownButtonFormField<String>(
-                            value: buildCategories().any(
-                                    (item) => item.value == _selectedCategory)
-                                ? _selectedCategory
-                                : null,
-                            decoration: const InputDecoration(
-                              labelText: 'カテゴリ',
-                              prefixIcon: Icon(Icons.category),
-                            ),
-                            items: buildCategories(),
-                            onChanged: (String? newValue) {
+                          readOnly: true,
+                          // Prevents manual input
+                          onTap: () async {
+                            DateTime? pickedDate = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime(2000),
+                              lastDate: DateTime(2101),
+                              locale: const Locale('ja', 'JP'),
+                              barrierDismissible: true,
+                            );
+                            if (pickedDate != null) {
+                              String formattedDate =
+                                  DateFormat('yyyy/MM/dd').format(pickedDate);
                               setState(() {
-                                _selectedCategory = newValue!;
+                                _dateController.text =
+                                    formattedDate; // Updates the TextFormField
                               });
-                            },
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'カテゴリを選択してください';
+                            }
+                          },
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return '利用日を入力してください';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 24),
+                        // カテゴリ選択
+                        DropdownButtonFormField<String>(
+                          value: buildCategories().any(
+                                  (item) => item.value == _selectedCategory)
+                              ? _selectedCategory
+                              : null,
+                          decoration: const InputDecoration(
+                            labelText: 'カテゴリ',
+                            prefixIcon: Icon(Icons.category),
+                          ),
+                          items: buildCategories(),
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              _selectedCategory = newValue!;
+                            });
+                          },
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'カテゴリを選択してください';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 24),
+                        // 金額
+                        TextFormField(
+                          keyboardType: TextInputType.number,
+                          controller: _amountController,
+                          decoration: const InputDecoration(
+                            labelText: '金額',
+                            prefixIcon: Icon(Icons.currency_yen),
+                          ),
+                          validator: (value) {
+                            if (value != null) {
+                              final isValid =
+                                  RegExp(r'^\d{1,8}$').hasMatch(value);
+                              if (!isValid) {
+                                return '最大8桁までの数値を入力してください';
                               }
-                              return null;
-                            },
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 24),
+                        // メモ
+                        TextFormField(
+                          controller: _noteController,
+                          decoration: const InputDecoration(
+                            labelText: 'メモ',
+                            prefixIcon: Icon(Icons.note),
                           ),
-                          const SizedBox(height: 24),
-                          // 金額
-                          TextFormField(
-                            keyboardType: TextInputType.number,
-                            controller: _amountController,
-                            decoration: const InputDecoration(
-                              labelText: '金額',
-                              prefixIcon: Icon(Icons.currency_yen),
-                            ),
-                            validator: (value) {
-                              if (value != null) {
-                                final isValid =
-                                    RegExp(r'^\d{1,8}$').hasMatch(value);
-                                if (!isValid) {
-                                  return '最大8桁までの数値を入力してください';
-                                }
-                              }
-                              return null;
-                            },
+                          validator: (value) {
+                            if (value != null && value.length > 30) {
+                              return 'メモは30文字以下で入力してください';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 32),
+                        ElevatedButton.icon(
+                          label: Text(widget.transaction == null ? '登録' : '更新'),
+                          icon: Icon(widget.transaction == null
+                              ? Icons.edit
+                              : Icons.update),
+                          iconAlignment: IconAlignment.start,
+                          onPressed: () {
+                            _isLoading ? null : _register();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            fixedSize: const Size(300, double.infinity),
                           ),
-                          const SizedBox(height: 24),
-                          // メモ
-                          TextFormField(
-                            controller: _noteController,
-                            decoration: const InputDecoration(
-                              labelText: 'メモ',
-                              prefixIcon: Icon(Icons.note),
-                            ),
-                            validator: (value) {
-                              if (value != null && value.length > 30) {
-                                return 'メモは30文字以下で入力してください';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 32),
-                          ElevatedButton.icon(
-                            label:
-                                Text(widget.transaction == null ? '登録' : '更新'),
-                            icon: Icon(widget.transaction == null
-                                ? Icons.edit
-                                : Icons.update),
-                            iconAlignment: IconAlignment.start,
-                            onPressed: () {
-                              _isLoading ? null : _register();
-                            },
-                            style: ElevatedButton.styleFrom(
-                              fixedSize: const Size(300, double.infinity),
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              ));
+              ),
+            ),
+    );
   }
 }

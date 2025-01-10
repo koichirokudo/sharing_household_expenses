@@ -1,23 +1,25 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sharing_household_expenses/app.dart';
+import 'package:sharing_household_expenses/providers/user_group_provider.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class FirstGroupInvitePage extends StatefulWidget {
+class FirstGroupInvitePage extends ConsumerStatefulWidget {
   const FirstGroupInvitePage({super.key});
 
   @override
   FirstGroupInvitePageState createState() => FirstGroupInvitePageState();
 }
 
-class FirstGroupInvitePageState extends State<FirstGroupInvitePage> {
+class FirstGroupInvitePageState extends ConsumerState<FirstGroupInvitePage> {
   bool _isLoading = false;
-  final _inviteCodeController = TextEditingController();
   final _fromKey = GlobalKey<FormState>();
+  final _inviteCodeController = TextEditingController();
 
-  Future<void> _submitInviteCode() async {
+  Future<void> _joinGroup() async {
     final isValid = _fromKey.currentState!.validate();
     if (!isValid) {
       return;
@@ -30,10 +32,9 @@ class FirstGroupInvitePageState extends State<FirstGroupInvitePage> {
     final inviteCode = _inviteCodeController.text.trim();
 
     try {
-      final response = await supabase.functions.invoke('join-group', body: {
-        'invite_code': inviteCode,
-      });
-      if (response.data['success'] == true) {
+      final response =
+          await ref.watch(userGroupProvider.notifier).joinGroup(inviteCode);
+      if (response == true) {
         if (mounted) {
           context.showSnackBar(
               message: 'グループに参加しました', backgroundColor: Colors.green);
@@ -41,14 +42,16 @@ class FirstGroupInvitePageState extends State<FirstGroupInvitePage> {
               MaterialPageRoute(builder: (context) => const App()),
               (route) => false);
         }
-      } else if (response.data['success'] == false) {
+      } else {
         if (mounted) {
-          context.showSnackBarError(message: response.data['error']);
+          context.showSnackBarError(message: 'グループへの参加に失敗しました');
         }
       }
-    } catch (error) {
+    } catch (e) {
       if (mounted) {
-        context.showSnackBarError(message: '$error');
+        context.showSnackBarError(
+          message: 'グループへの参加処理中にエラーが発生しました: ${e.runtimeType} - ${e.toString()}',
+        );
       }
     } finally {
       setState(() {
@@ -160,7 +163,7 @@ class FirstGroupInvitePageState extends State<FirstGroupInvitePage> {
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton.icon(
-                      onPressed: _isLoading ? null : _submitInviteCode,
+                      onPressed: _isLoading ? null : _joinGroup,
                       label: Text(_isLoading ? '' : '招待されたグループに参加する'),
                       icon: _isLoading
                           ? CircularProgressIndicator()

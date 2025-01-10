@@ -54,6 +54,20 @@ class AuthRepository {
     return Profile.fromMap(response);
   }
 
+  // ユーザー登録
+  Future<AuthResponse> signUpUser(
+      {required String username,
+      required String email,
+      required String password}) async {
+    return await supabase.auth.signUp(
+      email: email,
+      password: password,
+      data: {
+        'username': username,
+      },
+    );
+  }
+
   // ユーザー情報更新
   Future<UserResponse?> updateUser({String? email, String? password}) async {
     if (email != null) {

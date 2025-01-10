@@ -49,8 +49,8 @@ class GroupInvitePageState extends ConsumerState<GroupInvitePage> {
     } catch (e) {
       if (mounted) {
         context.showSnackBarError(
-            message:
-                'グループへの参加処理中にエラーが発生しました: ${e.runtimeType} - ${e.toString()}');
+          message: 'グループへの参加処理中にエラーが発生しました: ${e.runtimeType} - ${e.toString()}',
+        );
       }
     } finally {
       setState(() {

@@ -1,11 +1,8 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sharing_household_expenses/app.dart';
 import 'package:sharing_household_expenses/providers/user_group_provider.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 class FirstGroupInvitePage extends ConsumerStatefulWidget {
   const FirstGroupInvitePage({super.key});
@@ -61,43 +58,12 @@ class FirstGroupInvitePageState extends ConsumerState<FirstGroupInvitePage> {
   }
 
   Future<void> _makeUserGroup() async {
-    final userId = supabase.auth.currentUser!.id;
-    const chars =
-        'AaBbCcDdEeFfGgHhIiJjKkLlMmNnOoPpQqRrSsTtUuVvWwXxYyZz1234567890';
-    Random rnd = Random();
-
-    String getRandomString(int length) =>
-        String.fromCharCodes(Iterable.generate(
-            length, (_) => chars.codeUnitAt(rnd.nextInt(chars.length))));
-    final randomString = getRandomString(10);
-    final inviteCode = getRandomString(8);
-    final groupName = 'group_$randomString';
     setState(() {
       _isLoading = true;
     });
     try {
-      final response = await supabase
-          .from('user_groups')
-          .insert({
-            'group_name': groupName,
-            'slug': groupName,
-            'invite_code': inviteCode, // 期限切れで設定しておく
-            'invite_limit': DateTime.now().toIso8601String(),
-            'start_day': 1,
-            'created_at': DateTime.now().toIso8601String(),
-            'updated_at': DateTime.now().toIso8601String(),
-          })
-          .select()
-          .single();
-
-      if (response['id'] != null) {
-        await supabase.from('profiles').update({
-          'group_id': response['id'],
-          'invite_status': 'accepted',
-          'invited_at': DateTime.now().toIso8601String(),
-          'updated_at': DateTime.now().toIso8601String(),
-        }).eq('id', userId);
-
+      final response = await ref.watch(userGroupProvider.notifier).makeGroup();
+      if (response == true) {
         if (mounted) {
           context.showSnackBar(
               message: 'グループに参加しました', backgroundColor: Colors.green);
@@ -105,10 +71,16 @@ class FirstGroupInvitePageState extends ConsumerState<FirstGroupInvitePage> {
               MaterialPageRoute(builder: (context) => const App()),
               (route) => false);
         }
+      } else {
+        if (mounted) {
+          context.showSnackBarError(message: 'グループへの参加に失敗しました');
+        }
       }
-    } on PostgrestException catch (error) {
+    } catch (e) {
       if (mounted) {
-        context.showSnackBarError(message: '$error');
+        context.showSnackBarError(
+          message: 'グループへの参加処理中にエラーが発生しました: ${e.runtimeType} - ${e.toString()}',
+        );
       }
     } finally {
       setState(() {

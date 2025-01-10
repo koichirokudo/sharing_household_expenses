@@ -8,6 +8,15 @@ class UserGroupRepository {
     return await supabase.functions.invoke('generate-group-invite-code');
   }
 
+  Future<bool> makeGroup() async {
+    final response = await supabase.functions.invoke('make-user-group');
+    if (response.data['success'] == true) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   // グループに参加
   Future<bool> joinGroup(String inviteCode) async {
     final response = await supabase.functions.invoke('join-group', body: {

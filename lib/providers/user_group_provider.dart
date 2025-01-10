@@ -30,13 +30,23 @@ class UserGroupNotifier extends StateNotifier<UserGroupState> {
     }
   }
 
+  Future<bool> makeGroup() async {
+    try {
+      final response = await repository.makeGroup();
+      return response;
+    } catch (e) {
+      throw Exception(
+          'Failed to make group: ${e.runtimeType} - ${e.toString()}');
+    }
+  }
+
   Future<bool> joinGroup(String inviteCode) async {
     try {
       final response = await repository.joinGroup(inviteCode);
       return response;
     } catch (e) {
       throw Exception(
-          'Failed to submit invite code: ${e.runtimeType} - ${e.toString()}');
+          'Failed to join group: ${e.runtimeType} - ${e.toString()}');
     }
   }
 

@@ -119,7 +119,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       state = state.copyWith(session: response.session, user: response.user);
     } catch (e) {
       throw Exception(
-          'Failed to update user:  ${e.runtimeType} - ${e.toString()}');
+          'Failled to update user:  ${e.runtimeType} - ${e.toString()}');
     } finally {
       state = state.copyWith(isLoading: false);
     }

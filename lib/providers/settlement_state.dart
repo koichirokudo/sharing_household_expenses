@@ -1,4 +1,7 @@
-import 'package:freezed_annotation/freezed_annotationt';
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+import '../models/settlement.dart';
+import '../models/settlement_item.dart';
 
 part 'settlement_state.freezed.dart';
 

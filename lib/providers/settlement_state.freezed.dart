@@ -22,8 +22,14 @@ mixin _$SettlementState {
 
   Settlement? get settlement => throw _privateConstructorUsedError;
 
+  List<Settlement> get settlements => throw _privateConstructorUsedError;
+
   List<SettlementItem> get settlementItems =>
       throw _privateConstructorUsedError;
+
+  List<Settlement> get sharedSettlements => throw _privateConstructorUsedError;
+
+  List<Settlement> get privateSettlements => throw _privateConstructorUsedError;
 
   Map<String, Map<String, dynamic>> get sharedIncomeAmounts =>
       throw _privateConstructorUsedError;
@@ -59,6 +65,8 @@ mixin _$SettlementState {
 
   int get amountPerPerson => throw _privateConstructorUsedError;
 
+  List<String> get years => throw _privateConstructorUsedError;
+
   String? get errorMessage => throw _privateConstructorUsedError;
 
   /// Create a copy of SettlementState
@@ -79,7 +87,10 @@ abstract class $SettlementStateCopyWith<$Res> {
       {bool isLoading,
       bool isSettlementComplete,
       Settlement? settlement,
+      List<Settlement> settlements,
       List<SettlementItem> settlementItems,
+      List<Settlement> sharedSettlements,
+      List<Settlement> privateSettlements,
       Map<String, Map<String, dynamic>> sharedIncomeAmounts,
       Map<String, Map<String, dynamic>> sharedExpenseAmounts,
       Map<String, Map<String, dynamic>> privateIncomeAmounts,
@@ -93,6 +104,7 @@ abstract class $SettlementStateCopyWith<$Res> {
       int incomeTotal,
       int expenseTotal,
       int amountPerPerson,
+      List<String> years,
       String? errorMessage});
 }
 
@@ -115,7 +127,10 @@ class _$SettlementStateCopyWithImpl<$Res, $Val extends SettlementState>
     Object? isLoading = null,
     Object? isSettlementComplete = null,
     Object? settlement = freezed,
+    Object? settlements = null,
     Object? settlementItems = null,
+    Object? sharedSettlements = null,
+    Object? privateSettlements = null,
     Object? sharedIncomeAmounts = null,
     Object? sharedExpenseAmounts = null,
     Object? privateIncomeAmounts = null,
@@ -129,6 +144,7 @@ class _$SettlementStateCopyWithImpl<$Res, $Val extends SettlementState>
     Object? incomeTotal = null,
     Object? expenseTotal = null,
     Object? amountPerPerson = null,
+    Object? years = null,
     Object? errorMessage = freezed,
   }) {
     return _then(_value.copyWith(
@@ -144,10 +160,22 @@ class _$SettlementStateCopyWithImpl<$Res, $Val extends SettlementState>
           ? _value.settlement
           : settlement // ignore: cast_nullable_to_non_nullable
               as Settlement?,
+      settlements: null == settlements
+          ? _value.settlements
+          : settlements // ignore: cast_nullable_to_non_nullable
+              as List<Settlement>,
       settlementItems: null == settlementItems
           ? _value.settlementItems
           : settlementItems // ignore: cast_nullable_to_non_nullable
               as List<SettlementItem>,
+      sharedSettlements: null == sharedSettlements
+          ? _value.sharedSettlements
+          : sharedSettlements // ignore: cast_nullable_to_non_nullable
+              as List<Settlement>,
+      privateSettlements: null == privateSettlements
+          ? _value.privateSettlements
+          : privateSettlements // ignore: cast_nullable_to_non_nullable
+              as List<Settlement>,
       sharedIncomeAmounts: null == sharedIncomeAmounts
           ? _value.sharedIncomeAmounts
           : sharedIncomeAmounts // ignore: cast_nullable_to_non_nullable
@@ -200,6 +228,10 @@ class _$SettlementStateCopyWithImpl<$Res, $Val extends SettlementState>
           ? _value.amountPerPerson
           : amountPerPerson // ignore: cast_nullable_to_non_nullable
               as int,
+      years: null == years
+          ? _value.years
+          : years // ignore: cast_nullable_to_non_nullable
+              as List<String>,
       errorMessage: freezed == errorMessage
           ? _value.errorMessage
           : errorMessage // ignore: cast_nullable_to_non_nullable
@@ -221,7 +253,10 @@ abstract class _$$SettlementStateImplCopyWith<$Res>
       {bool isLoading,
       bool isSettlementComplete,
       Settlement? settlement,
+      List<Settlement> settlements,
       List<SettlementItem> settlementItems,
+      List<Settlement> sharedSettlements,
+      List<Settlement> privateSettlements,
       Map<String, Map<String, dynamic>> sharedIncomeAmounts,
       Map<String, Map<String, dynamic>> sharedExpenseAmounts,
       Map<String, Map<String, dynamic>> privateIncomeAmounts,
@@ -235,6 +270,7 @@ abstract class _$$SettlementStateImplCopyWith<$Res>
       int incomeTotal,
       int expenseTotal,
       int amountPerPerson,
+      List<String> years,
       String? errorMessage});
 }
 
@@ -254,7 +290,10 @@ class __$$SettlementStateImplCopyWithImpl<$Res>
     Object? isLoading = null,
     Object? isSettlementComplete = null,
     Object? settlement = freezed,
+    Object? settlements = null,
     Object? settlementItems = null,
+    Object? sharedSettlements = null,
+    Object? privateSettlements = null,
     Object? sharedIncomeAmounts = null,
     Object? sharedExpenseAmounts = null,
     Object? privateIncomeAmounts = null,
@@ -268,6 +307,7 @@ class __$$SettlementStateImplCopyWithImpl<$Res>
     Object? incomeTotal = null,
     Object? expenseTotal = null,
     Object? amountPerPerson = null,
+    Object? years = null,
     Object? errorMessage = freezed,
   }) {
     return _then(_$SettlementStateImpl(
@@ -283,10 +323,22 @@ class __$$SettlementStateImplCopyWithImpl<$Res>
           ? _value.settlement
           : settlement // ignore: cast_nullable_to_non_nullable
               as Settlement?,
+      settlements: null == settlements
+          ? _value._settlements
+          : settlements // ignore: cast_nullable_to_non_nullable
+              as List<Settlement>,
       settlementItems: null == settlementItems
           ? _value._settlementItems
           : settlementItems // ignore: cast_nullable_to_non_nullable
               as List<SettlementItem>,
+      sharedSettlements: null == sharedSettlements
+          ? _value._sharedSettlements
+          : sharedSettlements // ignore: cast_nullable_to_non_nullable
+              as List<Settlement>,
+      privateSettlements: null == privateSettlements
+          ? _value._privateSettlements
+          : privateSettlements // ignore: cast_nullable_to_non_nullable
+              as List<Settlement>,
       sharedIncomeAmounts: null == sharedIncomeAmounts
           ? _value._sharedIncomeAmounts
           : sharedIncomeAmounts // ignore: cast_nullable_to_non_nullable
@@ -339,6 +391,10 @@ class __$$SettlementStateImplCopyWithImpl<$Res>
           ? _value.amountPerPerson
           : amountPerPerson // ignore: cast_nullable_to_non_nullable
               as int,
+      years: null == years
+          ? _value._years
+          : years // ignore: cast_nullable_to_non_nullable
+              as List<String>,
       errorMessage: freezed == errorMessage
           ? _value.errorMessage
           : errorMessage // ignore: cast_nullable_to_non_nullable
@@ -354,7 +410,10 @@ class _$SettlementStateImpl implements _SettlementState {
       {required this.isLoading,
       required this.isSettlementComplete,
       required this.settlement,
+      required final List<Settlement> settlements,
       required final List<SettlementItem> settlementItems,
+      required final List<Settlement> sharedSettlements,
+      required final List<Settlement> privateSettlements,
       required final Map<String, Map<String, dynamic>> sharedIncomeAmounts,
       required final Map<String, Map<String, dynamic>> sharedExpenseAmounts,
       required final Map<String, Map<String, dynamic>> privateIncomeAmounts,
@@ -368,8 +427,12 @@ class _$SettlementStateImpl implements _SettlementState {
       required this.incomeTotal,
       required this.expenseTotal,
       required this.amountPerPerson,
+      required final List<String> years,
       this.errorMessage})
-      : _settlementItems = settlementItems,
+      : _settlements = settlements,
+        _settlementItems = settlementItems,
+        _sharedSettlements = sharedSettlements,
+        _privateSettlements = privateSettlements,
         _sharedIncomeAmounts = sharedIncomeAmounts,
         _sharedExpenseAmounts = sharedExpenseAmounts,
         _privateIncomeAmounts = privateIncomeAmounts,
@@ -379,7 +442,8 @@ class _$SettlementStateImpl implements _SettlementState {
         _privateIncomeSections = privateIncomeSections,
         _privateExpenseSections = privateExpenseSections,
         _payer = payer,
-        _payee = payee;
+        _payee = payee,
+        _years = years;
 
   @override
   final bool isLoading;
@@ -387,6 +451,15 @@ class _$SettlementStateImpl implements _SettlementState {
   final bool isSettlementComplete;
   @override
   final Settlement? settlement;
+  final List<Settlement> _settlements;
+
+  @override
+  List<Settlement> get settlements {
+    if (_settlements is EqualUnmodifiableListView) return _settlements;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_settlements);
+  }
+
   final List<SettlementItem> _settlementItems;
 
   @override
@@ -394,6 +467,26 @@ class _$SettlementStateImpl implements _SettlementState {
     if (_settlementItems is EqualUnmodifiableListView) return _settlementItems;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableListView(_settlementItems);
+  }
+
+  final List<Settlement> _sharedSettlements;
+
+  @override
+  List<Settlement> get sharedSettlements {
+    if (_sharedSettlements is EqualUnmodifiableListView)
+      return _sharedSettlements;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_sharedSettlements);
+  }
+
+  final List<Settlement> _privateSettlements;
+
+  @override
+  List<Settlement> get privateSettlements {
+    if (_privateSettlements is EqualUnmodifiableListView)
+      return _privateSettlements;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_privateSettlements);
   }
 
   final Map<String, Map<String, dynamic>> _sharedIncomeAmounts;
@@ -500,12 +593,21 @@ class _$SettlementStateImpl implements _SettlementState {
   final int expenseTotal;
   @override
   final int amountPerPerson;
+  final List<String> _years;
+
+  @override
+  List<String> get years {
+    if (_years is EqualUnmodifiableListView) return _years;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_years);
+  }
+
   @override
   final String? errorMessage;
 
   @override
   String toString() {
-    return 'SettlementState(isLoading: $isLoading, isSettlementComplete: $isSettlementComplete, settlement: $settlement, settlementItems: $settlementItems, sharedIncomeAmounts: $sharedIncomeAmounts, sharedExpenseAmounts: $sharedExpenseAmounts, privateIncomeAmounts: $privateIncomeAmounts, privateExpenseAmounts: $privateExpenseAmounts, sharedIncomeSections: $sharedIncomeSections, sharedExpenseSections: $sharedExpenseSections, privateIncomeSections: $privateIncomeSections, privateExpenseSections: $privateExpenseSections, payer: $payer, payee: $payee, incomeTotal: $incomeTotal, expenseTotal: $expenseTotal, amountPerPerson: $amountPerPerson, errorMessage: $errorMessage)';
+    return 'SettlementState(isLoading: $isLoading, isSettlementComplete: $isSettlementComplete, settlement: $settlement, settlements: $settlements, settlementItems: $settlementItems, sharedSettlements: $sharedSettlements, privateSettlements: $privateSettlements, sharedIncomeAmounts: $sharedIncomeAmounts, sharedExpenseAmounts: $sharedExpenseAmounts, privateIncomeAmounts: $privateIncomeAmounts, privateExpenseAmounts: $privateExpenseAmounts, sharedIncomeSections: $sharedIncomeSections, sharedExpenseSections: $sharedExpenseSections, privateIncomeSections: $privateIncomeSections, privateExpenseSections: $privateExpenseSections, payer: $payer, payee: $payee, incomeTotal: $incomeTotal, expenseTotal: $expenseTotal, amountPerPerson: $amountPerPerson, years: $years, errorMessage: $errorMessage)';
   }
 
   @override
@@ -520,7 +622,13 @@ class _$SettlementStateImpl implements _SettlementState {
             (identical(other.settlement, settlement) ||
                 other.settlement == settlement) &&
             const DeepCollectionEquality()
+                .equals(other._settlements, _settlements) &&
+            const DeepCollectionEquality()
                 .equals(other._settlementItems, _settlementItems) &&
+            const DeepCollectionEquality()
+                .equals(other._sharedSettlements, _sharedSettlements) &&
+            const DeepCollectionEquality()
+                .equals(other._privateSettlements, _privateSettlements) &&
             const DeepCollectionEquality()
                 .equals(other._sharedIncomeAmounts, _sharedIncomeAmounts) &&
             const DeepCollectionEquality()
@@ -545,31 +653,37 @@ class _$SettlementStateImpl implements _SettlementState {
                 other.expenseTotal == expenseTotal) &&
             (identical(other.amountPerPerson, amountPerPerson) ||
                 other.amountPerPerson == amountPerPerson) &&
+            const DeepCollectionEquality().equals(other._years, _years) &&
             (identical(other.errorMessage, errorMessage) ||
                 other.errorMessage == errorMessage));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      isLoading,
-      isSettlementComplete,
-      settlement,
-      const DeepCollectionEquality().hash(_settlementItems),
-      const DeepCollectionEquality().hash(_sharedIncomeAmounts),
-      const DeepCollectionEquality().hash(_sharedExpenseAmounts),
-      const DeepCollectionEquality().hash(_privateIncomeAmounts),
-      const DeepCollectionEquality().hash(_privateExpenseAmounts),
-      const DeepCollectionEquality().hash(_sharedIncomeSections),
-      const DeepCollectionEquality().hash(_sharedExpenseSections),
-      const DeepCollectionEquality().hash(_privateIncomeSections),
-      const DeepCollectionEquality().hash(_privateExpenseSections),
-      const DeepCollectionEquality().hash(_payer),
-      const DeepCollectionEquality().hash(_payee),
-      incomeTotal,
-      expenseTotal,
-      amountPerPerson,
-      errorMessage);
+  int get hashCode => Object.hashAll([
+        runtimeType,
+        isLoading,
+        isSettlementComplete,
+        settlement,
+        const DeepCollectionEquality().hash(_settlements),
+        const DeepCollectionEquality().hash(_settlementItems),
+        const DeepCollectionEquality().hash(_sharedSettlements),
+        const DeepCollectionEquality().hash(_privateSettlements),
+        const DeepCollectionEquality().hash(_sharedIncomeAmounts),
+        const DeepCollectionEquality().hash(_sharedExpenseAmounts),
+        const DeepCollectionEquality().hash(_privateIncomeAmounts),
+        const DeepCollectionEquality().hash(_privateExpenseAmounts),
+        const DeepCollectionEquality().hash(_sharedIncomeSections),
+        const DeepCollectionEquality().hash(_sharedExpenseSections),
+        const DeepCollectionEquality().hash(_privateIncomeSections),
+        const DeepCollectionEquality().hash(_privateExpenseSections),
+        const DeepCollectionEquality().hash(_payer),
+        const DeepCollectionEquality().hash(_payee),
+        incomeTotal,
+        expenseTotal,
+        amountPerPerson,
+        const DeepCollectionEquality().hash(_years),
+        errorMessage
+      ]);
 
   /// Create a copy of SettlementState
   /// with the given fields replaced by the non-null parameter values.
@@ -586,7 +700,10 @@ abstract class _SettlementState implements SettlementState {
       {required final bool isLoading,
       required final bool isSettlementComplete,
       required final Settlement? settlement,
+      required final List<Settlement> settlements,
       required final List<SettlementItem> settlementItems,
+      required final List<Settlement> sharedSettlements,
+      required final List<Settlement> privateSettlements,
       required final Map<String, Map<String, dynamic>> sharedIncomeAmounts,
       required final Map<String, Map<String, dynamic>> sharedExpenseAmounts,
       required final Map<String, Map<String, dynamic>> privateIncomeAmounts,
@@ -600,6 +717,7 @@ abstract class _SettlementState implements SettlementState {
       required final int incomeTotal,
       required final int expenseTotal,
       required final int amountPerPerson,
+      required final List<String> years,
       final String? errorMessage}) = _$SettlementStateImpl;
 
   @override
@@ -612,7 +730,16 @@ abstract class _SettlementState implements SettlementState {
   Settlement? get settlement;
 
   @override
+  List<Settlement> get settlements;
+
+  @override
   List<SettlementItem> get settlementItems;
+
+  @override
+  List<Settlement> get sharedSettlements;
+
+  @override
+  List<Settlement> get privateSettlements;
 
   @override
   Map<String, Map<String, dynamic>> get sharedIncomeAmounts;
@@ -652,6 +779,9 @@ abstract class _SettlementState implements SettlementState {
 
   @override
   int get amountPerPerson;
+
+  @override
+  List<String> get years;
 
   @override
   String? get errorMessage;

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:pie_chart/pie_chart.dart';
 import 'package:sharing_household_expenses/constants/transaction_type.dart';
 import 'package:sharing_household_expenses/providers/auth_provider.dart';
 import 'package:sharing_household_expenses/providers/auth_state.dart';
@@ -319,30 +318,9 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(settlementProvider);
-    final expenseTotal = state.expenseTotal;
-    final incomeTotal = state.incomeTotal;
-    final amountPerPerson = state.amountPerPerson;
-    if (selectedDataType == 'shared') {
-      incomeSections = state.sharedIncomeSections;
-      expenseSections = state.sharedExpenseSections;
-    } else {
-      incomeSections = state.privateIncomeSections;
-      expenseSections = state.privateExpenseSections;
-    }
-    String pieChartCenterText = '';
     final payer = state.payer;
     final payee = state.payee;
 
-    if (incomeExpenseType == 'expense' && selectedDataType == 'share') {
-      pieChartCenterText =
-          '支払合計額: ${convertToYenFormat(amount: expenseTotal)}\n'
-          '割り勘金額: ${convertToYenFormat(amount: amountPerPerson)}';
-    } else if (incomeExpenseType == 'expense' &&
-        selectedDataType == 'private') {
-      pieChartCenterText = '支払合計額: ${convertToYenFormat(amount: expenseTotal)}';
-    } else if (incomeExpenseType == 'income') {
-      pieChartCenterText = '収入合計額: ${convertToYenFormat(amount: incomeTotal)}';
-    }
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -375,95 +353,12 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
                   // トグルボタン
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ToggleButtons(
-                        onPressed: (int index) {
-                          setState(() {
-                            for (int i = 0; i < _selectedType.length; i++) {
-                              _selectedType[i] = i == index;
-                            }
-                            if (index == 0) {
-                              incomeExpenseType = 'income';
-                            } else {
-                              incomeExpenseType = 'expense';
-                            }
-                          });
-                        },
-                        isSelected: _selectedType,
-                        borderRadius: const BorderRadius.all(
-                          Radius.circular(8),
-                        ),
-                        constraints: const BoxConstraints(
-                          minHeight: 40.0,
-                          minWidth: 80.0,
-                        ),
-                        children: [
-                          Text('収入'),
-                          Text('支出'),
-                        ],
-                      )
-                    ],
-                  ),
-                  // グラフ
-                  SizedBox(
-                    width: 400,
-                    height: 400,
-                    child: (incomeExpenseType == 'expense' &&
-                                expenseSections.isEmpty) ||
-                            (incomeExpenseType == 'income' &&
-                                incomeSections.isEmpty)
-                        ? Center(
-                            child: Text(
-                              'データがありません',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          )
-                        : PieChart(
-                            dataMap: incomeExpenseType == 'expense'
-                                ? expenseSections
-                                : incomeSections,
-                            legendOptions: LegendOptions(
-                              showLegends: true,
-                              showLegendsInRow: true,
-                              legendPosition: LegendPosition.top,
-                              legendTextStyle: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            chartRadius:
-                                MediaQuery.of(context).size.width / 1.2,
-                            chartLegendSpacing: 16,
-                            chartValuesOptions: ChartValuesOptions(
-                              showChartValues: true,
-                              showChartValuesOutside: false,
-                              showChartValuesInPercentage: false,
-                              showChartValueBackground: false,
-                              decimalPlaces: 0,
-                              chartValueStyle: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
-                            ),
-                            // 半径を調整
-                            formatChartValues: (value) {
-                              return NumberFormat.currency(
-                                      locale: 'ja_JP', symbol: '¥')
-                                  .format(value);
-                            },
-                            chartType: ChartType.ring,
-                            centerText: pieChartCenterText,
-                          ),
-                  ),
+                  if (selectedDataType == 'shared') ...[
+                    _buildSettlementCard(payer),
+                    const SizedBox(height: 16),
+                    _buildSettlementCard(payee),
+                  ],
                   const SizedBox(height: 16),
                   if (!isSettlement)
                     Center(
@@ -508,12 +403,6 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
                         ),
                       ),
                     ),
-                  const SizedBox(height: 16),
-                  if (selectedDataType == 'shared') ...[
-                    _buildSettlementCard(payer),
-                    const SizedBox(height: 16),
-                    _buildSettlementCard(payee),
-                  ],
                   const SizedBox(height: 16),
                   // 共有された明細の一覧
                   Card(

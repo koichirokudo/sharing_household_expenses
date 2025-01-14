@@ -7,8 +7,6 @@ import 'package:sharing_household_expenses/models/transaction.dart';
 import 'package:sharing_household_expenses/providers/settlement_state.dart';
 import 'package:sharing_household_expenses/repositories/settlement_repository.dart';
 
-import '../utils/constants.dart';
-
 final settlementProvider =
     StateNotifierProvider<SettlementNotifier, SettlementState>(
   (ref) => SettlementNotifier(SettlementRepository()),
@@ -31,10 +29,6 @@ class SettlementNotifier extends StateNotifier<SettlementState> {
             sharedExpenseAmounts: {},
             privateIncomeAmounts: {},
             privateExpenseAmounts: {},
-            sharedIncomeSections: {},
-            sharedExpenseSections: {},
-            privateIncomeSections: {},
-            privateExpenseSections: {},
             payer: {},
             payee: {},
             expenseTotal: 0,
@@ -48,13 +42,11 @@ class SettlementNotifier extends StateNotifier<SettlementState> {
       List<Transaction> transactions, List<Profile>? profiles) async {
     if (profiles != null) {
       await calcSharedSettlements(transactions, profiles);
-      generateSharedSections();
     }
   }
 
   void initializePrivate(List<Transaction> transactions) {
     calcPrivateSettlements(transactions);
-    generatePrivateSections();
   }
 
   Future<void> fetchYearlySettlements(String groupId, DateTime now) async {
@@ -242,71 +234,6 @@ class SettlementNotifier extends StateNotifier<SettlementState> {
       privateIncomeAmounts: privateIncomeAmounts,
       expenseTotal: expenseTotal,
       incomeTotal: incomeTotal,
-    );
-  }
-
-  void generateSharedSections() {
-    final sharedExpenseSections =
-        Map<String, double>.from(state.sharedExpenseSections);
-    final sharedIncomeSections =
-        Map<String, double>.from(state.sharedIncomeSections);
-    Map<String, dynamic> payer = {};
-    Map<String, dynamic> payee = {};
-
-    state.sharedExpenseAmounts.forEach((profileId, data) {
-      sharedExpenseSections['${data['username']}'] =
-          double.parse(data['amount'].toString());
-      if (data['role'] == 'payer') {
-        payer = {
-          'role': 'payer',
-          'username': data['username'],
-          'avatarUrl': data['avatar_url'],
-          'advancePayment': convertToYenFormat(amount: data['amount']),
-          'payment': convertToYenFormat(amount: data['payments']),
-        };
-      } else if (data['role'] == 'payee') {
-        payee = {
-          'role': 'payee',
-          'username': data['username'],
-          'avatarUrl': data['avatar_url'],
-          'advancePayment': convertToYenFormat(amount: data['amount']),
-          'receive': convertToYenFormat(amount: data['payments']),
-        };
-      }
-    });
-
-    state.sharedIncomeAmounts.forEach((profileId, data) {
-      sharedIncomeSections['${data['username']}'] =
-          double.parse(data['amount'].toString());
-    });
-
-    state = state.copyWith(
-      sharedExpenseSections: sharedExpenseSections,
-      sharedIncomeSections: sharedIncomeSections,
-      payer: payer,
-      payee: payee,
-    );
-  }
-
-  void generatePrivateSections() {
-    final privateExpenseSections =
-        Map<String, double>.from(state.privateExpenseSections);
-    final privateIncomeSections =
-        Map<String, double>.from(state.privateIncomeSections);
-
-    state.privateExpenseAmounts.forEach((categoryName, data) {
-      privateExpenseSections[categoryName] =
-          double.parse(data['amount'].toString());
-    });
-
-    state.privateIncomeAmounts.forEach((categoryName, data) {
-      privateIncomeSections[categoryName] =
-          double.parse(data['amount'].toString());
-    });
-
-    state = state.copyWith(
-      privateExpenseSections: privateExpenseSections,
-      privateIncomeSections: privateIncomeSections,
     );
   }
 

@@ -33,6 +33,7 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
   @override
   void initState() {
     super.initState();
+    months = [];
     Future.microtask(() async {
       final authNotifier = ref.watch(authProvider.notifier);
       await authNotifier.fetchProfile();
@@ -85,14 +86,6 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
   }
 
   Widget _buildMonthSelector() {
-    if (months.isEmpty) {
-      return Center(
-        child: Text(
-          '月データがありません',
-          style: TextStyle(fontSize: 18, color: Colors.grey),
-        ),
-      );
-    }
     return SizedBox(
       height: 80,
       child: Row(
@@ -319,8 +312,19 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
 
   Widget _buildNotFoundData() {
     return ListView(
+      // 常にスクロール可能にすることで、データが無い場合でもリフレッシュ操作を可能にする
+      physics: AlwaysScrollableScrollPhysics(),
       children: [
-        circularIndicator,
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Center(
+            child: Text(
+              'データがありません。\n下に引っ張って更新してください。',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 18, color: Colors.grey),
+            ),
+          ),
+        ),
       ],
     );
   }

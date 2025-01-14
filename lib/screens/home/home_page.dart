@@ -6,6 +6,9 @@ import 'package:sharing_household_expenses/providers/transaction_provider.dart';
 import 'package:sharing_household_expenses/screens/sign_in/sign_in.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
 
+import '../../models/profile.dart';
+import '../../providers/auth_state.dart';
+import '../group/first_group_invite_page.dart';
 import '../profile/user_page.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -17,6 +20,8 @@ class HomePage extends ConsumerStatefulWidget {
 
 class HomePageState extends ConsumerState<HomePage> {
   bool _isLoading = false;
+  late Profile profile;
+  late AuthState auth;
 
   @override
   void initState() {
@@ -28,6 +33,9 @@ class HomePageState extends ConsumerState<HomePage> {
       final authNotifier = ref.watch(authProvider.notifier);
       await authNotifier.fetchProfile();
       final auth = ref.watch(authProvider);
+      if (auth.profile != null) {
+        profile = auth.profile!;
+      }
       final groupId = auth.profile?.groupId;
       final transactionNotifier = ref.watch(transactionProvider.notifier);
       final currentMonth = DateTime.now();
@@ -36,33 +44,19 @@ class HomePageState extends ConsumerState<HomePage> {
           groupId,
           currentMonth,
         );
+      } else {
+        if (mounted) {
+          Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const FirstGroupInvitePage()));
+        }
       }
       setState(() {
         _isLoading = false;
       });
     });
   }
-
-  // Future<void> _checkUserGroupStatus() async {
-  //   final userId = supabase.auth.currentUser!.id;
-  //   try {
-  //     profile =
-  //         await supabase.from('profiles').select('*').eq('id', userId).single();
-  //
-  //     if (profile['group_id'] == null) {
-  //       if (mounted) {
-  //         Navigator.pushReplacement(
-  //             context,
-  //             MaterialPageRoute(
-  //                 builder: (context) => const FirstGroupInvitePage()));
-  //       }
-  //     }
-  //   } on PostgrestException catch (error) {
-  //     if (mounted) {
-  //       context.showSnackBarError(message: '$error');
-  //     }
-  //   }
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -81,7 +75,7 @@ class HomePageState extends ConsumerState<HomePage> {
       appBar: AppBar(
         centerTitle: true,
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: const Text('シェア家計簿'),
+        title: const Text('今月の収支'),
         actions: [
           // ログイン状態によって表示を変えるアカウントボタンまたはログインボタン
           IconButton(
@@ -113,15 +107,7 @@ class HomePageState extends ConsumerState<HomePage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const SizedBox(height: 16),
-                    const Text(
-                      '今月の収支',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                    ),
-                    // 個人の収支
+                    // グループの収支
                     Column(
                       children: [
                         Padding(
@@ -217,7 +203,7 @@ class HomePageState extends ConsumerState<HomePage> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    // グループの収支
+                    // 個人の収支
                     Column(
                       children: [
                         Padding(

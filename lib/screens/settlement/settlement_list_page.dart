@@ -125,7 +125,7 @@ class SettlementListPageState extends ConsumerState<SettlementListPage> {
 
   Widget _buildSettlementIsEmpty() {
     return ListView(
-      // 常にスクロール可能にすることで、データが無い場合でもリフレっ操作を可能にする
+      // 常にスクロール可能にすることで、データが無い場合でもリフレッシュ操作を可能にする
       physics: AlwaysScrollableScrollPhysics(),
       children: [
         Padding(

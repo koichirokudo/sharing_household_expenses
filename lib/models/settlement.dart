@@ -14,7 +14,7 @@ class Settlement {
   final SettlementStatus? status;
   final DateTime createdAt;
   final DateTime updatedAt;
-  final List<SettlementItem> settlementItems;
+  final List<SettlementItem>? settlementItems;
 
   Settlement({
     required this.id,
@@ -45,9 +45,12 @@ class Settlement {
           : null,
       createdAt: DateTime.parse(map['created_at']),
       updatedAt: DateTime.parse(map['updated_at']),
-      settlementItems: (map['settlement_items'] as List<dynamic>)
-          .map((item) => SettlementItem.fromMap(item as Map<String, dynamic>))
-          .toList(),
+      settlementItems: map['settlement_items'] != null
+          ? (map['settlement_items'] as List<dynamic>)
+              .map((item) =>
+                  SettlementItem.fromMap(item as Map<String, dynamic>))
+              .toList()
+          : null,
     );
   }
 
@@ -63,7 +66,7 @@ class Settlement {
       'status': status?.name,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
-      'settlement_items': settlementItems.map((item) => item.toMap()).toList(),
+      'settlement_items': settlementItems?.map((item) => item.toMap()).toList(),
     };
   }
 }

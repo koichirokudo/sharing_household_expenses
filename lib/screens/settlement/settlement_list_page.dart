@@ -147,6 +147,10 @@ class SettlementListPageState extends ConsumerState<SettlementListPage> {
     SettlementItem? payer;
     SettlementItem? payee;
 
+    if (settlementItems == null) {
+      return Row(children: [Text('データがありません')]);
+    }
+
     for (var item in settlementItems) {
       if (item.role == Role.payer) {
         payer = item;
@@ -155,7 +159,10 @@ class SettlementListPageState extends ConsumerState<SettlementListPage> {
       }
     }
 
-    if (payer == null || payee == null) {
+    if (payer == null ||
+        payee == null ||
+        payer.profile == null ||
+        payee.profile == null) {
       return Row(children: [Text('データがありません')]);
     }
 
@@ -179,7 +186,7 @@ class SettlementListPageState extends ConsumerState<SettlementListPage> {
             const SizedBox(height: 4),
             // ユーザー名
             Text(
-              payer.profile.username,
+              payer.profile!.username,
               style: const TextStyle(
                 fontSize: 10,
                 color: Colors.black,
@@ -224,7 +231,7 @@ class SettlementListPageState extends ConsumerState<SettlementListPage> {
             const SizedBox(height: 4),
             // ユーザー名
             Text(
-              payee.profile.username,
+              payee.profile!.username,
               style: const TextStyle(
                 fontSize: 10,
                 color: Colors.black,

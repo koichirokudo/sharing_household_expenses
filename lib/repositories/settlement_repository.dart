@@ -45,9 +45,7 @@ class SettlementRepository {
       throw Exception('清算詳細情報が取得できません');
     }
 
-    return (response as List<dynamic>)
-        .map((item) => SettlementItem.fromMap(item))
-        .toList();
+    return response.map((item) => SettlementItem.fromMap(item)).toList();
   }
 
   Future<bool> checkSettlement(String visibility, String month) async {

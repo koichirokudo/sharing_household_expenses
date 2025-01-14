@@ -11,7 +11,7 @@ class SettlementItem {
   final double percentage;
   final DateTime createdAt;
   final DateTime updatedAt;
-  final Profile profile;
+  final Profile? profile;
 
   SettlementItem({
     required this.id,
@@ -35,7 +35,8 @@ class SettlementItem {
       percentage: map['percentage'],
       createdAt: DateTime.parse(map['created_at']),
       updatedAt: DateTime.parse(map['updated_at']),
-      profile: Profile.fromMap(map['profiles']),
+      profile:
+          map['profiles'] != null ? Profile.fromMap(map['profiles']) : null,
     );
   }
 
@@ -49,7 +50,7 @@ class SettlementItem {
       'percentage': percentage,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
-      'profiles': profile.toMap(),
+      'profiles': profile?.toMap(),
     };
   }
 }

@@ -1,3 +1,5 @@
+import 'package:sharing_household_expenses/models/settlement_item.dart';
+
 import '../constants/settlement_status.dart';
 import '../constants/settlement_visibility.dart';
 
@@ -12,6 +14,7 @@ class Settlement {
   final SettlementStatus? status;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final List<SettlementItem> settlementItems;
 
   Settlement({
     required this.id,
@@ -24,6 +27,7 @@ class Settlement {
     this.status,
     required this.createdAt,
     required this.updatedAt,
+    required this.settlementItems,
   });
 
   factory Settlement.fromMap(Map<String, dynamic> map) {
@@ -41,6 +45,9 @@ class Settlement {
           : null,
       createdAt: DateTime.parse(map['created_at']),
       updatedAt: DateTime.parse(map['updated_at']),
+      settlementItems: (map['settlement_items'] as List<dynamic>)
+          .map((item) => SettlementItem.fromMap(item as Map<String, dynamic>))
+          .toList(),
     );
   }
 
@@ -56,6 +63,7 @@ class Settlement {
       'status': status?.name,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
+      'settlement_items': settlementItems.map((item) => item.toMap()).toList(),
     };
   }
 }

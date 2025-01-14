@@ -24,7 +24,6 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
   bool _isSettlement = false;
   List<String> months = [];
   List<Transaction> transactions = [];
-  List<Map<String, dynamic>> settlements = [];
   late Profile profile;
   late int selectedIndex = 1;
   late final PageController _pageController;
@@ -235,15 +234,17 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
   Widget _buildToggleButtons() {
     return ToggleButtons(
       onPressed: (int index) async {
-        for (int i = 0; i < _selectedType.length; i++) {
-          _selectedType[i] = i == index;
-        }
+        setState(() {
+          for (int i = 0; i < _selectedType.length; i++) {
+            _selectedType[i] = i == index;
+          }
 
-        if (index == 0) {
-          sharedPrivateType = 'shared';
-        } else {
-          sharedPrivateType = 'expense';
-        }
+          if (index == 0) {
+            sharedPrivateType = 'shared';
+          } else {
+            sharedPrivateType = 'private';
+          }
+        });
         // 清算済みかをチェックする
         _isSettlement = await _checkSettlement();
       },

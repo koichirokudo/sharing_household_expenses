@@ -209,7 +209,7 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
         item['role'] = 'payer';
       } else {
         item['payments'] = 0;
-        item['role'] = 'neutral';
+        item['role'] = 'even';
       }
     });
   }
@@ -269,13 +269,11 @@ class SettlementDetailPageState extends State<SettlementDetailPage> {
 
   void _generateSelfSettlementData() {
     selfExpenseAmounts.forEach((categoryName, data) {
-      expenseSections['${categoryName}'] =
-          double.parse(data['amount'].toString());
+      expenseSections[categoryName] = double.parse(data['amount'].toString());
     });
 
     selfIncomeAmounts.forEach((categoryName, data) {
-      incomeSections['${categoryName}'] =
-          double.parse(data['amount'].toString());
+      incomeSections[categoryName] = double.parse(data['amount'].toString());
     });
   }
 

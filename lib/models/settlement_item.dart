@@ -1,3 +1,5 @@
+import 'package:sharing_household_expenses/models/profile.dart';
+
 import '../constants/role.dart';
 
 class SettlementItem {
@@ -9,6 +11,7 @@ class SettlementItem {
   final double percentage;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final Profile profile;
 
   SettlementItem({
     required this.id,
@@ -19,6 +22,7 @@ class SettlementItem {
     required this.percentage,
     required this.createdAt,
     required this.updatedAt,
+    required this.profile,
   });
 
   factory SettlementItem.fromMap(Map<String, dynamic> map) {
@@ -31,6 +35,7 @@ class SettlementItem {
       percentage: map['percentage'],
       createdAt: DateTime.parse(map['created_at']),
       updatedAt: DateTime.parse(map['updated_at']),
+      profile: Profile.fromMap(map['profiles']),
     );
   }
 
@@ -44,6 +49,7 @@ class SettlementItem {
       'percentage': percentage,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
+      'profiles': profile.toMap(),
     };
   }
 }

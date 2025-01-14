@@ -1,7 +1,4 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
-
-import '../models/settlement.dart';
-import '../models/settlement_item.dart';
+import 'package:freezed_annotation/freezed_annotationt';
 
 part 'settlement_state.freezed.dart';
 
@@ -11,7 +8,10 @@ class SettlementState with _$SettlementState {
     required bool isLoading,
     required bool isSettlementComplete,
     required Settlement? settlement,
+    required List<Settlement> settlements,
     required List<SettlementItem> settlementItems,
+    required List<Settlement> sharedSettlements,
+    required List<Settlement> privateSettlements,
     required Map<String, Map<String, dynamic>> sharedIncomeAmounts,
     required Map<String, Map<String, dynamic>> sharedExpenseAmounts,
     required Map<String, Map<String, dynamic>> privateIncomeAmounts,
@@ -25,6 +25,7 @@ class SettlementState with _$SettlementState {
     required int incomeTotal,
     required int expenseTotal,
     required int amountPerPerson,
+    required List<String> years,
     String? errorMessage,
   }) = _SettlementState;
 }

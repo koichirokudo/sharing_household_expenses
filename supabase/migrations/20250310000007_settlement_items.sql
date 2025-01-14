@@ -5,7 +5,7 @@ CREATE TABLE settlement_items
     id         integer PRIMARY KEY DEFAULT nextval('settlement_items_id_seq'::regclass),
     settlement_id integer NOT NULL REFERENCES settlements(id),
     profile_id uuid NOT NULL REFERENCES profiles (id),
-    role TEXT NOT NULL CHECK (role IN ('payer', 'payee', 'self')), -- 'payer', 'payee', 'self'
+    role TEXT NOT NULL CHECK (role IN ('payer', 'payee', 'self', 'even')), -- 'payer', 'payee', 'self', 'even'
     amount NUMERIC(10, 2) NOT NULL DEFAULT 0,
     percentage NUMERIC(10, 2) NOT NULL DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,

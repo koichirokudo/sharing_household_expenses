@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:sharing_household_expenses/constants/role.dart';
+import 'package:sharing_household_expenses/constants/settlement_visibility.dart';
 import 'package:sharing_household_expenses/constants/transaction_type.dart';
 import 'package:sharing_household_expenses/models/profile.dart';
 import 'package:sharing_household_expenses/models/transaction.dart';
@@ -22,6 +24,9 @@ class SettlementNotifier extends StateNotifier<SettlementState> {
             isLoading: false,
             isSettlementComplete: false,
             settlement: null,
+            settlements: [],
+            sharedSettlements: [],
+            privateSettlements: [],
             settlementItems: [],
             sharedIncomeAmounts: {},
             sharedExpenseAmounts: {},
@@ -36,6 +41,7 @@ class SettlementNotifier extends StateNotifier<SettlementState> {
             expenseTotal: 0,
             incomeTotal: 0,
             amountPerPerson: 0,
+            years: [],
           ),
         );
 
@@ -50,6 +56,56 @@ class SettlementNotifier extends StateNotifier<SettlementState> {
   void initializePrivate(List<Transaction> transactions) {
     calcPrivateSettlements(transactions);
     generatePrivateSections();
+  }
+
+  Future<void> fetchYearlySettlements(String groupId, DateTime now) async {
+    state = state.copyWith(isLoading: true);
+    try {
+      final settlements = await repository.fetchYearly(groupId, now);
+      state = state.copyWith(settlements: settlements);
+      groupByVisibility();
+    } catch (e) {
+      throw Exception('Failed to fetch yearly settlements: $e');
+    } finally {
+      state = state.copyWith(isLoading: false);
+    }
+  }
+
+  Future<void> saveSettlement(Map<String, dynamic> settlementData) async {
+    state = state.copyWith(isLoading: true);
+    try {
+      final response = await repository.saveSettlement(settlementData);
+      state = state.copyWith(isSettlementComplete: true, settlement: response);
+    } catch (e) {
+      throw Exception('Failed to confirm settlement: $e');
+    } finally {
+      state = state.copyWith(isLoading: false);
+    }
+  }
+
+  Future<void> saveSettlementItems(
+      List<Map<String, dynamic>> settlementItemData) async {
+    state = state.copyWith(isLoading: true);
+    try {
+      final response = await repository.saveSettlementItems(settlementItemData);
+      state = state.copyWith(settlementItems: response);
+    } catch (e) {
+      throw Exception('Failed to confirm settlement: $e');
+    } finally {
+      state = state.copyWith(isLoading: false);
+    }
+  }
+
+  Future<bool> checkSettlement(String visibility, String month) async {
+    state = state.copyWith(isLoading: true);
+    try {
+      final response = await repository.checkSettlement(visibility, month);
+      return response;
+    } catch (e) {
+      throw Exception('Failed to check settlement: $e');
+    } finally {
+      state = state.copyWith(isLoading: false);
+    }
   }
 
   // 共有データの清算
@@ -119,8 +175,9 @@ class SettlementNotifier extends StateNotifier<SettlementState> {
           // 支払人
           item['role'] = 'payer';
         } else {
+          // even
           item['payments'] = 0;
-          item['role'] = 'neutral';
+          item['role'] = 'even';
         }
       });
 
@@ -252,40 +309,31 @@ class SettlementNotifier extends StateNotifier<SettlementState> {
     );
   }
 
-  Future<void> saveSettlement(Map<String, dynamic> settlementData) async {
-    state = state.copyWith(isLoading: true);
-    try {
-      final response = await repository.saveSettlement(settlementData);
-      state = state.copyWith(isSettlementComplete: true, settlement: response);
-    } catch (e) {
-      throw Exception('Failed to confirm settlement: $e');
-    } finally {
-      state = state.copyWith(isLoading: false);
-    }
+  void generateYears() {
+    final now = DateTime.now();
+    final years = List.generate(2, (index) {
+      final year = DateTime(now.year - index, now.month, 1);
+      return DateFormat('yyyy').format(year);
+    });
+    state = state.copyWith(years: years.reversed.toList());
   }
 
-  Future<void> saveSettlementItems(
-      List<Map<String, dynamic>> settlementItemData) async {
-    state = state.copyWith(isLoading: true);
-    try {
-      final response = await repository.saveSettlementItems(settlementItemData);
-      state = state.copyWith(settlementItems: response);
-    } catch (e) {
-      throw Exception('Failed to confirm settlement: $e');
-    } finally {
-      state = state.copyWith(isLoading: false);
-    }
-  }
+  void groupByVisibility() {
+    final settlements = state.settlements;
+    final sharedData = settlements.where((settlement) {
+      if (settlement.visibility == SettlementVisibility.shared) {
+        return true;
+      }
+      return false;
+    }).toList();
+    state = state.copyWith(sharedSettlements: sharedData);
 
-  Future<bool> checkSettlement(String visibility, String month) async {
-    state = state.copyWith(isLoading: true);
-    try {
-      final response = await repository.checkSettlement(visibility, month);
-      return response;
-    } catch (e) {
-      throw Exception('Failed to check settlement: $e');
-    } finally {
-      state = state.copyWith(isLoading: false);
-    }
+    final privateData = settlements.where((settlement) {
+      if (settlement.visibility == SettlementVisibility.private) {
+        return true;
+      }
+      return false;
+    }).toList();
+    state = state.copyWith(privateSettlements: privateData);
   }
 }

@@ -3,6 +3,23 @@ import '../models/settlement_item.dart';
 import '../utils/constants.dart';
 
 class SettlementRepository {
+  Future<List<Settlement>> fetchYearly(String groupId, DateTime now) async {
+    final startOfYear = '${now.year}/01';
+    final endOfYear = '${now.year + 1}/01';
+
+    final response = await supabase
+        .from('settlements')
+        .select('*, settlement_items(*, profiles(*))')
+        .eq('group_id', groupId)
+        .gte('settlement_date', startOfYear)
+        .lt('settlement_date', endOfYear)
+        .order('settlement_date', ascending: true);
+
+    return (response as List<dynamic>)
+        .map((settlement) => Settlement.fromMap(settlement))
+        .toList();
+  }
+
   Future<Settlement> saveSettlement(Map<String, dynamic> settlementData) async {
     final response = await supabase
         .from('settlements')

@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:sharing_household_expenses/constants/role.dart';
 import 'package:sharing_household_expenses/constants/settlement_visibility.dart';
 import 'package:sharing_household_expenses/constants/transaction_type.dart';
 import 'package:sharing_household_expenses/models/profile.dart';
@@ -257,15 +256,17 @@ class SettlementNotifier extends StateNotifier<SettlementState> {
     state.sharedExpenseAmounts.forEach((profileId, data) {
       sharedExpenseSections['${data['username']}'] =
           double.parse(data['amount'].toString());
-      if (data['role'] == Role.payer) {
+      if (data['role'] == 'payer') {
         payer = {
+          'role': 'payer',
           'username': data['username'],
           'avatarUrl': data['avatar_url'],
           'advancePayment': convertToYenFormat(amount: data['amount']),
           'payment': convertToYenFormat(amount: data['payments']),
         };
-      } else if (data['role'] == Role.payee) {
+      } else if (data['role'] == 'payee') {
         payee = {
+          'role': 'payee',
           'username': data['username'],
           'avatarUrl': data['avatar_url'],
           'advancePayment': convertToYenFormat(amount: data['amount']),

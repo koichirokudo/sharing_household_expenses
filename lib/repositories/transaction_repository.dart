@@ -4,7 +4,8 @@ import '../utils/constants.dart';
 
 class TransactionRepository {
   //　月ごとのトランザクションを取得する
-  Future<List<Transaction>> fetchMonthly(String groupId, DateTime month) async {
+  Future<List<Transaction>> fetchMonthlyByGroup(
+      String groupId, DateTime month) async {
     final startOfMonth = DateTime(month.year, month.month);
     final endOfMonth = DateTime(month.year, month.month + 1)
         .subtract(const Duration(seconds: 1));
@@ -15,6 +16,19 @@ class TransactionRepository {
         .gte('date', startOfMonth.toIso8601String())
         .lt('date', endOfMonth.toIso8601String())
         .eq('group_id', groupId)
+        .order('date', ascending: false);
+
+    return (response as List<dynamic>)
+        .map((transaction) => Transaction.fromMap(transaction))
+        .toList();
+  }
+
+  Future<List<Transaction>> fetchMonthlyBySettlement(
+      String settlementId) async {
+    final response = await supabase
+        .from('transactions')
+        .select('*, sub_categories!inner(*), profiles!inner(*)')
+        .eq('settlement_id', settlementId)
         .order('date', ascending: false);
 
     return (response as List<dynamic>)

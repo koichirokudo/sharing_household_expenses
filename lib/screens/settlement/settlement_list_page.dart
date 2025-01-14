@@ -313,7 +313,7 @@ class SettlementListPageState extends ConsumerState<SettlementListPage> {
               context,
               MaterialPageRoute(
                 builder: (context) => SettlementDetailPage(
-                  settlementId: settlements[index].id,
+                  settlementId: settlements[index].id.toString(),
                   profile: profile,
                   month: settlementDate,
                   selectedDataType: sharedPrivateType,

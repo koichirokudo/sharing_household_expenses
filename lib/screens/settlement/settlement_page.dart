@@ -219,6 +219,7 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
   Widget _buildSettlementCard(data) {
     final state = ref.watch(settlementProvider);
     final amountPerPerson = state.amountPerPerson;
+
     return Card(
       elevation: 1.0,
       shape: RoundedRectangleBorder(
@@ -236,14 +237,13 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    image: DecorationImage(
-                      fit: BoxFit.fill,
-                      image: data['avatarUrl'] != null
-                          ? NetworkImage(data['avatarUrl'])
-                          : AssetImage('assets/icons/user_icon.png'),
-                    ),
-                  ),
+                      shape: BoxShape.circle,
+                      image: DecorationImage(
+                        fit: BoxFit.fill,
+                        image: data['avatarUrl'] != null
+                            ? NetworkImage(data['avatarUrl'])
+                            : AssetImage('assets/icons/user_icon.png'),
+                      )),
                 ),
                 const SizedBox(width: 8),
                 // 支払人
@@ -262,9 +262,7 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Text(
-                    convertToYenFormat(amount: amountPerPerson),
-                  ),
+                  Text(convertToYenFormat(amount: amountPerPerson)),
                   const SizedBox(width: 16),
                 ],
               )
@@ -275,7 +273,7 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   const SizedBox(width: 16),
-                  Text('自分が支払った金額'),
+                  Text('立替金額'),
                 ],
               ),
               Row(
@@ -287,22 +285,31 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
               )
             ]),
             const SizedBox(height: 8),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  const SizedBox(width: 16),
-                  Text(data['role'] == 'payer' ? '清算で支払う金額' : '清算で受け取る金額'),
-                ],
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Text('${data['payment']}'),
-                  const SizedBox(width: 16),
-                ],
-              )
-            ])
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    const SizedBox(width: 16),
+                    Text(
+                      data['role'] == 'payer' ? '清算で支払う金額' : '清算で受け取る金額',
+                    ),
+                  ],
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text(
+                      data['role'] == 'payer'
+                          ? data['payment']
+                          : data['receive'],
+                    ),
+                    const SizedBox(width: 16),
+                  ],
+                )
+              ],
+            ),
           ],
         ),
       ),
@@ -323,6 +330,9 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
       expenseSections = state.privateExpenseSections;
     }
     String pieChartCenterText = '';
+    final payer = state.payer;
+    final payee = state.payee;
+
     if (incomeExpenseType == 'expense' && selectedDataType == 'share') {
       pieChartCenterText =
           '支払合計額: ${convertToYenFormat(amount: expenseTotal)}\n'
@@ -498,14 +508,13 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
                         ),
                       ),
                     ),
-                  const SizedBox(height: 8),
-                  if (selectedDataType == 'share' &&
-                      settlementData != null) ...[
-                    _buildSettlementCard(settlementData?['payer']),
-                    const SizedBox(height: 8),
-                    _buildSettlementCard(settlementData?['payee']),
+                  const SizedBox(height: 16),
+                  if (selectedDataType == 'shared') ...[
+                    _buildSettlementCard(payer),
+                    const SizedBox(height: 16),
+                    _buildSettlementCard(payee),
                   ],
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
                   // 共有された明細の一覧
                   Card(
                     elevation: 4.0,

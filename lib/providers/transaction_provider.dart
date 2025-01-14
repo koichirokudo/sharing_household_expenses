@@ -37,11 +37,24 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
   Future<void> fetchMonthlyTransactions(String groupId, DateTime month) async {
     state = state.copyWith(isLoading: true);
     try {
-      final transactions = await repository.fetchMonthly(groupId, month);
+      final transactions = await repository.fetchMonthlyByGroup(groupId, month);
       state = state.copyWith(transactions: transactions);
       groupByVisibility();
       calculateTotalAmounts();
       generateMonths();
+    } catch (e) {
+      throw Exception('Failed to fetch monthly transactions: $e');
+    } finally {
+      state = state.copyWith(isLoading: false);
+    }
+  }
+
+  Future<void> fetchMonthlyTransactionsBySettlement(String settlementId) async {
+    state = state.copyWith(isLoading: true);
+    try {
+      final transactions =
+          await repository.fetchMonthlyBySettlement(settlementId);
+      state = state.copyWith(transactions: transactions);
     } catch (e) {
       throw Exception('Failed to fetch monthly transactions: $e');
     } finally {

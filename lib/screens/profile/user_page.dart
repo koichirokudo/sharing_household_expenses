@@ -9,8 +9,6 @@ import 'package:sharing_household_expenses/screens/profile/email_change_page.dar
 import 'package:sharing_household_expenses/screens/profile/password_reset_page.dart';
 import 'package:sharing_household_expenses/screens/profile/profile_edit_page.dart';
 import 'package:sharing_household_expenses/screens/sign_in/sign_in.dart';
-import 'package:sharing_household_expenses/services/transaction_service.dart';
-import 'package:sharing_household_expenses/utils/constants.dart';
 
 class UserPage extends ConsumerStatefulWidget {
   const UserPage({super.key});
@@ -20,14 +18,6 @@ class UserPage extends ConsumerStatefulWidget {
 }
 
 class UserPageState extends ConsumerState {
-  late TransactionService transactionService;
-
-  @override
-  void initState() {
-    super.initState;
-    transactionService = TransactionService(supabase);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -155,7 +145,6 @@ class UserPageState extends ConsumerState {
                   minimumSize: Size(400, 50),
                 ),
                 onPressed: () {
-                  transactionService.clearAllCache();
                   ref.watch(authProvider.notifier).signOut();
                   Navigator.of(context).pushAndRemoveUntil(
                       MaterialPageRoute(

@@ -319,19 +319,8 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
 
   Widget _buildNotFoundData() {
     return ListView(
-      // 常にスクロール可能にすることで、データが無い場合でもリフレっ操作を可能にする
-      physics: AlwaysScrollableScrollPhysics(),
       children: [
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Center(
-            child: Text(
-              'データがありません。\n下に引っ張って更新してください。',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 18, color: Colors.grey),
-            ),
-          ),
-        ),
+        circularIndicator,
       ],
     );
   }
@@ -517,12 +506,7 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
           backgroundColor: Theme.of(context).colorScheme.inversePrimary,
           title: Text('明細一覧'),
         ),
-        body: Center(
-          child: Text(
-            'データがありません。',
-            style: TextStyle(fontSize: 18, color: Colors.grey),
-          ),
-        ),
+        body: circularIndicator,
       );
     }
 

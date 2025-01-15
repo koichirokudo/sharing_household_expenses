@@ -45,7 +45,6 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
   Map<String, double> incomeSections = {};
   Map<String, Map<String, dynamic>>? settlementData = {};
 
-  final List<bool> _selectedType = <bool>[false, true];
   late Profile profile;
   late List<Profile>? profiles;
   late AuthState auth;
@@ -53,6 +52,9 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
   @override
   void initState() {
     super.initState();
+    setState(() {
+      _isLoading = true;
+    });
     // initState 内で widget.transaction を初期化
     transactions = widget.transactions;
     profile = widget.profile;
@@ -65,22 +67,45 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
       await authNotifier.fetchProfile();
       await authNotifier.fetchProfiles();
       auth = ref.watch(authProvider);
+      final groupId = profile.groupId;
+      if (groupId == null) {
+        return;
+      }
       profiles = auth.profiles;
+
+      DateTime now = DateTime.now(); // 現在の日付
+      int year = now.year;
+      int month = now.month - 1;
+      // 月が0以下になった場合、前年に戻す
+      if (month <= 0) {
+        month += 12;
+        year -= 1;
+      }
+      // 存在しない日付を補正
+      int day = now.day;
+      int lastDayOfMonth = DateTime(year, month + 1, 0).day; // 月末の日付
+      if (day > lastDayOfMonth) {
+        day = lastDayOfMonth;
+      }
+
+      DateTime prevMonth = DateTime(year, month, day);
       final settlementNotifier = ref.watch(settlementProvider.notifier);
+      final transactionNotifier = ref.watch(transactionProvider.notifier);
       if (selectedDataType == 'shared') {
+        await transactionNotifier.fetchPrevMonthlyTransactions(
+            groupId, prevMonth);
         await settlementNotifier.initializeShared(transactions, profiles);
       } else if (selectedDataType == 'private') {
         settlementNotifier.initializePrivate(transactions);
       }
     });
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   Future<void> _sharedSettlementConfirm() async {
     try {
-      setState(() {
-        _isLoading = true;
-      });
-
       final state = ref.watch(settlementProvider);
 
       final settlementData = {
@@ -139,19 +164,11 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
       if (mounted) {
         context.showSnackBarError(message: '$error');
       }
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
     }
   }
 
   Future<void> _privateSettlementConfirm() async {
     try {
-      setState(() {
-        _isLoading = true;
-      });
-
       final state = ref.watch(settlementProvider);
       DateTime now = DateTime.now();
       final settlementDate = DateFormat('yyyy/MM').format(now);
@@ -208,10 +225,6 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
       if (mounted) {
         context.showSnackBarError(message: '$error');
       }
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
     }
   }
 
@@ -236,13 +249,14 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      image: DecorationImage(
-                        fit: BoxFit.fill,
-                        image: data['avatarUrl'] != null
-                            ? NetworkImage(data['avatarUrl'])
-                            : AssetImage('assets/icons/user_icon.png'),
-                      )),
+                    shape: BoxShape.circle,
+                    image: DecorationImage(
+                      fit: BoxFit.fill,
+                      image: data['avatarUrl'] != null
+                          ? NetworkImage(data['avatarUrl'])
+                          : AssetImage('assets/icons/user_icon.png'),
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 8),
                 // 支払人
@@ -267,22 +281,25 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
               )
             ]),
             const SizedBox(height: 8),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  const SizedBox(width: 16),
-                  Text('立替金額'),
-                ],
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Text('${data['advancePayment']}'),
-                  const SizedBox(width: 16),
-                ],
-              )
-            ]),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    const SizedBox(width: 16),
+                    Text('立替金額'),
+                  ],
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Text('${data['advancePayment']}'),
+                    const SizedBox(width: 16),
+                  ],
+                )
+              ],
+            ),
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -306,7 +323,7 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
                     ),
                     const SizedBox(width: 16),
                   ],
-                )
+                ),
               ],
             ),
           ],
@@ -315,11 +332,112 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
     );
   }
 
+  Widget _buildDisplayTotalAmounts() {
+    final state = ref.watch(settlementProvider);
+
+    final incomeTotal = convertToYenFormat(
+      amount: state.incomeTotal,
+    );
+    final expenseTotal = convertToYenFormat(
+      amount: state.expenseTotal,
+    );
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 4.0,
+                vertical: 1.0,
+              ),
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: Colors.green,
+                  width: 0.5,
+                ),
+                borderRadius: BorderRadius.circular(4.0),
+              ),
+              child: Text(
+                '収入',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                  color: Colors.green,
+                ),
+              ),
+            ),
+            SizedBox(width: 12),
+            Text(
+              incomeTotal,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+              ),
+            ),
+          ],
+        ),
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 4.0,
+                vertical: 1.0,
+              ),
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: Colors.red,
+                  width: 0.5,
+                ),
+                borderRadius: BorderRadius.circular(4.0),
+              ),
+              child: Text(
+                '支出',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                  color: Colors.red,
+                ),
+              ),
+            ),
+            SizedBox(width: 12),
+            Text(
+              expenseTotal,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(settlementProvider);
-    final payer = state.payer;
-    final payee = state.payee;
+    Map<String, dynamic> payer = {};
+    Map<String, dynamic> payee = {};
+    Map<String, dynamic> rankExpense = {};
+
+    setState(() {
+      payer = state.payer;
+      payee = state.payee;
+      rankExpense = state.rankExpenseAmounts;
+    });
+
+    if (_isLoading || payer.isEmpty || payee.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(
+          centerTitle: true,
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          title: const Text('清算'),
+        ),
+        body: circularIndicator,
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -328,257 +446,293 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
         title: const Text('清算'),
       ),
       body: SingleChildScrollView(
-        child: _isLoading
-            ? Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(128.0),
-                  child: CircularProgressIndicator(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // ヘッダー
+            Container(
+              alignment: Alignment.center,
+              padding: const EdgeInsets.all(16.0),
+              color: const Color(0x002a2a2a),
+              height: 60,
+              child: Text(
+                month,
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
                 ),
-              )
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+              ),
+            ),
+            // Column(
+            //   children: [
+            //     _buildDisplayTotalAmounts(),
+            //     Container(
+            //       alignment: Alignment.center,
+            //       padding: const EdgeInsets.only(top: 16.0),
+            //       child: const Text(
+            //         '支出トップ 5',
+            //         style: TextStyle(
+            //           fontSize: 16,
+            //           fontWeight: FontWeight.bold,
+            //           color: Colors.black,
+            //         ),
+            //       ),
+            //     ),
+            //     Padding(
+            //       padding: const EdgeInsets.only(right: 8.0, left: 8.0),
+            //       child: ListView.builder(
+            //         shrinkWrap: true,
+            //         // 必須: ListViewをColumn内で展開可能にする
+            //         physics: const NeverScrollableScrollPhysics(),
+            //         // 外側のスクロールビューに依存
+            //         padding: const EdgeInsets.all(16.0),
+            //         itemCount: 5,
+            //         itemBuilder: (context, index) {
+            //           final entry = rankExpense.entries.toList()[index];
+            //           final category = entry.key;
+            //           final amount = entry.value;
+            //           return Padding(
+            //             padding: const EdgeInsets.all(4.0),
+            //             child: Column(
+            //               children: [
+            //                 Row(
+            //                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            //                   children: [
+            //                     Text(
+            //                       '${index + 1}位',
+            //                       style: TextStyle(fontWeight: FontWeight.bold),
+            //                     ),
+            //                     Text(category),
+            //                     Text(convertToYenFormat(amount: amount)),
+            //                   ],
+            //                 ),
+            //               ],
+            //             ),
+            //           );
+            //         },
+            //       ),
+            //     ),
+            //   ],
+            // ),
+            if (selectedDataType == 'shared') ...[
+              _buildSettlementCard(payer),
+              const SizedBox(height: 16),
+              _buildSettlementCard(payee),
+            ],
+            const SizedBox(height: 16),
+            if (!isSettlement)
+              Center(
+                child: SizedBox(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      showDialog<void>(
+                        context: context,
+                        builder: (BuildContext dialogContext) {
+                          return AlertDialog(
+                            title: Text('清算確定処理'),
+                            content: Text('確定すると変更することはできません。よろしいですか？'),
+                            actions: <Widget>[
+                              TextButton(
+                                child: Text('はい'),
+                                onPressed: () {
+                                  Navigator.of(dialogContext)
+                                      .pop(); // Dismiss alert dialog
+                                  if (selectedDataType == 'shared') {
+                                    _sharedSettlementConfirm();
+                                  } else {
+                                    _privateSettlementConfirm();
+                                  }
+                                },
+                              ),
+                              TextButton(
+                                child: Text('いいえ'),
+                                onPressed: () {
+                                  Navigator.of(dialogContext)
+                                      .pop(); // Dismiss alert dialog
+                                },
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      fixedSize: const Size(200, 50),
+                    ),
+                    child: const Text('清算を確定する'),
+                  ),
+                ),
+              ),
+            const SizedBox(height: 16),
+            // 共有された明細の一覧
+            Card(
+              elevation: 4.0,
+              margin: const EdgeInsets.all(8.0),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16.0),
+              ),
+              child: Column(
                 children: [
-                  // ヘッダー
                   Container(
                     alignment: Alignment.center,
                     padding: const EdgeInsets.all(16.0),
-                    color: const Color(0x002a2a2a),
-                    height: 60,
-                    child: Text(
-                      month,
+                    child: const Text(
+                      '共有明細一覧',
                       style: TextStyle(
-                        fontSize: 24,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: Colors.black,
                       ),
                     ),
                   ),
-                  // トグルボタン
-                  if (selectedDataType == 'shared') ...[
-                    _buildSettlementCard(payer),
-                    const SizedBox(height: 16),
-                    _buildSettlementCard(payee),
-                  ],
-                  const SizedBox(height: 16),
-                  if (!isSettlement)
-                    Center(
-                      child: SizedBox(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            showDialog<void>(
-                              context: context,
-                              builder: (BuildContext dialogContext) {
-                                return AlertDialog(
-                                  title: Text('清算確定処理'),
-                                  content: Text('確定すると変更することはできません。よろしいですか？'),
-                                  actions: <Widget>[
-                                    TextButton(
-                                      child: Text('はい'),
-                                      onPressed: () {
-                                        Navigator.of(dialogContext)
-                                            .pop(); // Dismiss alert dialog
-                                        if (selectedDataType == 'shared') {
-                                          _sharedSettlementConfirm();
-                                        } else {
-                                          _privateSettlementConfirm();
-                                        }
-                                      },
-                                    ),
-                                    TextButton(
-                                      child: Text('いいえ'),
-                                      onPressed: () {
-                                        Navigator.of(dialogContext)
-                                            .pop(); // Dismiss alert dialog
-                                      },
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            fixedSize: const Size(200, 50),
-                          ),
-                          child: const Text('清算を確定する'),
-                        ),
-                      ),
-                    ),
-                  const SizedBox(height: 16),
-                  // 共有された明細の一覧
-                  Card(
-                    elevation: 4.0,
-                    margin: const EdgeInsets.all(8.0),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16.0),
-                    ),
-                    child: Column(
-                      children: [
-                        Container(
-                          alignment: Alignment.center,
-                          padding: const EdgeInsets.all(16.0),
-                          child: const Text(
-                            '共有明細一覧',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
+                  const Divider(height: 1, color: Colors.black12),
+                  // リスト部分
+                  ListView.builder(
+                    shrinkWrap: true,
+                    // 必須: ListViewをColumn内で展開可能にする
+                    physics: const NeverScrollableScrollPhysics(),
+                    // 外側のスクロールビューに依存
+                    padding: const EdgeInsets.all(16.0),
+                    itemCount: transactions.length,
+                    itemBuilder: (context, index) {
+                      double amount = transactions[index].amount;
+                      final displayAmount = convertToYenFormat(
+                        amount: amount.round(),
+                      );
+                      final date = DateTime.parse(
+                        transactions[index].date.toString(),
+                      ).toLocal();
+                      final transactionDate =
+                          DateFormat('yyyy/MM/dd').format(date);
+                      final username = transactions[index].profile?.username;
+                      final categoryName =
+                          transactions[index].subCategory?.name;
+                      if (username == null || categoryName == null) {
+                        return Text('データがありません');
+                      }
+                      return InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => TransactionDetailPage(
+                                transaction: transactions[index],
+                                profile: profile,
+                                isSettlement: false,
+                              ),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          height: 80,
+                          decoration: const BoxDecoration(
+                            border: Border(
+                              bottom: BorderSide(
+                                color: Colors.black12,
+                                width: 1.0,
+                              ),
                             ),
                           ),
-                        ),
-                        const Divider(height: 1, color: Colors.black12),
-                        // リスト部分
-                        ListView.builder(
-                          shrinkWrap: true,
-                          // 必須: ListViewをColumn内で展開可能にする
-                          physics: const NeverScrollableScrollPhysics(),
-                          // 外側のスクロールビューに依存
-                          padding: const EdgeInsets.all(16.0),
-                          itemCount: transactions.length,
-                          itemBuilder: (context, index) {
-                            double amount = transactions[index].amount;
-                            final displayAmount = convertToYenFormat(
-                              amount: amount.round(),
-                            );
-                            final date = DateTime.parse(
-                              transactions[index].date.toString(),
-                            ).toLocal();
-                            final transactionDate =
-                                DateFormat('yyyy/MM/dd').format(date);
-                            final username =
-                                transactions[index].profile?.username;
-                            final categoryName =
-                                transactions[index].subCategory?.name;
-                            if (username == null || categoryName == null) {
-                              return Text('データがありません');
-                            }
-                            return InkWell(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => TransactionDetailPage(
-                                      transaction: transactions[index],
-                                      profile: profile,
-                                      isSettlement: false,
-                                    ),
-                                  ),
-                                );
-                              },
-                              child: Container(
-                                height: 80,
-                                decoration: const BoxDecoration(
-                                  border: Border(
-                                    bottom: BorderSide(
-                                      color: Colors.black12,
-                                      width: 1.0,
-                                    ),
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            Text(
-                                              transactions[index].name,
-                                              style: const TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.black,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              '- $username',
-                                              style: const TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.black,
-                                              ),
-                                            ),
-                                          ],
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        transactions[index].name,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black,
                                         ),
-                                        Row(
-                                          children: [
-                                            Text(
-                                              transactionDate,
-                                              style: const TextStyle(
-                                                fontSize: 10,
-                                                color: Colors.black,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                horizontal: 4.0,
-                                                vertical: 1.0,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                border: Border.all(
-                                                  color: transactions[index]
-                                                              .type ==
-                                                          TransactionType.income
-                                                      ? Colors.green
-                                                      : Colors.red,
-                                                  width: 0.5,
-                                                ),
-                                                borderRadius:
-                                                    BorderRadius.circular(4.0),
-                                              ),
-                                              child: Text(
-                                                transactions[index].type ==
-                                                        TransactionType.income
-                                                    ? '収入'
-                                                    : '支出',
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  color: transactions[index]
-                                                              .type ==
-                                                          TransactionType.income
-                                                      ? Colors.green
-                                                      : Colors.red,
-                                                ),
-                                              ),
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              categoryName,
-                                              style: const TextStyle(
-                                                fontSize: 12,
-                                                color: Colors.black,
-                                              ),
-                                            ),
-                                          ],
-                                        )
-                                      ],
-                                    ),
-                                    Text(
-                                      displayAmount,
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black,
                                       ),
-                                    ),
-                                  ],
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        '- $username',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        transactionDate,
+                                        style: const TextStyle(
+                                          fontSize: 10,
+                                          color: Colors.black,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 4.0,
+                                          vertical: 1.0,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          border: Border.all(
+                                            color: transactions[index].type ==
+                                                    TransactionType.income
+                                                ? Colors.green
+                                                : Colors.red,
+                                            width: 0.5,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(4.0),
+                                        ),
+                                        child: Text(
+                                          transactions[index].type ==
+                                                  TransactionType.income
+                                              ? '収入'
+                                              : '支出',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: transactions[index].type ==
+                                                    TransactionType.income
+                                                ? Colors.green
+                                                : Colors.red,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        categoryName,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.black,
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                ],
+                              ),
+                              Text(
+                                displayAmount,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
                                 ),
                               ),
-                            );
-                          },
+                            ],
+                          ),
                         ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
                 ],
               ),
+            ),
+          ],
+        ),
       ),
     );
   }

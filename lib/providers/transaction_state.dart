@@ -10,6 +10,8 @@ class TransactionState with _$TransactionState {
   const factory TransactionState({
     required bool isLoading,
     required List<Transaction> transactions,
+    required List<Transaction> prevMonthTransactions,
+    required List<Transaction> prevYearTransactions,
     required List<Transaction> sharedTransactions,
     required List<Transaction> privateTransactions,
     required Map<TransactionType, double> sharedTotalAmounts,

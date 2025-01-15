@@ -7,6 +7,8 @@ import 'package:sharing_household_expenses/models/transaction.dart';
 import 'package:sharing_household_expenses/providers/settlement_state.dart';
 import 'package:sharing_household_expenses/repositories/settlement_repository.dart';
 
+import '../utils/constants.dart';
+
 final settlementProvider =
     StateNotifierProvider<SettlementNotifier, SettlementState>(
   (ref) => SettlementNotifier(SettlementRepository()),
@@ -29,6 +31,7 @@ class SettlementNotifier extends StateNotifier<SettlementState> {
             sharedExpenseAmounts: {},
             privateIncomeAmounts: {},
             privateExpenseAmounts: {},
+            rankExpenseAmounts: {},
             payer: {},
             payee: {},
             expenseTotal: 0,
@@ -106,6 +109,7 @@ class SettlementNotifier extends StateNotifier<SettlementState> {
     try {
       final sharedIncomeAmounts = <String, Map<String, dynamic>>{};
       final sharedExpenseAmounts = <String, Map<String, dynamic>>{};
+      Map<String, dynamic> rankExpenseAmounts = {};
       int incomeTotal = 0;
       int expenseTotal = 0;
 
@@ -135,6 +139,17 @@ class SettlementNotifier extends StateNotifier<SettlementState> {
                 sharedExpenseAmounts[profileId]?['amount'] + amount;
             expenseTotal = expenseTotal + amount;
           }
+
+          final categoryName = item.subCategory?.name;
+          if (categoryName == null) {
+            return;
+          }
+          if (rankExpenseAmounts.containsKey(categoryName)) {
+            rankExpenseAmounts[categoryName] =
+                rankExpenseAmounts[categoryName] + amount;
+          } else {
+            rankExpenseAmounts[categoryName] = amount;
+          }
         } else {
           String profileId = item.profileId;
           double doubleAmount = item.amount;
@@ -147,6 +162,10 @@ class SettlementNotifier extends StateNotifier<SettlementState> {
           }
         }
       }
+
+      // カテゴリーごとの支出額を大きい順にソートして処理
+      final sortedRankExpenseAmounts = rankExpenseAmounts.entries.toList()
+        ..sort((a, b) => b.value.compareTo(a.value));
 
       // 1人あたりの支払額（割り勘金額）
       final amountPerPerson =
@@ -172,12 +191,40 @@ class SettlementNotifier extends StateNotifier<SettlementState> {
         }
       });
 
+      Map<String, dynamic> payer = {};
+      Map<String, dynamic> payee = {};
+
+      sharedExpenseAmounts.forEach((profileId, data) {
+        if (data['role'] == 'payer') {
+          payer = {
+            'role': 'payer',
+            'username': data['username'],
+            'avatarUrl': data['avatar_url'],
+            'advancePayment': convertToYenFormat(amount: data['amount']),
+            'payment': convertToYenFormat(amount: data['payments']),
+          };
+        } else if (data['role'] == 'payee') {
+          payee = {
+            'role': 'payee',
+            'username': data['username'],
+            'avatarUrl': data['avatar_url'],
+            'advancePayment': convertToYenFormat(amount: data['amount']),
+            'receive': convertToYenFormat(amount: data['payments']),
+          };
+        } else {
+          // TODO: even のときにどうするか
+        }
+      });
+
       state = state.copyWith(
         sharedExpenseAmounts: sharedExpenseAmounts,
         sharedIncomeAmounts: sharedIncomeAmounts,
+        rankExpenseAmounts: Map.fromEntries(sortedRankExpenseAmounts),
         expenseTotal: expenseTotal,
         incomeTotal: incomeTotal,
         amountPerPerson: amountPerPerson,
+        payer: payer,
+        payee: payee,
       );
     } catch (e) {
       throw Exception('Failed to calculate shared settlements: $e');
@@ -264,4 +311,6 @@ class SettlementNotifier extends StateNotifier<SettlementState> {
     }).toList();
     state = state.copyWith(privateSettlements: privateData);
   }
+
+  void generate() {}
 }

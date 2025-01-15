@@ -40,14 +40,16 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
       final auth = ref.watch(authProvider);
       // TODO: ! はやめたい
       profile = auth.profile!;
+      final profileId = auth.profile?.id;
       final groupId = auth.profile?.groupId;
       final transactionNotifier = ref.watch(transactionProvider.notifier);
       final transactionState = ref.watch(transactionProvider);
-      final currentMonth = DateTime.now();
-      if (groupId != null) {
+      final now = DateTime.now();
+      if (profileId != null && groupId != null) {
         await transactionNotifier.fetchMonthlyTransactions(
           groupId,
-          currentMonth,
+          now,
+          profileId,
         );
         setState(() {
           months = transactionState.months;
@@ -141,13 +143,13 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
       amount: int.parse(
         sharedPrivateType == 'shared'
             ? sharedIncomeTotalAmounts.toString()
-            : sharedExpenseTotalAmounts.toString(),
+            : privateIncomeTotalAmounts.toString(),
       ),
     );
     final expenseTotal = convertToYenFormat(
       amount: int.parse(
         sharedPrivateType == 'shared'
-            ? privateIncomeTotalAmounts.toString()
+            ? sharedExpenseTotalAmounts.toString()
             : privateExpenseTotalAmounts.toString(),
       ),
     );
@@ -290,13 +292,15 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
 
               if (response == true) {
                 final auth = ref.watch(authProvider);
+                final profileId = auth.profile?.id;
                 final groupId = auth.profile?.groupId;
-                if (groupId != null) {
+                if (profileId != null && groupId != null) {
                   await ref
                       .watch(transactionProvider.notifier)
                       .fetchMonthlyTransactions(
                         groupId,
                         convertMonthToDateTime(months[selectedIndex]),
+                        profileId,
                       );
                 }
                 setState(() {
@@ -333,13 +337,15 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
     return RefreshIndicator(
       onRefresh: () async {
         final auth = ref.watch(authProvider);
+        final profileId = auth.profile?.id;
         final groupId = auth.profile?.groupId;
-        if (groupId != null) {
+        if (profileId != null && groupId != null) {
           await ref
               .watch(transactionProvider.notifier)
               .fetchMonthlyTransactions(
                 groupId,
                 convertMonthToDateTime(months[selectedIndex]),
+                profileId,
               );
         }
       },
@@ -371,13 +377,15 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
                     );
                     if (response == true) {
                       final auth = ref.watch(authProvider);
+                      final profileId = auth.profile?.id;
                       final groupId = auth.profile?.groupId;
-                      if (groupId != null) {
+                      if (profileId != null && groupId != null) {
                         await ref
                             .watch(transactionProvider.notifier)
                             .fetchMonthlyTransactions(
                               groupId,
                               convertMonthToDateTime(months[selectedIndex]),
+                              profileId,
                             );
                       }
                     }
@@ -496,6 +504,7 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
   Widget build(BuildContext context) {
     final transactionNotifier = ref.watch(transactionProvider.notifier);
     final transactionState = ref.watch(transactionProvider);
+    final profileId = ref.watch(authProvider).profile?.id;
     final groupId = ref.watch(authProvider).profile?.groupId;
     final isLoading = transactionState.isLoading;
 
@@ -503,7 +512,7 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
         ? transactionState.sharedTransactions
         : transactionState.privateTransactions;
 
-    if (months.isEmpty || groupId == null) {
+    if (months.isEmpty || groupId == null || profileId == null) {
       return Scaffold(
         appBar: AppBar(
           centerTitle: true,
@@ -536,6 +545,7 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
                   transactionNotifier.fetchMonthlyTransactions(
                     groupId,
                     convertMonthToDateTime(months[selectedIndex]),
+                    profileId,
                   );
                 });
               },

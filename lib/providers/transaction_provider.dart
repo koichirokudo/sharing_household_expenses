@@ -20,6 +20,8 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
           TransactionState(
             isLoading: false,
             transactions: [],
+            prevMonthTransactions: [],
+            prevYearTransactions: [],
             sharedTransactions: [],
             privateTransactions: [],
             sharedTotalAmounts: {
@@ -34,14 +36,28 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
           ),
         );
 
-  Future<void> fetchMonthlyTransactions(String groupId, DateTime month) async {
+  Future<void> fetchMonthlyTransactions(
+      String groupId, DateTime date, String profileId) async {
     state = state.copyWith(isLoading: true);
     try {
-      final transactions = await repository.fetchMonthlyByGroup(groupId, month);
+      final transactions = await repository.fetchMonthlyByGroup(groupId, date);
       state = state.copyWith(transactions: transactions);
-      groupByVisibility();
+      groupByVisibility(profileId);
       calculateTotalAmounts();
       generateMonths();
+    } catch (e) {
+      throw Exception('Failed to fetch monthly transactions: $e');
+    } finally {
+      state = state.copyWith(isLoading: false);
+    }
+  }
+
+  Future<void> fetchPrevMonthlyTransactions(
+      String groupId, DateTime date) async {
+    state = state.copyWith(isLoading: true);
+    try {
+      final transactions = await repository.fetchMonthlyByGroup(groupId, date);
+      state = state.copyWith(prevMonthTransactions: transactions);
     } catch (e) {
       throw Exception('Failed to fetch monthly transactions: $e');
     } finally {
@@ -141,7 +157,7 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
     }
   }
 
-  void groupByVisibility() {
+  void groupByVisibility(profileId) {
     final transactions = state.transactions;
     final sharedData = transactions.where((transaction) {
       if (transaction.share == true) {
@@ -152,7 +168,7 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
     state = state.copyWith(sharedTransactions: sharedData);
 
     final privateData = transactions.where((transaction) {
-      if (transaction.share == false) {
+      if (transaction.share == false && transaction.profileId == profileId) {
         return true;
       }
       return false;
@@ -171,11 +187,14 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
       TransactionType.expense: 0.0,
     };
 
-    for (var transaction in state.transactions) {
-      final targetMap =
-          transaction.share ? sharedTotalAmounts : privateTotalAmounts;
-      targetMap[transaction.type] =
-          (targetMap[transaction.type] ?? 0) + transaction.amount;
+    for (var transaction in state.sharedTransactions) {
+      sharedTotalAmounts[transaction.type] =
+          (sharedTotalAmounts[transaction.type] ?? 0) + transaction.amount;
+    }
+
+    for (var transaction in state.privateTransactions) {
+      privateTotalAmounts[transaction.type] =
+          (privateTotalAmounts[transaction.type] ?? 0) + transaction.amount;
     }
 
     state = state.copyWith(

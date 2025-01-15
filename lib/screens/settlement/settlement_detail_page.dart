@@ -44,7 +44,6 @@ class SettlementDetailPageState extends ConsumerState<SettlementDetailPage> {
   Map<String, double> incomeSections = {};
   Map<String, Map<String, dynamic>>? settlementData = {};
 
-  final List<bool> _selectedType = <bool>[false, true];
   late Profile profile;
   late List<Profile>? profiles;
   late AuthState auth;
@@ -178,6 +177,89 @@ class SettlementDetailPageState extends ConsumerState<SettlementDetailPage> {
     );
   }
 
+  Widget _buildDisplayTotalAmounts() {
+    final state = ref.watch(settlementProvider);
+
+    final incomeTotal = convertToYenFormat(
+      amount: state.incomeTotal,
+    );
+    final expenseTotal = convertToYenFormat(
+      amount: state.expenseTotal,
+    );
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 4.0,
+                vertical: 1.0,
+              ),
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: Colors.green,
+                  width: 0.5,
+                ),
+                borderRadius: BorderRadius.circular(4.0),
+              ),
+              child: Text(
+                '収入',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                  color: Colors.green,
+                ),
+              ),
+            ),
+            SizedBox(width: 12),
+            Text(
+              incomeTotal,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+              ),
+            ),
+          ],
+        ),
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 4.0,
+                vertical: 1.0,
+              ),
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: Colors.red,
+                  width: 0.5,
+                ),
+                borderRadius: BorderRadius.circular(4.0),
+              ),
+              child: Text(
+                '支出',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                  color: Colors.red,
+                ),
+              ),
+            ),
+            SizedBox(width: 12),
+            Text(
+              expenseTotal,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(settlementProvider);
@@ -229,6 +311,8 @@ class SettlementDetailPageState extends ConsumerState<SettlementDetailPage> {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  _buildDisplayTotalAmounts(),
                   const SizedBox(height: 16),
                   if (selectedDataType == 'shared') ...[
                     _buildSettlementCard(payer),

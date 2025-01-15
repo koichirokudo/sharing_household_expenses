@@ -5,9 +5,9 @@ import '../utils/constants.dart';
 class TransactionRepository {
   //　月ごとのトランザクションを取得する
   Future<List<Transaction>> fetchMonthlyByGroup(
-      String groupId, DateTime month) async {
-    final startOfMonth = DateTime(month.year, month.month);
-    final endOfMonth = DateTime(month.year, month.month + 1)
+      String groupId, DateTime date) async {
+    final startOfMonth = DateTime(date.year, date.month);
+    final endOfMonth = DateTime(date.year, date.month + 1)
         .subtract(const Duration(seconds: 1));
 
     final response = await supabase

@@ -17,27 +17,19 @@ final _privateConstructorUsedError = UnsupportedError(
 /// @nodoc
 mixin _$TransactionState {
   bool get isLoading => throw _privateConstructorUsedError;
-
   List<Transaction> get transactions => throw _privateConstructorUsedError;
-
   List<Transaction> get prevMonthTransactions =>
       throw _privateConstructorUsedError;
-
   List<Transaction> get prevYearTransactions =>
       throw _privateConstructorUsedError;
-
   List<Transaction> get sharedTransactions =>
       throw _privateConstructorUsedError;
-
   List<Transaction> get privateTransactions =>
       throw _privateConstructorUsedError;
-
   Map<TransactionType, double> get sharedTotalAmounts =>
       throw _privateConstructorUsedError;
-
   Map<TransactionType, double> get privateTotalAmounts =>
       throw _privateConstructorUsedError;
-
   List<String> get months => throw _privateConstructorUsedError;
 
   /// Create a copy of TransactionState
@@ -52,7 +44,6 @@ abstract class $TransactionStateCopyWith<$Res> {
   factory $TransactionStateCopyWith(
           TransactionState value, $Res Function(TransactionState) then) =
       _$TransactionStateCopyWithImpl<$Res, TransactionState>;
-
   @useResult
   $Res call(
       {bool isLoading,
@@ -73,7 +64,6 @@ class _$TransactionStateCopyWithImpl<$Res, $Val extends TransactionState>
 
   // ignore: unused_field
   final $Val _value;
-
   // ignore: unused_field
   final $Res Function($Val) _then;
 
@@ -139,7 +129,6 @@ abstract class _$$TransactionStateImplCopyWith<$Res>
   factory _$$TransactionStateImplCopyWith(_$TransactionStateImpl value,
           $Res Function(_$TransactionStateImpl) then) =
       __$$TransactionStateImplCopyWithImpl<$Res>;
-
   @override
   @useResult
   $Res call(
@@ -243,7 +232,6 @@ class _$TransactionStateImpl implements _TransactionState {
   @override
   final bool isLoading;
   final List<Transaction> _transactions;
-
   @override
   List<Transaction> get transactions {
     if (_transactions is EqualUnmodifiableListView) return _transactions;
@@ -252,7 +240,6 @@ class _$TransactionStateImpl implements _TransactionState {
   }
 
   final List<Transaction> _prevMonthTransactions;
-
   @override
   List<Transaction> get prevMonthTransactions {
     if (_prevMonthTransactions is EqualUnmodifiableListView)
@@ -262,7 +249,6 @@ class _$TransactionStateImpl implements _TransactionState {
   }
 
   final List<Transaction> _prevYearTransactions;
-
   @override
   List<Transaction> get prevYearTransactions {
     if (_prevYearTransactions is EqualUnmodifiableListView)
@@ -272,7 +258,6 @@ class _$TransactionStateImpl implements _TransactionState {
   }
 
   final List<Transaction> _sharedTransactions;
-
   @override
   List<Transaction> get sharedTransactions {
     if (_sharedTransactions is EqualUnmodifiableListView)
@@ -282,7 +267,6 @@ class _$TransactionStateImpl implements _TransactionState {
   }
 
   final List<Transaction> _privateTransactions;
-
   @override
   List<Transaction> get privateTransactions {
     if (_privateTransactions is EqualUnmodifiableListView)
@@ -292,7 +276,6 @@ class _$TransactionStateImpl implements _TransactionState {
   }
 
   final Map<TransactionType, double> _sharedTotalAmounts;
-
   @override
   Map<TransactionType, double> get sharedTotalAmounts {
     if (_sharedTotalAmounts is EqualUnmodifiableMapView)
@@ -302,7 +285,6 @@ class _$TransactionStateImpl implements _TransactionState {
   }
 
   final Map<TransactionType, double> _privateTotalAmounts;
-
   @override
   Map<TransactionType, double> get privateTotalAmounts {
     if (_privateTotalAmounts is EqualUnmodifiableMapView)
@@ -312,7 +294,6 @@ class _$TransactionStateImpl implements _TransactionState {
   }
 
   final List<String> _months;
-
   @override
   List<String> get months {
     if (_months is EqualUnmodifiableListView) return _months;
@@ -386,28 +367,20 @@ abstract class _TransactionState implements TransactionState {
 
   @override
   bool get isLoading;
-
   @override
   List<Transaction> get transactions;
-
   @override
   List<Transaction> get prevMonthTransactions;
-
   @override
   List<Transaction> get prevYearTransactions;
-
   @override
   List<Transaction> get sharedTransactions;
-
   @override
   List<Transaction> get privateTransactions;
-
   @override
   Map<TransactionType, double> get sharedTotalAmounts;
-
   @override
   Map<TransactionType, double> get privateTotalAmounts;
-
   @override
   List<String> get months;
 

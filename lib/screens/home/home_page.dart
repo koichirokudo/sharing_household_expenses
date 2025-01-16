@@ -46,9 +46,11 @@ class HomePageState extends ConsumerState<HomePage> {
       } else {
         if (mounted) {
           Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const FirstGroupInvitePage()));
+            context,
+            MaterialPageRoute(
+              builder: (context) => const FirstGroupInvitePage(),
+            ),
+          );
         }
       }
       setState(() {
@@ -103,201 +105,206 @@ class HomePageState extends ConsumerState<HomePage> {
           ? circularIndicator
           : SingleChildScrollView(
               child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SizedBox(height: 16),
-                    // グループの収支
-                    Column(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Row(
-                              mainAxisAlignment: MainAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 16),
+                  // グループの収支
+                  Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              const Icon(
+                                Icons.group,
+                                color: Colors.blue,
+                                size: 32,
+                              ),
+                              const SizedBox(width: 16),
+                              const Text(
+                                'グループ',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ]),
+                      ),
+                      const Divider(height: 1, color: Colors.black12),
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
                               children: [
                                 const Icon(
-                                  Icons.group,
-                                  color: Colors.blue,
+                                  Icons.trending_up,
+                                  color: Colors.green,
                                   size: 32,
                                 ),
                                 const SizedBox(width: 16),
                                 const Text(
-                                  'グループ',
+                                  '収入',
                                   style: TextStyle(
-                                    fontSize: 24,
+                                    fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                     color: Colors.black,
                                   ),
                                 ),
-                              ]),
-                        ),
-                        const Divider(height: 1, color: Colors.black12),
-                        Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.trending_up,
-                                    color: Colors.green,
-                                    size: 32,
-                                  ),
-                                  const SizedBox(width: 16),
-                                  const Text(
-                                    '収入',
-                                    style: TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
-                                    ),
-                                  ),
-                                ],
+                              ],
+                            ),
+                            Text(
+                              convertToYenFormat(amount: sharedIncome),
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
                               ),
-                              Text(
-                                convertToYenFormat(amount: sharedIncome),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.trending_down,
+                                      color: Colors.red,
+                                      size: 32,
+                                    ),
+                                    const SizedBox(width: 16),
+                                    const Text(
+                                      '支出',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Text(
+                                  convertToYenFormat(amount: sharedExpense),
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  // 個人の収支
+                  Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              const Icon(
+                                Icons.account_circle,
+                                color: Colors.blue,
+                                size: 32,
+                              ),
+                              const SizedBox(width: 16),
+                              const Text(
+                                '個人',
                                 style: TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.black,
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.trending_down,
-                                    color: Colors.red,
-                                    size: 32,
-                                  ),
-                                  const SizedBox(width: 16),
-                                  const Text(
-                                    '支出',
-                                    style: TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Text(
-                                convertToYenFormat(amount: sharedExpense),
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    // 個人の収支
-                    Column(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Row(
-                              mainAxisAlignment: MainAxisAlignment.start,
+                            ]),
+                      ),
+                      const Divider(height: 1, color: Colors.black12),
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
                               children: [
                                 const Icon(
-                                  Icons.account_circle,
-                                  color: Colors.blue,
+                                  Icons.trending_up,
+                                  color: Colors.green,
                                   size: 32,
                                 ),
                                 const SizedBox(width: 16),
                                 const Text(
-                                  '個人',
+                                  '収入',
                                   style: TextStyle(
-                                    fontSize: 24,
+                                    fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                     color: Colors.black,
                                   ),
                                 ),
-                              ]),
-                        ),
-                        const Divider(height: 1, color: Colors.black12),
-                        Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.trending_up,
-                                    color: Colors.green,
-                                    size: 32,
-                                  ),
-                                  const SizedBox(width: 16),
-                                  const Text(
-                                    '収入',
-                                    style: TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
-                                    ),
-                                  ),
-                                ],
+                              ],
+                            ),
+                            Text(
+                              convertToYenFormat(amount: privateIncome),
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
                               ),
-                              Text(
-                                convertToYenFormat(amount: privateIncome),
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
+                            ),
+                          ],
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.trending_down,
+                                  color: Colors.red,
+                                  size: 32,
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.trending_down,
-                                    color: Colors.red,
-                                    size: 32,
+                                const SizedBox(width: 16),
+                                const Text(
+                                  '支出',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
                                   ),
-                                  const SizedBox(width: 16),
-                                  const Text(
-                                    '支出',
-                                    style: TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Text(
-                                convertToYenFormat(amount: privateExpense),
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
                                 ),
+                              ],
+                            ),
+                            Text(
+                              convertToYenFormat(amount: privateExpense),
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ]),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
     );
   }

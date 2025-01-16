@@ -14,7 +14,6 @@ class EmailChangePage extends ConsumerStatefulWidget {
 
 class EmailChangePageState extends ConsumerState<EmailChangePage> {
   bool _isLoading = false;
-  bool _isAuthEmail = false;
   final _fromKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _confirmEmailController = TextEditingController();
@@ -68,7 +67,6 @@ class EmailChangePageState extends ConsumerState<EmailChangePage> {
     final appLinks = AppLinks();
     appLinks.uriLinkStream.listen((Uri? uri) {
       if (uri != null && uri.host == 'change-email') {
-        _isAuthEmail = true;
         if (mounted) {
           context.showSnackBar(
               message: 'メールアドレスを変更しました', backgroundColor: Colors.green);

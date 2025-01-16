@@ -19,7 +19,6 @@ class SettlementState with _$SettlementState {
     required Map<String, Map<String, dynamic>> sharedExpenseAmounts,
     required Map<String, Map<String, dynamic>> privateIncomeAmounts,
     required Map<String, Map<String, dynamic>> privateExpenseAmounts,
-    required Map<String, dynamic> rankExpenseAmounts,
     required Map<String, dynamic> payer,
     required Map<String, dynamic> payee,
     required int incomeTotal,

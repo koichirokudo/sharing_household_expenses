@@ -31,7 +31,6 @@ class SettlementNotifier extends StateNotifier<SettlementState> {
             sharedExpenseAmounts: {},
             privateIncomeAmounts: {},
             privateExpenseAmounts: {},
-            rankExpenseAmounts: {},
             payer: {},
             payee: {},
             expenseTotal: 0,
@@ -90,7 +89,8 @@ class SettlementNotifier extends StateNotifier<SettlementState> {
     }
   }
 
-  Future<bool> checkSettlement(String visibility, String month) async {
+  Future<Map<String, dynamic>> checkSettlement(
+      String visibility, String month) async {
     state = state.copyWith(isLoading: true);
     try {
       final response = await repository.checkSettlement(visibility, month);
@@ -109,7 +109,6 @@ class SettlementNotifier extends StateNotifier<SettlementState> {
     try {
       final sharedIncomeAmounts = <String, Map<String, dynamic>>{};
       final sharedExpenseAmounts = <String, Map<String, dynamic>>{};
-      Map<String, dynamic> rankExpenseAmounts = {};
       int incomeTotal = 0;
       int expenseTotal = 0;
 
@@ -144,12 +143,6 @@ class SettlementNotifier extends StateNotifier<SettlementState> {
           if (categoryName == null) {
             return;
           }
-          if (rankExpenseAmounts.containsKey(categoryName)) {
-            rankExpenseAmounts[categoryName] =
-                rankExpenseAmounts[categoryName] + amount;
-          } else {
-            rankExpenseAmounts[categoryName] = amount;
-          }
         } else {
           String profileId = item.profileId;
           double doubleAmount = item.amount;
@@ -162,10 +155,6 @@ class SettlementNotifier extends StateNotifier<SettlementState> {
           }
         }
       }
-
-      // カテゴリーごとの支出額を大きい順にソートして処理
-      final sortedRankExpenseAmounts = rankExpenseAmounts.entries.toList()
-        ..sort((a, b) => b.value.compareTo(a.value));
 
       // 1人あたりの支払額（割り勘金額）
       final amountPerPerson =
@@ -219,7 +208,6 @@ class SettlementNotifier extends StateNotifier<SettlementState> {
       state = state.copyWith(
         sharedExpenseAmounts: sharedExpenseAmounts,
         sharedIncomeAmounts: sharedIncomeAmounts,
-        rankExpenseAmounts: Map.fromEntries(sortedRankExpenseAmounts),
         expenseTotal: expenseTotal,
         incomeTotal: incomeTotal,
         amountPerPerson: amountPerPerson,

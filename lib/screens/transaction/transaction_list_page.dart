@@ -22,8 +22,10 @@ class TransactionListPage extends ConsumerStatefulWidget {
 class TransactionListPageState extends ConsumerState<TransactionListPage> {
   bool _isSettlementLoading = false;
   bool _isSettlement = false;
+  bool _invalidGroupCount = false;
   List<String> months = [];
   List<Transaction> transactions = [];
+  Map<String, dynamic> response = {};
   late Profile profile;
   late int selectedIndex = 1;
   late final PageController _pageController;
@@ -59,12 +61,19 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
             viewportFraction: 1,
           );
         });
-        _isSettlement = await _checkSettlement();
+        response = await _checkSettlement();
+        if (response['isSettlement'] == true) {
+          _isSettlement = true;
+        }
+
+        if (response['invalidGroupCount'] == true) {
+          _invalidGroupCount = true;
+        }
       }
     });
   }
 
-  Future<bool> _checkSettlement() async {
+  Future<Map<String, dynamic>> _checkSettlement() async {
     setState(() {
       _isSettlementLoading = true;
     });
@@ -84,7 +93,7 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
         _isSettlementLoading = false;
       });
     }
-    return false;
+    return {};
   }
 
   Widget _buildMonthSelector() {
@@ -241,7 +250,15 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
           }
         });
         // 清算済みかをチェックする
-        _isSettlement = await _checkSettlement();
+        _isSettlement = false;
+        _invalidGroupCount = false;
+        response = await _checkSettlement();
+        if (response['isSettlement'] == true) {
+          _isSettlement = true;
+        }
+        if (response['invalidGroupCount'] == true) {
+          _invalidGroupCount = true;
+        }
       },
       borderRadius: const BorderRadius.all(
         Radius.circular(8),
@@ -274,7 +291,7 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
     }
 
     return ElevatedButton.icon(
-      onPressed: _isSettlement || transactions.isEmpty
+      onPressed: _isSettlement || _invalidGroupCount || transactions.isEmpty
           ? null
           : () async {
               final response = await Navigator.push(

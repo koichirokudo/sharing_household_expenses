@@ -48,7 +48,8 @@ class SettlementRepository {
     return response.map((item) => SettlementItem.fromMap(item)).toList();
   }
 
-  Future<bool> checkSettlement(String visibility, String month) async {
+  Future<Map<String, dynamic>> checkSettlement(
+      String visibility, String month) async {
     final response = await supabase.functions.invoke(
       'check-settlement',
       body: {
@@ -57,6 +58,6 @@ class SettlementRepository {
       },
     );
 
-    return response.data['isSettlement'] ?? false;
+    return response.data;
   }
 }

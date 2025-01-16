@@ -75,7 +75,7 @@ class TransactionRegisterPageState
     } else {
       // 編集データがない場合の初期設定
       _selectedType = 'expense';
-      _selectedCategory = '5001';
+      _selectedCategory = '4001';
       _share = true;
       _dateController.text = DateFormat('yyyy/MM/dd').format(DateTime.now());
     }
@@ -96,9 +96,9 @@ class TransactionRegisterPageState
       final profileId = auth.profile?.id;
       final groupId = auth.profile?.groupId;
 
-      final bool isSettlement =
+      final response =
           await _checkSettlement(_dateController.text.substring(0, 7));
-      if (isSettlement) {
+      if (response['isSettlement'] == true) {
         // 清算済みの場合は登録することができない
         if (mounted) {
           context.showSnackBarError(message: '選択した月はすでに清算済みのため登録できません');
@@ -144,7 +144,7 @@ class TransactionRegisterPageState
         _amountController.clear();
         _selectedType = 'expense';
         _share = true;
-        _selectedCategory = '5001';
+        _selectedCategory = '4001';
       } else {
         // 更新
         if (mounted) {
@@ -175,7 +175,7 @@ class TransactionRegisterPageState
     }
   }
 
-  Future<bool> _checkSettlement(String month) async {
+  Future<Map<String, dynamic>> _checkSettlement(String month) async {
     try {
       final auth = ref.watch(authProvider);
       final profile = auth.profile;
@@ -196,7 +196,7 @@ class TransactionRegisterPageState
         context.showSnackBarError(message: '$error');
       }
     }
-    return false;
+    return {};
   }
 
   @override
@@ -289,7 +289,7 @@ class TransactionRegisterPageState
                                 onChanged: (String? value) {
                                   setState(() {
                                     _selectedType = 'income';
-                                    _selectedCategory = '5102';
+                                    _selectedCategory = '4017';
                                   });
                                 },
                               ),
@@ -302,7 +302,7 @@ class TransactionRegisterPageState
                                 onChanged: (String? value) {
                                   setState(() {
                                     _selectedType = 'expense';
-                                    _selectedCategory = '5001';
+                                    _selectedCategory = '4001';
                                   });
                                 },
                               ),

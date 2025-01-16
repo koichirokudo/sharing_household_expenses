@@ -420,12 +420,10 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
     final state = ref.watch(settlementProvider);
     Map<String, dynamic> payer = {};
     Map<String, dynamic> payee = {};
-    Map<String, dynamic> rankExpense = {};
 
     setState(() {
       payer = state.payer;
       payee = state.payee;
-      rankExpense = state.rankExpenseAmounts;
     });
 
     if (_isLoading || payer.isEmpty || payee.isEmpty) {
@@ -464,57 +462,6 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
                 ),
               ),
             ),
-            // Column(
-            //   children: [
-            //     _buildDisplayTotalAmounts(),
-            //     Container(
-            //       alignment: Alignment.center,
-            //       padding: const EdgeInsets.only(top: 16.0),
-            //       child: const Text(
-            //         '支出トップ 5',
-            //         style: TextStyle(
-            //           fontSize: 16,
-            //           fontWeight: FontWeight.bold,
-            //           color: Colors.black,
-            //         ),
-            //       ),
-            //     ),
-            //     Padding(
-            //       padding: const EdgeInsets.only(right: 8.0, left: 8.0),
-            //       child: ListView.builder(
-            //         shrinkWrap: true,
-            //         // 必須: ListViewをColumn内で展開可能にする
-            //         physics: const NeverScrollableScrollPhysics(),
-            //         // 外側のスクロールビューに依存
-            //         padding: const EdgeInsets.all(16.0),
-            //         itemCount: 5,
-            //         itemBuilder: (context, index) {
-            //           final entry = rankExpense.entries.toList()[index];
-            //           final category = entry.key;
-            //           final amount = entry.value;
-            //           return Padding(
-            //             padding: const EdgeInsets.all(4.0),
-            //             child: Column(
-            //               children: [
-            //                 Row(
-            //                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            //                   children: [
-            //                     Text(
-            //                       '${index + 1}位',
-            //                       style: TextStyle(fontWeight: FontWeight.bold),
-            //                     ),
-            //                     Text(category),
-            //                     Text(convertToYenFormat(amount: amount)),
-            //                   ],
-            //                 ),
-            //               ],
-            //             ),
-            //           );
-            //         },
-            //       ),
-            //     ),
-            //   ],
-            // ),
             if (selectedDataType == 'shared') ...[
               _buildSettlementCard(payer),
               const SizedBox(height: 16),

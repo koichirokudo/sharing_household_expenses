@@ -38,7 +38,6 @@ serve(async (request) => {
         .eq("id", updatedTransaction[0].id)
         .single();
 
-    console.log(enrichedTransaction);
     if (fetchError) {
       throw new Error("トランザクションの関連データの取得に失敗しました");
     }

@@ -12,6 +12,8 @@ serve(async (request) => {
 
   const body = await request.json();
   const { visibility, month } = body;
+  let isSettlement = false;
+  let invalidGroupCount = false;
 
   if (!month) {
     return new Response(
@@ -48,6 +50,20 @@ serve(async (request) => {
       throw new Error("Error fetching user profile.");
     }
 
+    // Get profiles
+    const { data: profiles, error: profilesError } = await supabaseClient
+      .from("profiles")
+      .select("id")
+      .eq("group_id", profile.group_id);
+
+    if (profilesError || !profiles) {
+      throw new Error("Error fetching user profile.");
+    }
+
+    if (visibility == "shared" && profiles.length < 2) {
+      invalidGroupCount = true;
+    }
+
     // Get settlements
     const { data: settlement } = await supabaseClient
       .from("settlements")
@@ -58,13 +74,16 @@ serve(async (request) => {
       .eq("settlement_date", month)
       .single();
 
-    let isSettlement = false;
     if (settlement !== null) {
       isSettlement = true;
     }
 
     return new Response(
-      JSON.stringify({ success: true, isSettlement: isSettlement }),
+      JSON.stringify({
+        success: true,
+        isSettlement: isSettlement,
+        invalidGroupCount: invalidGroupCount,
+      }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,

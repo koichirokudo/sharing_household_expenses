@@ -1,4 +1,4 @@
-import 'package:functions_client/src/types.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../utils/constants.dart';
 

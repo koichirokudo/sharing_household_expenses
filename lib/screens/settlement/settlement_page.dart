@@ -643,17 +643,20 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
                                 children: [
                                   Row(
                                     children: [
-                                      Text(
-                                        transactions[index].name,
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black,
+                                      if (transactions[index].name != '') ...[
+                                        Text(
+                                          '${transactions[index].name} -',
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
                                         ),
-                                      ),
-                                      const SizedBox(width: 8),
+                                        const SizedBox(width: 4),
+                                      ],
                                       Text(
-                                        '- $username',
+                                        username,
                                         style: const TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.bold,

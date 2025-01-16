@@ -6,7 +6,7 @@ CREATE TABLE transactions (
     group_id uuid NOT NULL REFERENCES user_groups(id),
     settlement_id integer REFERENCES settlements(id),
     sub_category_id integer NOT NULL REFERENCES sub_categories (id),
-    name TEXT NOT NULL,
+    name TEXT,
     date TIMESTAMP WITH TIME ZONE NOT NULL,
     type TEXT NOT NULL CHECK (type IN ('income', 'expense')), -- 'income', 'expense'
     amount NUMERIC(10, 2) NOT NULL DEFAULT 0,

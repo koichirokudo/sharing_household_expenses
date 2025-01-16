@@ -72,7 +72,7 @@ class TransactionRegisterPageState
       _dateController.text = DateFormat('yyyy/MM/dd').format(DateTime.parse(
         transaction.date.toString(),
       ).toLocal());
-      _nameController.text = transaction.name;
+      _nameController.text = transaction.name ?? '';
       _amountController.text = transaction.amount.round().toString();
       _noteController.text = transaction.note ?? '';
     } else {
@@ -328,10 +328,7 @@ class TransactionRegisterPageState
                             prefixIcon: Icon(Icons.list_alt),
                           ),
                           validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return '明細名を入力してください';
-                            }
-                            if (value.length > 50) {
+                            if (value != null && value.length > 50) {
                               return '明細名は50文字以下で入力してください';
                             }
                             return null;
@@ -411,7 +408,7 @@ class TransactionRegisterPageState
                               final isValid =
                                   RegExp(r'^\d{1,8}$').hasMatch(value);
                               if (!isValid) {
-                                return '最大8桁までの数値を入力してください';
+                                return '数値を入力してください（最大8桁まで）';
                               }
                             }
                             return null;

@@ -403,7 +403,7 @@ class SettlementDetailPageState extends ConsumerState<SettlementDetailPage> {
                                         Row(
                                           children: [
                                             Text(
-                                              transactions[index].name,
+                                              transactions[index].name ?? '',
                                               style: const TextStyle(
                                                 fontSize: 12,
                                                 fontWeight: FontWeight.bold,

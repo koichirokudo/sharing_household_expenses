@@ -206,7 +206,7 @@ class TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
                           child: Column(
                             children: [
                               Text(
-                                transaction.name,
+                                transaction.name ?? '',
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,

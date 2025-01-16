@@ -9,7 +9,7 @@ class Transaction {
   final String groupId;
   final int? settlementId;
   final int subCategoryId;
-  final String name;
+  final String? name;
   final DateTime date;
   final TransactionType type;
   final double amount;
@@ -26,7 +26,7 @@ class Transaction {
     required this.groupId,
     this.settlementId,
     required this.subCategoryId,
-    required this.name,
+    this.name,
     required this.date,
     required this.type,
     required this.amount,

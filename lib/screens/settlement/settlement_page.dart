@@ -73,27 +73,8 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
       }
       profiles = auth.profiles;
 
-      DateTime now = DateTime.now(); // 現在の日付
-      int year = now.year;
-      int month = now.month - 1;
-      // 月が0以下になった場合、前年に戻す
-      if (month <= 0) {
-        month += 12;
-        year -= 1;
-      }
-      // 存在しない日付を補正
-      int day = now.day;
-      int lastDayOfMonth = DateTime(year, month + 1, 0).day; // 月末の日付
-      if (day > lastDayOfMonth) {
-        day = lastDayOfMonth;
-      }
-
-      DateTime prevMonth = DateTime(year, month, day);
       final settlementNotifier = ref.watch(settlementProvider.notifier);
-      final transactionNotifier = ref.watch(transactionProvider.notifier);
       if (selectedDataType == 'shared') {
-        await transactionNotifier.fetchPrevMonthlyTransactions(
-            groupId, prevMonth);
         await settlementNotifier.initializeShared(transactions, profiles);
       } else if (selectedDataType == 'private') {
         settlementNotifier.initializePrivate(transactions);

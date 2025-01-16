@@ -24,9 +24,8 @@ class TransactionRegisterPage extends ConsumerStatefulWidget {
 class TransactionRegisterPageState
     extends ConsumerState<TransactionRegisterPage> {
   bool _isLoading = false;
-  bool _isSettlementLoading = false;
   int? _id;
-  bool _share = false;
+  bool _share = true;
   String _selectedType = 'expense';
   String? _selectedCategory;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
@@ -80,7 +79,7 @@ class TransactionRegisterPageState
       // 編集データがない場合の初期設定
       _selectedType = 'expense';
       _selectedCategory = '5001';
-      _share = false;
+      _share = true;
       _dateController.text = DateFormat('yyyy/MM/dd').format(DateTime.now());
     }
   }
@@ -149,7 +148,7 @@ class TransactionRegisterPageState
         _noteController.clear();
         _amountController.clear();
         _selectedType = 'expense';
-        _share = false;
+        _share = true;
         _selectedCategory = '5001';
       } else {
         // 更新
@@ -183,10 +182,6 @@ class TransactionRegisterPageState
 
   Future<bool> _checkSettlement(String month) async {
     try {
-      setState(() {
-        _isSettlementLoading = true;
-      });
-
       final auth = ref.watch(authProvider);
       final profile = auth.profile;
 
@@ -205,10 +200,6 @@ class TransactionRegisterPageState
       if (mounted) {
         context.showSnackBarError(message: '$error');
       }
-    } finally {
-      setState(() {
-        _isSettlementLoading = false;
-      });
     }
     return false;
   }
@@ -249,39 +240,48 @@ class TransactionRegisterPageState
               child: SingleChildScrollView(
                 child: Center(
                   child: Padding(
-                    padding: const EdgeInsets.all(32.0),
+                    padding: const EdgeInsets.all(16.0),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // 共有設定
+                        // 共有するしないの選択
                         Row(
                           children: [
                             Padding(
                               padding: const EdgeInsets.only(left: 10.0),
                               child: Image.asset('assets/icons/share_icon.png',
                                   width: 24),
-                            ), // アイコンを先頭に配置
-                            const Padding(
-                              padding: EdgeInsets.only(left: 24.0, right: 64.0),
-                              child: Text(
-                                '共有',
-                                style: TextStyle(
-                                  fontSize: 16,
+                            ),
+                            Expanded(
+                              child: RadioListTile<bool>(
+                                title: const Text(
+                                  '共有する',
+                                  style: TextStyle(fontSize: 13),
                                 ),
+                                value: true,
+                                groupValue: _share,
+                                onChanged: (bool? value) {
+                                  setState(() {
+                                    _share = true;
+                                  });
+                                },
                               ),
                             ),
-                            Text('しない'),
-                            const SizedBox(width: 8),
-                            Switch(
-                              value: _share,
-                              onChanged: (bool value) => {
-                                setState(() {
-                                  _share = value;
-                                }),
-                              },
+                            Expanded(
+                              child: RadioListTile<bool>(
+                                title: const Text(
+                                  '共有しない',
+                                  style: TextStyle(fontSize: 13),
+                                ),
+                                value: false,
+                                groupValue: _share,
+                                onChanged: (bool? value) {
+                                  setState(() {
+                                    _share = false;
+                                  });
+                                },
+                              ),
                             ),
-                            const SizedBox(width: 8),
-                            Text('する'),
                           ],
                         ),
                         const SizedBox(height: 8),

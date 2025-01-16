@@ -36,14 +36,13 @@ class HomePageState extends ConsumerState<HomePage> {
       if (auth.profile != null) {
         profile = auth.profile!;
       }
+      final profileId = auth.profile?.id;
       final groupId = auth.profile?.groupId;
       final transactionNotifier = ref.watch(transactionProvider.notifier);
-      final currentMonth = DateTime.now();
-      if (groupId != null) {
+      final now = DateTime.now();
+      if (profileId != null && groupId != null) {
         await transactionNotifier.fetchMonthlyTransactions(
-          groupId,
-          currentMonth,
-        );
+            groupId, now, profileId);
       } else {
         if (mounted) {
           Navigator.pushReplacement(

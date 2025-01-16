@@ -42,7 +42,7 @@ class Transaction {
       profileId: map['profile_id'],
       groupId: map['group_id'],
       settlementId: map['settlement_id'],
-      categoryId: map['sub_category_id'],
+      categoryId: map['category_id'],
       name: map['name'],
       date: DateTime.parse(map['date']),
       type: TransactionType.values.firstWhere((e) => e.name == map['type']),

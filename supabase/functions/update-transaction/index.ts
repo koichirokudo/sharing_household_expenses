@@ -34,7 +34,7 @@ serve(async (request) => {
     const { data: enrichedTransaction, error: fetchError } =
       await supabaseClient
         .from("transactions")
-        .select("*, sub_categories!inner(*), profiles!inner(*)")
+        .select("*, categories!inner(*), profiles!inner(*)")
         .eq("id", updatedTransaction[0].id)
         .single();
 

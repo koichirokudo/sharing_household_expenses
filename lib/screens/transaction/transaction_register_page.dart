@@ -114,7 +114,7 @@ class TransactionRegisterPageState
         if (_id != null) 'id': _id,
         'profile_id': profileId,
         'group_id': groupId,
-        'sub_category_id': int.tryParse(_selectedCategory!),
+        'category_id': int.tryParse(_selectedCategory!),
         'amount': int.tryParse(_amountController.text.trim()),
         'share': _share,
         'type': _selectedType == 'income' ? 'income' : 'expense',

@@ -12,7 +12,7 @@ class TransactionRepository {
 
     final response = await supabase
         .from('transactions')
-        .select('*, sub_categories!inner(*), profiles!inner(*)')
+        .select('*, categories!inner(*), profiles!inner(*)')
         .gte('date', startOfMonth.toIso8601String())
         .lt('date', endOfMonth.toIso8601String())
         .eq('group_id', groupId)
@@ -27,7 +27,7 @@ class TransactionRepository {
       String settlementId) async {
     final response = await supabase
         .from('transactions')
-        .select('*, sub_categories!inner(*), profiles!inner(*)')
+        .select('*, categories!inner(*), profiles!inner(*)')
         .eq('settlement_id', settlementId)
         .order('date', ascending: false);
 

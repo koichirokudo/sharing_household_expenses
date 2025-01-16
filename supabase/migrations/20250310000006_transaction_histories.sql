@@ -8,7 +8,6 @@ CREATE TABLE transaction_histories (
     previous_amount NUMERIC(10, 2) NOT NULL DEFAULT 0,
     previous_type TEXT NOT NULL, -- 'payer', 'payee'
     previous_category_id integer REFERENCES categories(id),
-    previous_note TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL
 );

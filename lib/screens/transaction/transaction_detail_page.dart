@@ -308,22 +308,6 @@ class TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
                           ],
                         ),
                       ),
-                      Container(
-                        decoration: const BoxDecoration(
-                          border: Border(
-                            bottom:
-                                BorderSide(color: Colors.black, width: 0.25),
-                          ),
-                        ),
-                        padding: const EdgeInsets.all(8.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text('メモ'),
-                            Text(transaction.note ?? ''),
-                          ],
-                        ),
-                      ),
                       if (!isSettlement) _buildButtons(),
                     ],
                   ),

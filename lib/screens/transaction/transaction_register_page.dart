@@ -32,7 +32,6 @@ class TransactionRegisterPageState
   final TextEditingController _dateController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
-  final TextEditingController _noteController = TextEditingController();
 
   @override
   void initState() {
@@ -56,7 +55,6 @@ class TransactionRegisterPageState
     _dateController.dispose();
     _nameController.dispose();
     _amountController.dispose();
-    _noteController.dispose();
     super.dispose();
   }
 
@@ -74,7 +72,6 @@ class TransactionRegisterPageState
       ).toLocal());
       _nameController.text = transaction.name ?? '';
       _amountController.text = transaction.amount.round().toString();
-      _noteController.text = transaction.note ?? '';
     } else {
       // 編集データがない場合の初期設定
       _selectedType = 'expense';
@@ -123,7 +120,6 @@ class TransactionRegisterPageState
         'type': _selectedType == 'income' ? 'income' : 'expense',
         'date': _dateController.text.trim(),
         'name': _nameController.text.trim(),
-        'note': _noteController.text.trim(),
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       };
 
@@ -145,7 +141,6 @@ class TransactionRegisterPageState
         }
         _dateController.text = DateFormat('yyyy/MM/dd').format(DateTime.now());
         _nameController.clear();
-        _noteController.clear();
         _amountController.clear();
         _selectedType = 'expense';
         _share = true;
@@ -410,21 +405,6 @@ class TransactionRegisterPageState
                               if (!isValid) {
                                 return '数値を入力してください（最大8桁まで）';
                               }
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 24),
-                        // メモ
-                        TextFormField(
-                          controller: _noteController,
-                          decoration: const InputDecoration(
-                            labelText: 'メモ',
-                            prefixIcon: Icon(Icons.note),
-                          ),
-                          validator: (value) {
-                            if (value != null && value.length > 30) {
-                              return 'メモは30文字以下で入力してください';
                             }
                             return null;
                           },

@@ -11,7 +11,6 @@ CREATE TABLE transactions (
     type TEXT NOT NULL CHECK (type IN ('income', 'expense')), -- 'income', 'expense'
     amount NUMERIC(10, 2) NOT NULL DEFAULT 0,
     share BOOLEAN NOT NULL DEFAULT false,
-    note TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL
 );

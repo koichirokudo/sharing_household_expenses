@@ -14,7 +14,6 @@ class Transaction {
   final TransactionType type;
   final double amount;
   final bool share;
-  final String? note;
   final DateTime createdAt;
   final DateTime updatedAt;
   late final SubCategory? subCategory;
@@ -31,7 +30,6 @@ class Transaction {
     required this.type,
     required this.amount,
     this.share = false,
-    this.note,
     required this.createdAt,
     required this.updatedAt,
     this.subCategory,
@@ -52,7 +50,6 @@ class Transaction {
           ? (map['amount'] as int).toDouble()
           : map['amount'] as double,
       share: map['share'],
-      note: map['note'],
       createdAt: DateTime.parse(map['created_at']),
       updatedAt: DateTime.parse(map['updated_at']),
       subCategory: map['sub_categories'] != null
@@ -75,7 +72,6 @@ class Transaction {
       'type': type.name,
       'amount': amount,
       'share': share,
-      'note': note,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
       'subCategories': subCategory?.toMap(),
@@ -94,7 +90,6 @@ class Transaction {
       'type': type.name,
       'amount': amount,
       'share': share,
-      'note': note,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
@@ -112,7 +107,6 @@ class Transaction {
       'type': type.name,
       'amount': amount,
       'share': share,
-      'note': note,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };

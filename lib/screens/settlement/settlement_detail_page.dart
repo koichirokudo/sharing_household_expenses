@@ -363,7 +363,7 @@ class SettlementDetailPageState extends ConsumerState<SettlementDetailPage> {
                             final username =
                                 transactions[index].profile?.username;
                             final categoryName =
-                                transactions[index].subCategory?.name;
+                                transactions[index].category?.name;
                             if (username == null || categoryName == null) {
                               return Text('データがありません');
                             }

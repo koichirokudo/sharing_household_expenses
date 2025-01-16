@@ -164,9 +164,9 @@ class TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
   Widget build(BuildContext context) {
     final state = ref.watch(transactionProvider);
     final profile = transaction.profile;
-    final subCategory = transaction.subCategory;
+    final category = transaction.category;
 
-    if (profile == null || subCategory == null) {
+    if (profile == null || category == null) {
       return circularIndicator;
     }
 
@@ -304,7 +304,7 @@ class TransactionDetailPageState extends ConsumerState<TransactionDetailPage> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text('カテゴリ'),
-                            Text(subCategory.name),
+                            Text(category.name),
                           ],
                         ),
                       ),

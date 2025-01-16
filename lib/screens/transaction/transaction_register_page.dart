@@ -65,7 +65,7 @@ class TransactionRegisterPageState
       _id = transaction.id;
       _selectedType =
           transaction.type == TransactionType.income ? 'income' : 'expense';
-      _selectedCategory = transaction.subCategory!.id.toString();
+      _selectedCategory = transaction.category!.id.toString();
       _share = transaction.share;
       _dateController.text = DateFormat('yyyy/MM/dd').format(DateTime.parse(
         transaction.date.toString(),
@@ -208,18 +208,12 @@ class TransactionRegisterPageState
           ? categoryState.incomeCategories
           : categoryState.expenseCategories;
 
-      return categories
-          .expand(
-            (category) => category.subCategories.map(
-              (subCategory) {
-                return DropdownMenuItem<String>(
-                  value: subCategory.id.toString(),
-                  child: Text(subCategory.name),
-                );
-              },
-            ),
-          )
-          .toList();
+      return categories.map((category) {
+        return DropdownMenuItem<String>(
+          value: category.id.toString(),
+          child: Text(category.name),
+        );
+      }).toList(); // map の結果を List に変換
     }
 
     return Scaffold(

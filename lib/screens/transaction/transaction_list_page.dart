@@ -474,7 +474,7 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  transactions[index].subCategory!.name,
+                                  transactions[index].category!.name,
                                   style: const TextStyle(
                                     fontSize: 12,
                                     color: Colors.black,

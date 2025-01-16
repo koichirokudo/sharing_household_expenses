@@ -4,10 +4,8 @@ import '../models/category.dart';
 
 class CategoryRepository {
   Future<List<Category>> fetchCategories() async {
-    final response = await supabase
-        .from('categories')
-        .select('*, sub_categories(*)')
-        .order('id', ascending: true);
+    final response =
+        await supabase.from('categories').select().order('id', ascending: true);
     final categories =
         (response as List).map((json) => Category.fromMap(json)).toList();
 

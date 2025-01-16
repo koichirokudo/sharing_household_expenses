@@ -140,7 +140,7 @@ class SettlementNotifier extends StateNotifier<SettlementState> {
             expenseTotal = expenseTotal + amount;
           }
 
-          final categoryName = item.subCategory?.name;
+          final categoryName = item.category?.name;
           if (categoryName == null) {
             return;
           }
@@ -242,7 +242,7 @@ class SettlementNotifier extends StateNotifier<SettlementState> {
 
     for (var item in transactions) {
       if (item.type == TransactionType.expense) {
-        final categoryName = item.subCategory?.name;
+        final categoryName = item.category?.name;
         if (categoryName == null) {
           return;
         }
@@ -258,7 +258,7 @@ class SettlementNotifier extends StateNotifier<SettlementState> {
           expenseTotal = expenseTotal + amount;
         }
       } else {
-        final categoryName = item.subCategory?.name;
+        final categoryName = item.category?.name;
         if (categoryName == null) {
           return;
         }

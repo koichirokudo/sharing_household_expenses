@@ -606,8 +606,7 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
                       final transactionDate =
                           DateFormat('yyyy/MM/dd').format(date);
                       final username = transactions[index].profile?.username;
-                      final categoryName =
-                          transactions[index].subCategory?.name;
+                      final categoryName = transactions[index].category?.name;
                       if (username == null || categoryName == null) {
                         return Text('データがありません');
                       }

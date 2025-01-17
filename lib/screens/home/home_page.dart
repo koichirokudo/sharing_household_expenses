@@ -73,13 +73,7 @@ class HomePageState extends ConsumerState<HomePage> {
       return Colors.grey;
     }
 
-    if (type == 'income') {
-      return amount < 0 ? Colors.green : Colors.red;
-    } else if (type == 'expense') {
-      return amount > 0 ? Colors.red : Colors.green;
-    }
-
-    return Colors.black;
+    return amount > 0 ? Colors.green : Colors.red;
   }
 
   Widget _buildActionButtons() {
@@ -211,7 +205,7 @@ class HomePageState extends ConsumerState<HomePage> {
         children: [
           Row(
             children: [
-              const SizedBox(width: 48),
+              const SizedBox(width: 216),
               Text(
                 isMonth ? '前月比' : '前年比',
                 style: TextStyle(

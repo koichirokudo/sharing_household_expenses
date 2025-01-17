@@ -33,6 +33,7 @@ class HomePageState extends ConsumerState<HomePage> {
       final profileId = ref.profileId;
       final groupId = ref.groupId;
       if (profileId != null && groupId != null) {
+        await ref.userGroupNotifier.fetchGroup(groupId);
         await ref.transactionNotifier.fetchMonthlyTransactions(
           groupId,
           profileId,
@@ -103,6 +104,7 @@ class HomePageState extends ConsumerState<HomePage> {
   Widget _buildTitleRow(bool isGroup) {
     final profile = ref.authState.profile;
     final profiles = ref.authState.profiles;
+    final groupName = ref.userGroupState.group?.groupName;
     final avatarUrl = profile?.avatarUrl;
     final username = profile?.username;
 
@@ -146,7 +148,7 @@ class HomePageState extends ConsumerState<HomePage> {
           ],
           const SizedBox(width: 8),
           Text(
-            isGroup ? 'グループ' : (username ?? '個人'),
+            isGroup ? (groupName ?? 'グループ') : (username ?? '個人'),
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,

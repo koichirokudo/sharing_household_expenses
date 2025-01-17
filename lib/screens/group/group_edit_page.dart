@@ -114,10 +114,10 @@ class GroupEditPageState extends ConsumerState<GroupEditPage> {
                         return 'グループ名を入力してください';
                       }
                       final isValid = RegExp(
-                              r'^[a-zA-Z0-9_]|[\u3040-\u309F]|\u3000|[\u30A1-\u30FC]|[\u4E00-\u9FFF]{3,24}$')
+                              r'^[a-zA-Z0-9\u3040-\u30FF\u4E00-\u9FFF]{3,10}$')
                           .hasMatch(value);
                       if (!isValid) {
-                        return 'グループ名はアルファベットか文字で3~24文字以下で入力してください';
+                        return 'グループ名はアルファベットか文字で3~10文字以下で入力してください';
                       }
                       return null;
                     },

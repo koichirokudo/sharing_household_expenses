@@ -14,8 +14,12 @@ class TransactionState with _$TransactionState {
     required List<Transaction> prevYearTransactions,
     required List<Transaction> sharedTransactions,
     required List<Transaction> privateTransactions,
-    required Map<TransactionType, double> sharedTotalAmounts,
-    required Map<TransactionType, double> privateTotalAmounts,
+    required Map<TransactionType, double> sharedCurrentTotals,
+    required Map<TransactionType, double> privateCurrentTotals,
+    required Map<TransactionType, double> sharedPrevMonthTotals,
+    required Map<TransactionType, double> privatePrevMonthTotals,
+    required Map<TransactionType, double> sharedPrevYearTotals,
+    required Map<TransactionType, double> privatePrevYearTotals,
     required List<String> months,
   }) = _TransactionState;
 }

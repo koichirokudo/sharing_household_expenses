@@ -24,11 +24,27 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
             prevYearTransactions: [],
             sharedTransactions: [],
             privateTransactions: [],
-            sharedTotalAmounts: {
+            sharedCurrentTotals: {
               TransactionType.income: 0.0,
               TransactionType.expense: 0.0
             },
-            privateTotalAmounts: {
+            privateCurrentTotals: {
+              TransactionType.income: 0.0,
+              TransactionType.expense: 0.0
+            },
+            sharedPrevMonthTotals: {
+              TransactionType.income: 0.0,
+              TransactionType.expense: 0.0
+            },
+            privatePrevMonthTotals: {
+              TransactionType.income: 0.0,
+              TransactionType.expense: 0.0
+            },
+            sharedPrevYearTotals: {
+              TransactionType.income: 0.0,
+              TransactionType.expense: 0.0
+            },
+            privatePrevYearTotals: {
               TransactionType.income: 0.0,
               TransactionType.expense: 0.0
             },
@@ -36,15 +52,11 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
           ),
         );
 
-  Future<void> fetchMonthlyTransactions(
-      String groupId, DateTime date, String profileId) async {
+  Future<void> fetchMonthlyTransactions(String groupId, DateTime date) async {
     state = state.copyWith(isLoading: true);
     try {
       final transactions = await repository.fetchMonthlyByGroup(groupId, date);
       state = state.copyWith(transactions: transactions);
-      groupByVisibility(profileId);
-      calculateTotalAmounts();
-      generateMonths();
     } catch (e) {
       throw Exception('Failed to fetch monthly transactions: $e');
     } finally {
@@ -59,7 +71,20 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
       final transactions = await repository.fetchMonthlyByGroup(groupId, date);
       state = state.copyWith(prevMonthTransactions: transactions);
     } catch (e) {
-      throw Exception('Failed to fetch monthly transactions: $e');
+      throw Exception('Failed to fetch prev monthly transactions: $e');
+    } finally {
+      state = state.copyWith(isLoading: false);
+    }
+  }
+
+  Future<void> fetchPrevYearlyTransactions(
+      String groupId, DateTime date) async {
+    state = state.copyWith(isLoading: true);
+    try {
+      final transactions = await repository.fetchMonthlyByGroup(groupId, date);
+      state = state.copyWith(prevYearTransactions: transactions);
+    } catch (e) {
+      throw Exception('Failed to fetch prev monthly transactions: $e');
     } finally {
       state = state.copyWith(isLoading: false);
     }
@@ -84,7 +109,7 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
       final response = await repository.insert(transaction);
       final updateTransactions = [...state.transactions, response];
       state = state.copyWith(transactions: updateTransactions);
-      calculateTotalAmounts();
+      calculateCurrentTotals();
     } catch (e) {
       throw Exception('Failed to insert transaction: $e');
     } finally {
@@ -101,7 +126,7 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
       }
       final updateTransactions = [...state.transactions, response];
       state = state.copyWith(transactions: updateTransactions);
-      calculateTotalAmounts();
+      calculateCurrentTotals();
       return response;
     } catch (e) {
       throw Exception('Failed to update transaction: $e');
@@ -115,7 +140,7 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
     try {
       final response = await repository.upsert(transaction);
       state = state.copyWith(transactions: response);
-      calculateTotalAmounts();
+      calculateCurrentTotals();
     } catch (e) {
       throw Exception('Failed to update transaction: $e');
     } finally {
@@ -134,7 +159,7 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
       final updatedTransactions =
           state.transactions.where((t) => t.id != transaction.id).toList();
       state = state.copyWith(transactions: updatedTransactions);
-      calculateTotalAmounts();
+      calculateCurrentTotals();
     } catch (e) {
       throw Exception('Failed to delete transaction: $e');
     } finally {
@@ -149,12 +174,93 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
       final updatedTransactions =
           state.transactions.where((t) => t.profileId != profile.id).toList();
       state = state.copyWith(transactions: updatedTransactions);
-      calculateTotalAmounts();
+      calculateCurrentTotals();
     } catch (e) {
       throw Exception('Failed to update transaction: $e');
     } finally {
       state = state.copyWith(isLoading: false);
     }
+  }
+
+  // 今月のグループと個人の収支の合計額を計算
+  void calculateCurrentTotals() {
+    final sharedCurrentTotals = {
+      TransactionType.income: 0.0,
+      TransactionType.expense: 0.0,
+    };
+    final privateCurrentTotals = {
+      TransactionType.income: 0.0,
+      TransactionType.expense: 0.0,
+    };
+
+    // 今月の共有データ
+    for (var transaction in state.transactions) {
+      if (transaction.share == true) {
+        sharedCurrentTotals[transaction.type] =
+            (sharedCurrentTotals[transaction.type] ?? 0) + transaction.amount;
+      } else {
+        privateCurrentTotals[transaction.type] =
+            (privateCurrentTotals[transaction.type] ?? 0) + transaction.amount;
+      }
+    }
+
+    state = state.copyWith(
+      sharedCurrentTotals: sharedCurrentTotals,
+      privateCurrentTotals: privateCurrentTotals,
+    );
+  }
+
+  void calculatePrevMonthTotals() {
+    final sharedPrevMonthTotals = {
+      TransactionType.income: 0.0,
+      TransactionType.expense: 0.0,
+    };
+    final privatePrevMonthTotals = {
+      TransactionType.income: 0.0,
+      TransactionType.expense: 0.0,
+    };
+
+    // 前月の共有データ
+    for (var transaction in state.prevMonthTransactions) {
+      if (transaction.share == true) {
+        sharedPrevMonthTotals[transaction.type] =
+            (sharedPrevMonthTotals[transaction.type] ?? 0) + transaction.amount;
+      } else {
+        privatePrevMonthTotals[transaction.type] =
+            (privatePrevMonthTotals[transaction.type] ?? 0) +
+                transaction.amount;
+      }
+    }
+    state = state.copyWith(
+      sharedPrevMonthTotals: sharedPrevMonthTotals,
+      privatePrevMonthTotals: privatePrevMonthTotals,
+    );
+  }
+
+  void calculatePrevYearTotals() {
+    final sharedPrevYearTotals = {
+      TransactionType.income: 0.0,
+      TransactionType.expense: 0.0,
+    };
+    final privatePrevYearTotals = {
+      TransactionType.income: 0.0,
+      TransactionType.expense: 0.0,
+    };
+
+    // 前年の共有データ
+    for (var transaction in state.prevYearTransactions) {
+      if (transaction.share == true) {
+        sharedPrevYearTotals[transaction.type] =
+            (sharedPrevYearTotals[transaction.type] ?? 0) + transaction.amount;
+      } else {
+        privatePrevYearTotals[transaction.type] =
+            (privatePrevYearTotals[transaction.type] ?? 0) + transaction.amount;
+      }
+    }
+    state = state.copyWith(
+      sharedPrevYearTotals: sharedPrevYearTotals,
+      privatePrevYearTotals: privatePrevYearTotals,
+    );
   }
 
   void groupByVisibility(profileId) {
@@ -176,37 +282,11 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
     state = state.copyWith(privateTransactions: privateData);
   }
 
-  // １ヶ月分のグループと個人の収支の合計額を計算
-  void calculateTotalAmounts() {
-    final sharedTotalAmounts = {
-      TransactionType.income: 0.0,
-      TransactionType.expense: 0.0,
-    };
-    final privateTotalAmounts = {
-      TransactionType.income: 0.0,
-      TransactionType.expense: 0.0,
-    };
-
-    for (var transaction in state.sharedTransactions) {
-      sharedTotalAmounts[transaction.type] =
-          (sharedTotalAmounts[transaction.type] ?? 0) + transaction.amount;
-    }
-
-    for (var transaction in state.privateTransactions) {
-      privateTotalAmounts[transaction.type] =
-          (privateTotalAmounts[transaction.type] ?? 0) + transaction.amount;
-    }
-
-    state = state.copyWith(
-      sharedTotalAmounts: sharedTotalAmounts,
-      privateTotalAmounts: privateTotalAmounts,
-    );
-  }
-
   // 現在の月から過去１年分(現在の月を含めた13ヶ月分)の月を取得する
   void generateMonths() {
     final currentMonth = DateTime.now();
-    List<String> months = List.generate(13, (index) {
+    // TODO: 課金: 5年(65ヶ月), 無料: 1年(13ヶ月)
+    List<String> months = List.generate(36, (index) {
       final month = DateTime(currentMonth.year, currentMonth.month - index, 1);
       return DateFormat('yyyy/MM').format(month);
     });

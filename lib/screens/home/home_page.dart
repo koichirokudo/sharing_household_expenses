@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sharing_household_expenses/constants/transaction_type.dart';
+import 'package:sharing_household_expenses/extensions/nullable_extensions.dart';
+import 'package:sharing_household_expenses/extensions/provider_ref_extensions.dart';
 import 'package:sharing_household_expenses/providers/auth_provider.dart';
-import 'package:sharing_household_expenses/providers/transaction_provider.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
 
 import '../../models/profile.dart';
@@ -29,19 +30,26 @@ class HomePageState extends ConsumerState<HomePage> {
       setState(() {
         _isLoading = true;
       });
-      final authNotifier = ref.watch(authProvider.notifier);
-      await authNotifier.fetchProfile();
-      final auth = ref.watch(authProvider);
-      if (auth.profile != null) {
-        profile = auth.profile!;
-      }
-      final profileId = auth.profile?.id;
-      final groupId = auth.profile?.groupId;
-      final transactionNotifier = ref.watch(transactionProvider.notifier);
-      final now = DateTime.now();
+      await ref.authNotifier.fetchProfile();
+      final profileId = ref.profileId;
+      final groupId = ref.groupId;
       if (profileId != null && groupId != null) {
-        await transactionNotifier.fetchMonthlyTransactions(
-            groupId, now, profileId);
+        await ref.transactionNotifier.fetchMonthlyTransactions(
+          groupId,
+          DateTime.now(),
+        );
+        ref.transactionNotifier.groupByVisibility(profileId);
+        ref.transactionNotifier.calculateCurrentTotals();
+        await ref.transactionNotifier.fetchPrevMonthlyTransactions(
+          groupId,
+          ref.utilNotifier.getPrevMonth(),
+        );
+        ref.transactionNotifier.calculatePrevMonthTotals();
+        await ref.transactionNotifier.fetchPrevYearlyTransactions(
+          groupId,
+          ref.utilNotifier.getPrevYear(),
+        );
+        ref.transactionNotifier.calculatePrevYearTotals();
       } else {
         if (mounted) {
           Navigator.pushReplacement(
@@ -56,6 +64,20 @@ class HomePageState extends ConsumerState<HomePage> {
         _isLoading = false;
       });
     });
+  }
+
+  Color _determineTextColor(int amount, String type) {
+    if (amount == 0) {
+      return Colors.grey;
+    }
+
+    if (type == 'income') {
+      return amount < 0 ? Colors.green : Colors.red;
+    } else if (type == 'expense') {
+      return amount > 0 ? Colors.red : Colors.green;
+    }
+
+    return Colors.black;
   }
 
   Widget _buildActionButtons() {
@@ -77,17 +99,155 @@ class HomePageState extends ConsumerState<HomePage> {
     );
   }
 
+  Widget _buildTitleRow(bool isGroup) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Icon(
+            isGroup ? Icons.group : Icons.account_circle,
+            color: Colors.blue,
+            size: 32,
+          ),
+          const SizedBox(width: 16),
+          Text(
+            isGroup ? 'グループ' : '個人',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCurrentTotalRow(int amount, String type) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 16.0, right: 16.0, left: 16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              type == 'income'
+                  ? Icon(
+                      Icons.trending_up,
+                      color: Colors.green,
+                      size: 32,
+                    )
+                  : Icon(
+                      Icons.trending_down,
+                      color: Colors.red,
+                      size: 32,
+                    ),
+              const SizedBox(width: 16),
+              Text(
+                type == 'income' ? '収入' : '支出',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+            ],
+          ),
+          Text(
+            convertToYenFormat(amount: amount),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPrevRow(int amount, bool isMonth, String type) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4.0, right: 16.0, left: 16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: [
+              const SizedBox(width: 48),
+              Text(
+                isMonth ? '前月比' : '前年比',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey,
+                ),
+              ),
+            ],
+          ),
+          Text(
+            amount > 0
+                ? '+${convertToYenFormat(amount: amount)}'
+                : convertToYenFormat(amount: amount),
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: _determineTextColor(amount, type),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(transactionProvider);
-    final sharedIncome =
-        state.sharedTotalAmounts[TransactionType.income]!.round();
-    final sharedExpense =
-        state.sharedTotalAmounts[TransactionType.expense]!.round();
-    final privateIncome =
-        state.privateTotalAmounts[TransactionType.income]!.round();
-    final privateExpense =
-        state.privateTotalAmounts[TransactionType.expense]!.round();
+    final util = ref.utilNotifier;
+    final state = ref.transactionState;
+
+    final sharedCurrentIncome =
+        state.sharedCurrentTotals[TransactionType.income].toSafeInt();
+    final sharedCurrentExpense =
+        state.sharedCurrentTotals[TransactionType.expense].toSafeInt();
+    final privateCurrentIncome =
+        state.privateCurrentTotals[TransactionType.income].toSafeInt();
+    final privateCurrentExpense =
+        state.privateCurrentTotals[TransactionType.expense].toSafeInt();
+
+    final sharedPrevMonthIncome = util.calcPrevTotalAmounts(
+      sharedCurrentIncome,
+      state.sharedPrevMonthTotals[TransactionType.income].toSafeInt(),
+    );
+    final sharedPrevMonthExpense = util.calcPrevTotalAmounts(
+      sharedCurrentExpense,
+      state.sharedPrevMonthTotals[TransactionType.expense].toSafeInt(),
+    );
+    final privatePrevMonthIncome = util.calcPrevTotalAmounts(
+      privateCurrentIncome,
+      state.privatePrevMonthTotals[TransactionType.income].toSafeInt(),
+    );
+    final privatePrevMonthExpense = util.calcPrevTotalAmounts(
+      privateCurrentExpense,
+      state.privatePrevMonthTotals[TransactionType.expense].toSafeInt(),
+    );
+
+    final sharedPrevYearIncome = util.calcPrevTotalAmounts(
+      sharedCurrentIncome,
+      state.sharedPrevYearTotals[TransactionType.income].toSafeInt(),
+    );
+    final sharedPrevYearExpense = util.calcPrevTotalAmounts(
+      sharedCurrentExpense,
+      state.sharedPrevYearTotals[TransactionType.expense].toSafeInt(),
+    );
+    final privatePrevYearIncome = util.calcPrevTotalAmounts(
+      privateCurrentIncome,
+      state.privatePrevYearTotals[TransactionType.income].toSafeInt(),
+    );
+    final privatePrevYearExpense = util.calcPrevTotalAmounts(
+      privateCurrentExpense,
+      state.privatePrevYearTotals[TransactionType.expense].toSafeInt(),
+    );
 
     if (_isLoading) {
       return Scaffold(
@@ -116,202 +276,30 @@ class HomePageState extends ConsumerState<HomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const SizedBox(height: 16),
             // グループの収支
             Column(
               children: [
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      const Icon(
-                        Icons.group,
-                        color: Colors.blue,
-                        size: 32,
-                      ),
-                      const SizedBox(width: 16),
-                      const Text(
-                        'グループ',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                _buildTitleRow(true),
                 const Divider(height: 1, color: Colors.black12),
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.trending_up,
-                            color: Colors.green,
-                            size: 32,
-                          ),
-                          const SizedBox(width: 16),
-                          const Text(
-                            '収入',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Text(
-                        convertToYenFormat(amount: sharedIncome),
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.trending_down,
-                                color: Colors.red,
-                                size: 32,
-                              ),
-                              const SizedBox(width: 16),
-                              const Text(
-                                '支出',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black,
-                                ),
-                              ),
-                            ],
-                          ),
-                          Text(
-                            convertToYenFormat(amount: sharedExpense),
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
+                _buildCurrentTotalRow(sharedCurrentIncome, 'income'),
+                _buildPrevRow(sharedPrevMonthIncome, true, 'income'),
+                _buildPrevRow(sharedPrevYearIncome, false, 'income'),
+                _buildCurrentTotalRow(sharedCurrentExpense, 'expense'),
+                _buildPrevRow(sharedPrevMonthExpense, true, 'expense'),
+                _buildPrevRow(sharedPrevYearExpense, false, 'expense'),
               ],
             ),
-            const SizedBox(height: 8),
             // 個人の収支
             Column(
               children: [
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      const Icon(
-                        Icons.account_circle,
-                        color: Colors.blue,
-                        size: 32,
-                      ),
-                      const SizedBox(width: 16),
-                      const Text(
-                        '個人',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                _buildTitleRow(false),
                 const Divider(height: 1, color: Colors.black12),
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.trending_up,
-                            color: Colors.green,
-                            size: 32,
-                          ),
-                          const SizedBox(width: 16),
-                          const Text(
-                            '収入',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Text(
-                        convertToYenFormat(amount: privateIncome),
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.trending_down,
-                            color: Colors.red,
-                            size: 32,
-                          ),
-                          const SizedBox(width: 16),
-                          const Text(
-                            '支出',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Text(
-                        convertToYenFormat(amount: privateExpense),
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                _buildCurrentTotalRow(privateCurrentIncome, 'income'),
+                _buildPrevRow(privatePrevMonthIncome, true, 'income'),
+                _buildPrevRow(privatePrevYearIncome, false, 'income'),
+                _buildCurrentTotalRow(privateCurrentExpense, 'expense'),
+                _buildPrevRow(privatePrevMonthExpense, true, 'expense'),
+                _buildPrevRow(privatePrevYearExpense, false, 'expense'),
               ],
             ),
           ],

@@ -60,18 +60,18 @@ class _App extends State<App> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: _screens[_selectedIndex],
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          onTap: _onItemTapped,
-          items: const <BottomNavigationBarItem>[
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'ホーム'),
-            BottomNavigationBarItem(icon: Icon(Icons.edit), label: '登録'),
-            BottomNavigationBarItem(icon: Icon(Icons.list), label: '明細一覧'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.fact_check), label: '清算一覧'),
-          ],
-          type: BottomNavigationBarType.fixed,
-        ));
+      body: _screens[_selectedIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'ホーム'),
+          BottomNavigationBarItem(icon: Icon(Icons.edit), label: '登録'),
+          BottomNavigationBarItem(icon: Icon(Icons.list), label: '明細一覧'),
+          BottomNavigationBarItem(icon: Icon(Icons.fact_check), label: '清算一覧'),
+        ],
+        type: BottomNavigationBarType.fixed,
+      ),
+    );
   }
 }

@@ -17,17 +17,11 @@ final _privateConstructorUsedError = UnsupportedError(
 /// @nodoc
 mixin _$AuthState {
   bool get isLoading => throw _privateConstructorUsedError;
-
   bool get isAuthenticated => throw _privateConstructorUsedError;
-
   Session? get session => throw _privateConstructorUsedError;
-
   User? get user => throw _privateConstructorUsedError;
-
   Profile? get profile => throw _privateConstructorUsedError;
-
   List<Profile>? get profiles => throw _privateConstructorUsedError;
-
   String? get errorMessage => throw _privateConstructorUsedError;
 
   /// Create a copy of AuthState
@@ -41,7 +35,6 @@ mixin _$AuthState {
 abstract class $AuthStateCopyWith<$Res> {
   factory $AuthStateCopyWith(AuthState value, $Res Function(AuthState) then) =
       _$AuthStateCopyWithImpl<$Res, AuthState>;
-
   @useResult
   $Res call(
       {bool isLoading,
@@ -60,7 +53,6 @@ class _$AuthStateCopyWithImpl<$Res, $Val extends AuthState>
 
   // ignore: unused_field
   final $Val _value;
-
   // ignore: unused_field
   final $Res Function($Val) _then;
 
@@ -116,7 +108,6 @@ abstract class _$$AuthStateImplCopyWith<$Res>
   factory _$$AuthStateImplCopyWith(
           _$AuthStateImpl value, $Res Function(_$AuthStateImpl) then) =
       __$$AuthStateImplCopyWithImpl<$Res>;
-
   @override
   @useResult
   $Res call(
@@ -207,7 +198,6 @@ class _$AuthStateImpl implements _AuthState {
   @override
   final Profile? profile;
   final List<Profile>? _profiles;
-
   @override
   List<Profile>? get profiles {
     final value = _profiles;
@@ -274,22 +264,16 @@ abstract class _AuthState implements AuthState {
 
   @override
   bool get isLoading;
-
   @override
   bool get isAuthenticated;
-
   @override
   Session? get session;
-
   @override
   User? get user;
-
   @override
   Profile? get profile;
-
   @override
   List<Profile>? get profiles;
-
   @override
   String? get errorMessage;
 

@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:sharing_household_expenses/constants/transaction_type.dart';
+import 'package:sharing_household_expenses/extensions/provider_ref_extensions.dart';
 import 'package:sharing_household_expenses/screens/transaction/transaction_detail_page.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
 
 import '../../models/profile.dart';
 import '../../models/transaction.dart';
-import '../../providers/auth_provider.dart';
-import '../../providers/settlement_provider.dart';
 import '../../providers/transaction_provider.dart';
 import '../settlement/settlement_page.dart';
 
@@ -35,42 +34,49 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
   @override
   void initState() {
     super.initState();
-    months = [];
     Future.microtask(() async {
-      final authNotifier = ref.watch(authProvider.notifier);
-      await authNotifier.fetchProfile();
-      final auth = ref.watch(authProvider);
-      // TODO: ! はやめたい
-      profile = auth.profile!;
-      final profileId = auth.profile?.id;
-      final groupId = auth.profile?.groupId;
-      final transactionNotifier = ref.watch(transactionProvider.notifier);
-      final transactionState = ref.watch(transactionProvider);
-      final now = DateTime.now();
-      if (profileId != null && groupId != null) {
-        await transactionNotifier.fetchMonthlyTransactions(
-          groupId,
-          now,
-          profileId,
-        );
-        setState(() {
-          months = transactionState.months;
-          selectedIndex = months.isNotEmpty ? months.length - 1 : 0;
-          _pageController = PageController(
-            initialPage: selectedIndex,
-            viewportFraction: 1,
-          );
-        });
-        response = await _checkSettlement();
-        if (response['isSettlement'] == true) {
-          _isSettlement = true;
-        }
-
-        if (response['invalidGroupCount'] == true) {
-          _invalidGroupCount = true;
-        }
-      }
+      _initializeData();
     });
+  }
+
+  Future<void> _initializeData() async {
+    try {
+      final groupId = ref.authState.profile?.groupId;
+      final profileId = ref.authState.profile?.id;
+      // トランザクションデータを取得
+      if (groupId != null && profileId != null) {
+        await ref.transactionNotifier.fetchMonthlyTransactions(
+          groupId,
+          DateTime.now(),
+        );
+        ref.transactionNotifier.groupByVisibility(profileId);
+        ref.transactionNotifier.calculateCurrentTotals();
+        ref.transactionNotifier.generateMonths();
+      }
+
+      // 状態の更新
+      setState(() {
+        months = ref.transactionState.months;
+        selectedIndex = months.isNotEmpty ? months.length - 1 : 0;
+        _pageController = PageController(
+          initialPage: selectedIndex,
+          viewportFraction: 1,
+        );
+      });
+
+      // 清算状態の確認
+      response = await _checkSettlement();
+      setState(() {
+        _isSettlement = response['isSettlement'] == true;
+        _invalidGroupCount = response['invalidGroupCount'] == true;
+      });
+    } catch (error, stackTrace) {
+      if (mounted) {
+        print('Error initializing data: $error');
+        print('Stack trace: $stackTrace');
+        context.showSnackBarError(message: 'データの初期化中にエラーが発生しました: $error');
+      }
+    }
   }
 
   Future<Map<String, dynamic>> _checkSettlement() async {
@@ -78,11 +84,10 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
       _isSettlementLoading = true;
     });
     try {
-      final response =
-          await ref.watch(settlementProvider.notifier).checkSettlement(
-                sharedPrivateType == 'shared' ? 'shared' : 'private',
-                months[selectedIndex],
-              );
+      final response = await ref.settlementNotifier.checkSettlement(
+        sharedPrivateType == 'shared' ? 'shared' : 'private',
+        months[selectedIndex],
+      );
       return response;
     } catch (error) {
       if (mounted) {
@@ -140,13 +145,13 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
   Widget _buildDisplayTotalAmounts() {
     final transactionState = ref.watch(transactionProvider);
     final sharedIncomeTotalAmounts =
-        transactionState.sharedTotalAmounts[TransactionType.income]?.round();
+        transactionState.sharedCurrentTotals[TransactionType.income]?.round();
     final sharedExpenseTotalAmounts =
-        transactionState.sharedTotalAmounts[TransactionType.expense]?.round();
+        transactionState.sharedCurrentTotals[TransactionType.expense]?.round();
     final privateIncomeTotalAmounts =
-        transactionState.privateTotalAmounts[TransactionType.income]?.round();
+        transactionState.privateCurrentTotals[TransactionType.income]?.round();
     final privateExpenseTotalAmounts =
-        transactionState.privateTotalAmounts[TransactionType.expense]?.round();
+        transactionState.privateCurrentTotals[TransactionType.expense]?.round();
 
     final incomeTotal = convertToYenFormat(
       amount: int.parse(
@@ -308,16 +313,15 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
               );
 
               if (response == true) {
-                final auth = ref.watch(authProvider);
-                final profileId = auth.profile?.id;
-                final groupId = auth.profile?.groupId;
+                final profileId = ref.profileId;
+                final groupId = ref.groupId;
                 if (profileId != null && groupId != null) {
+                  ref.invalidate(transactionProvider);
                   await ref
                       .watch(transactionProvider.notifier)
                       .fetchMonthlyTransactions(
                         groupId,
                         convertMonthToDateTime(months[selectedIndex]),
-                        profileId,
                       );
                 }
                 setState(() {
@@ -353,17 +357,18 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
   Widget _buildIndicator() {
     return RefreshIndicator(
       onRefresh: () async {
-        final auth = ref.watch(authProvider);
-        final profileId = auth.profile?.id;
-        final groupId = auth.profile?.groupId;
+        final profileId = ref.profileId;
+        final groupId = ref.groupId;
         if (profileId != null && groupId != null) {
+          ref.invalidate(transactionProvider);
           await ref
               .watch(transactionProvider.notifier)
               .fetchMonthlyTransactions(
                 groupId,
                 convertMonthToDateTime(months[selectedIndex]),
-                profileId,
               );
+          ref.transactionNotifier.groupByVisibility(profileId);
+          ref.transactionNotifier.calculateCurrentTotals();
         }
       },
       child: transactions.isEmpty
@@ -393,17 +398,17 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
                       ),
                     );
                     if (response == true) {
-                      final auth = ref.watch(authProvider);
-                      final profileId = auth.profile?.id;
-                      final groupId = auth.profile?.groupId;
+                      final profileId = ref.profileId;
+                      final groupId = ref.groupId;
                       if (profileId != null && groupId != null) {
                         await ref
                             .watch(transactionProvider.notifier)
                             .fetchMonthlyTransactions(
                               groupId,
                               convertMonthToDateTime(months[selectedIndex]),
-                              profileId,
                             );
+                        ref.transactionNotifier.groupByVisibility(profileId);
+                        ref.transactionNotifier.calculateCurrentTotals();
                       }
                     }
                   },
@@ -521,10 +526,9 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
 
   @override
   Widget build(BuildContext context) {
-    final transactionNotifier = ref.watch(transactionProvider.notifier);
-    final transactionState = ref.watch(transactionProvider);
-    final profileId = ref.watch(authProvider).profile?.id;
-    final groupId = ref.watch(authProvider).profile?.groupId;
+    final transactionState = ref.transactionState;
+    final profileId = ref.profileId;
+    final groupId = ref.groupId;
     final isLoading = transactionState.isLoading;
 
     transactions = sharedPrivateType == 'shared'
@@ -560,12 +564,13 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
                   selectedIndex = index;
                 });
                 // 選択された月のデータを取得する
-                Future.delayed(Duration(milliseconds: 100), () {
-                  transactionNotifier.fetchMonthlyTransactions(
+                Future.delayed(Duration(milliseconds: 100), () async {
+                  await ref.transactionNotifier.fetchMonthlyTransactions(
                     groupId,
                     convertMonthToDateTime(months[selectedIndex]),
-                    profileId,
                   );
+                  ref.transactionNotifier.groupByVisibility(profileId);
+                  ref.transactionNotifier.calculateCurrentTotals();
                 });
               },
               itemCount: months.length,

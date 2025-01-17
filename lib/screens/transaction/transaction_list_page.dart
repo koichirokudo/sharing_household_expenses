@@ -49,9 +49,9 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
       if (groupId != null && profileId != null) {
         await ref.transactionNotifier.fetchMonthlyTransactions(
           groupId,
+          profileId,
           DateTime.now(),
         );
-        ref.transactionNotifier.groupByVisibility(profileId);
         ref.transactionNotifier.calculateCurrentTotals();
         ref.transactionNotifier.generateMonths();
       }
@@ -323,6 +323,7 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
                       .watch(transactionProvider.notifier)
                       .fetchMonthlyTransactions(
                         groupId,
+                        profileId,
                         convertMonthToDateTime(months[selectedIndex]),
                       );
                 }
@@ -367,9 +368,9 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
               .watch(transactionProvider.notifier)
               .fetchMonthlyTransactions(
                 groupId,
+                profileId,
                 convertMonthToDateTime(months[selectedIndex]),
               );
-          ref.transactionNotifier.groupByVisibility(profileId);
           ref.transactionNotifier.calculateCurrentTotals();
         }
       },
@@ -407,9 +408,9 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
                             .watch(transactionProvider.notifier)
                             .fetchMonthlyTransactions(
                               groupId,
+                              profileId,
                               convertMonthToDateTime(months[selectedIndex]),
                             );
-                        ref.transactionNotifier.groupByVisibility(profileId);
                         ref.transactionNotifier.calculateCurrentTotals();
                       }
                     }
@@ -569,9 +570,9 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
                 Future.delayed(Duration(milliseconds: 100), () async {
                   await ref.transactionNotifier.fetchMonthlyTransactions(
                     groupId,
+                    profileId,
                     convertMonthToDateTime(months[selectedIndex]),
                   );
-                  ref.transactionNotifier.groupByVisibility(profileId);
                   ref.transactionNotifier.calculateCurrentTotals();
                 });
               },

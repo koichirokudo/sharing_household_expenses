@@ -35,17 +35,19 @@ class HomePageState extends ConsumerState<HomePage> {
       if (profileId != null && groupId != null) {
         await ref.transactionNotifier.fetchMonthlyTransactions(
           groupId,
+          profileId,
           DateTime.now(),
         );
-        ref.transactionNotifier.groupByVisibility(profileId);
         ref.transactionNotifier.calculateCurrentTotals();
         await ref.transactionNotifier.fetchPrevMonthlyTransactions(
           groupId,
+          profileId,
           ref.utilNotifier.getPrevMonth(),
         );
         ref.transactionNotifier.calculatePrevMonthTotals();
         await ref.transactionNotifier.fetchPrevYearlyTransactions(
           groupId,
+          profileId,
           ref.utilNotifier.getPrevYear(),
         );
         ref.transactionNotifier.calculatePrevYearTotals();

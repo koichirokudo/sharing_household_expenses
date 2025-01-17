@@ -20,10 +20,14 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
           TransactionState(
             isLoading: false,
             transactions: [],
-            prevMonthTransactions: [],
-            prevYearTransactions: [],
             sharedTransactions: [],
             privateTransactions: [],
+            prevMonthTransactions: [],
+            sharedPrevMonthTransactions: [],
+            privatePrevMonthTransactions: [],
+            prevYearTransactions: [],
+            sharedPrevYearTransactions: [],
+            privatePrevYearTransactions: [],
             sharedCurrentTotals: {
               TransactionType.income: 0.0,
               TransactionType.expense: 0.0
@@ -52,11 +56,28 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
           ),
         );
 
-  Future<void> fetchMonthlyTransactions(String groupId, DateTime date) async {
+  Future<void> fetchMonthlyTransactions(
+      String groupId, String profileId, DateTime date) async {
     state = state.copyWith(isLoading: true);
     try {
       final transactions = await repository.fetchMonthlyByGroup(groupId, date);
       state = state.copyWith(transactions: transactions);
+
+      final sharedData = transactions.where((transaction) {
+        if (transaction.share == true) {
+          return true;
+        }
+        return false;
+      }).toList();
+      state = state.copyWith(sharedTransactions: sharedData);
+
+      final privateData = transactions.where((transaction) {
+        if (transaction.share == false && transaction.profileId == profileId) {
+          return true;
+        }
+        return false;
+      }).toList();
+      state = state.copyWith(privateTransactions: privateData);
     } catch (e) {
       throw Exception('Failed to fetch monthly transactions: $e');
     } finally {
@@ -65,11 +86,27 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
   }
 
   Future<void> fetchPrevMonthlyTransactions(
-      String groupId, DateTime date) async {
+      String groupId, String profileId, DateTime date) async {
     state = state.copyWith(isLoading: true);
     try {
       final transactions = await repository.fetchMonthlyByGroup(groupId, date);
       state = state.copyWith(prevMonthTransactions: transactions);
+
+      final sharedData = transactions.where((transaction) {
+        if (transaction.share == true) {
+          return true;
+        }
+        return false;
+      }).toList();
+      state = state.copyWith(sharedPrevMonthTransactions: sharedData);
+
+      final privateData = transactions.where((transaction) {
+        if (transaction.share == false && transaction.profileId == profileId) {
+          return true;
+        }
+        return false;
+      }).toList();
+      state = state.copyWith(privatePrevMonthTransactions: privateData);
     } catch (e) {
       throw Exception('Failed to fetch prev monthly transactions: $e');
     } finally {
@@ -78,11 +115,27 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
   }
 
   Future<void> fetchPrevYearlyTransactions(
-      String groupId, DateTime date) async {
+      String groupId, String profileId, DateTime date) async {
     state = state.copyWith(isLoading: true);
     try {
       final transactions = await repository.fetchMonthlyByGroup(groupId, date);
       state = state.copyWith(prevYearTransactions: transactions);
+
+      final sharedData = transactions.where((transaction) {
+        if (transaction.share == true) {
+          return true;
+        }
+        return false;
+      }).toList();
+      state = state.copyWith(sharedPrevYearTransactions: sharedData);
+
+      final privateData = transactions.where((transaction) {
+        if (transaction.share == false && transaction.profileId == profileId) {
+          return true;
+        }
+        return false;
+      }).toList();
+      state = state.copyWith(privatePrevYearTransactions: privateData);
     } catch (e) {
       throw Exception('Failed to fetch prev monthly transactions: $e');
     } finally {
@@ -194,14 +247,15 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
     };
 
     // 今月の共有データ
-    for (var transaction in state.transactions) {
-      if (transaction.share == true) {
-        sharedCurrentTotals[transaction.type] =
-            (sharedCurrentTotals[transaction.type] ?? 0) + transaction.amount;
-      } else {
-        privateCurrentTotals[transaction.type] =
-            (privateCurrentTotals[transaction.type] ?? 0) + transaction.amount;
-      }
+    for (var transaction in state.sharedTransactions) {
+      sharedCurrentTotals[transaction.type] =
+          (sharedCurrentTotals[transaction.type] ?? 0) + transaction.amount;
+    }
+
+    // 今月の個人データ
+    for (var transaction in state.privateTransactions) {
+      privateCurrentTotals[transaction.type] =
+          (privateCurrentTotals[transaction.type] ?? 0) + transaction.amount;
     }
 
     state = state.copyWith(
@@ -210,6 +264,7 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
     );
   }
 
+  // 前月のグループと個人の収支の合計額を計算
   void calculatePrevMonthTotals() {
     final sharedPrevMonthTotals = {
       TransactionType.income: 0.0,
@@ -221,22 +276,24 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
     };
 
     // 前月の共有データ
-    for (var transaction in state.prevMonthTransactions) {
-      if (transaction.share == true) {
-        sharedPrevMonthTotals[transaction.type] =
-            (sharedPrevMonthTotals[transaction.type] ?? 0) + transaction.amount;
-      } else {
-        privatePrevMonthTotals[transaction.type] =
-            (privatePrevMonthTotals[transaction.type] ?? 0) +
-                transaction.amount;
-      }
+    for (var transaction in state.sharedPrevMonthTransactions) {
+      sharedPrevMonthTotals[transaction.type] =
+          (sharedPrevMonthTotals[transaction.type] ?? 0) + transaction.amount;
     }
+
+    // 前月の個人データ
+    for (var transaction in state.privatePrevMonthTransactions) {
+      privatePrevMonthTotals[transaction.type] =
+          (privatePrevMonthTotals[transaction.type] ?? 0) + transaction.amount;
+    }
+
     state = state.copyWith(
       sharedPrevMonthTotals: sharedPrevMonthTotals,
       privatePrevMonthTotals: privatePrevMonthTotals,
     );
   }
 
+  // 前年の同じ月のグループと個人の収支の合計額を計算
   void calculatePrevYearTotals() {
     final sharedPrevYearTotals = {
       TransactionType.income: 0.0,
@@ -247,39 +304,22 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
       TransactionType.expense: 0.0,
     };
 
-    // 前年の共有データ
-    for (var transaction in state.prevYearTransactions) {
-      if (transaction.share == true) {
-        sharedPrevYearTotals[transaction.type] =
-            (sharedPrevYearTotals[transaction.type] ?? 0) + transaction.amount;
-      } else {
-        privatePrevYearTotals[transaction.type] =
-            (privatePrevYearTotals[transaction.type] ?? 0) + transaction.amount;
-      }
+    // 前年の同じ月の共有データ
+    for (var transaction in state.sharedPrevYearTransactions) {
+      sharedPrevYearTotals[transaction.type] =
+          (sharedPrevYearTotals[transaction.type] ?? 0) + transaction.amount;
     }
+
+    // 前年の同じ月の個人データ
+    for (var transaction in state.privatePrevYearTransactions) {
+      privatePrevYearTotals[transaction.type] =
+          (privatePrevYearTotals[transaction.type] ?? 0) + transaction.amount;
+    }
+
     state = state.copyWith(
       sharedPrevYearTotals: sharedPrevYearTotals,
       privatePrevYearTotals: privatePrevYearTotals,
     );
-  }
-
-  void groupByVisibility(profileId) {
-    final transactions = state.transactions;
-    final sharedData = transactions.where((transaction) {
-      if (transaction.share == true) {
-        return true;
-      }
-      return false;
-    }).toList();
-    state = state.copyWith(sharedTransactions: sharedData);
-
-    final privateData = transactions.where((transaction) {
-      if (transaction.share == false && transaction.profileId == profileId) {
-        return true;
-      }
-      return false;
-    }).toList();
-    state = state.copyWith(privateTransactions: privateData);
   }
 
   // 現在の月から過去１年分(現在の月を含めた13ヶ月分)の月を取得する

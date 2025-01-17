@@ -13,10 +13,13 @@ class UserGroupNotifier extends StateNotifier<UserGroupState> {
   final UserGroupRepository repository;
 
   UserGroupNotifier(this.repository)
-      : super(UserGroupState(
-          inviteCode: null,
-          group: null,
-        ));
+      : super(
+          UserGroupState(
+            isLoading: false,
+            inviteCode: null,
+            group: null,
+          ),
+        );
 
   Future<void> generateInviteCode() async {
     try {
@@ -27,6 +30,33 @@ class UserGroupNotifier extends StateNotifier<UserGroupState> {
     } catch (e) {
       throw Exception(
           'Failed to generate invite code: ${e.runtimeType} - ${e.toString()}');
+    }
+  }
+
+  Future<void> fetchGroup(String groupId) async {
+    state = state.copyWith(isLoading: true);
+    try {
+      final response = await repository.fetchGroup(groupId);
+      state = state.copyWith(group: response);
+    } catch (e) {
+      throw Exception(
+          'Failed to fetch group: ${e.runtimeType} - ${e.toString()}');
+    } finally {
+      state = state.copyWith(isLoading: false);
+    }
+  }
+
+  Future<void> updateGroup(String groupId, Map<String, dynamic> data) async {
+    state = state.copyWith(isLoading: true);
+    try {
+      final response = await repository.updateGroup(groupId, data);
+
+      state = state.copyWith(group: response);
+    } catch (e) {
+      throw Exception(
+          'Failed to update group:  ${e.runtimeType} - ${e.toString()}');
+    } finally {
+      state = state.copyWith(isLoading: false);
     }
   }
 

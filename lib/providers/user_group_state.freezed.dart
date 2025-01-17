@@ -16,8 +16,11 @@ final _privateConstructorUsedError = UnsupportedError(
 
 /// @nodoc
 mixin _$UserGroupState {
+  bool get isLoading => throw _privateConstructorUsedError;
+
   String? get inviteCode => throw _privateConstructorUsedError;
-  Map<String, dynamic>? get group => throw _privateConstructorUsedError;
+
+  UserGroup? get group => throw _privateConstructorUsedError;
 
   /// Create a copy of UserGroupState
   /// with the given fields replaced by the non-null parameter values.
@@ -31,8 +34,9 @@ abstract class $UserGroupStateCopyWith<$Res> {
   factory $UserGroupStateCopyWith(
           UserGroupState value, $Res Function(UserGroupState) then) =
       _$UserGroupStateCopyWithImpl<$Res, UserGroupState>;
+
   @useResult
-  $Res call({String? inviteCode, Map<String, dynamic>? group});
+  $Res call({bool isLoading, String? inviteCode, UserGroup? group});
 }
 
 /// @nodoc
@@ -42,6 +46,7 @@ class _$UserGroupStateCopyWithImpl<$Res, $Val extends UserGroupState>
 
   // ignore: unused_field
   final $Val _value;
+
   // ignore: unused_field
   final $Res Function($Val) _then;
 
@@ -50,10 +55,15 @@ class _$UserGroupStateCopyWithImpl<$Res, $Val extends UserGroupState>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? isLoading = null,
     Object? inviteCode = freezed,
     Object? group = freezed,
   }) {
     return _then(_value.copyWith(
+      isLoading: null == isLoading
+          ? _value.isLoading
+          : isLoading // ignore: cast_nullable_to_non_nullable
+              as bool,
       inviteCode: freezed == inviteCode
           ? _value.inviteCode
           : inviteCode // ignore: cast_nullable_to_non_nullable
@@ -61,7 +71,7 @@ class _$UserGroupStateCopyWithImpl<$Res, $Val extends UserGroupState>
       group: freezed == group
           ? _value.group
           : group // ignore: cast_nullable_to_non_nullable
-              as Map<String, dynamic>?,
+              as UserGroup?,
     ) as $Val);
   }
 }
@@ -72,9 +82,10 @@ abstract class _$$UserGroupStateImplCopyWith<$Res>
   factory _$$UserGroupStateImplCopyWith(_$UserGroupStateImpl value,
           $Res Function(_$UserGroupStateImpl) then) =
       __$$UserGroupStateImplCopyWithImpl<$Res>;
+
   @override
   @useResult
-  $Res call({String? inviteCode, Map<String, dynamic>? group});
+  $Res call({bool isLoading, String? inviteCode, UserGroup? group});
 }
 
 /// @nodoc
@@ -90,18 +101,23 @@ class __$$UserGroupStateImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
+    Object? isLoading = null,
     Object? inviteCode = freezed,
     Object? group = freezed,
   }) {
     return _then(_$UserGroupStateImpl(
+      isLoading: null == isLoading
+          ? _value.isLoading
+          : isLoading // ignore: cast_nullable_to_non_nullable
+              as bool,
       inviteCode: freezed == inviteCode
           ? _value.inviteCode
           : inviteCode // ignore: cast_nullable_to_non_nullable
               as String?,
       group: freezed == group
-          ? _value._group
+          ? _value.group
           : group // ignore: cast_nullable_to_non_nullable
-              as Map<String, dynamic>?,
+              as UserGroup?,
     ));
   }
 }
@@ -110,24 +126,18 @@ class __$$UserGroupStateImplCopyWithImpl<$Res>
 
 class _$UserGroupStateImpl implements _UserGroupState {
   _$UserGroupStateImpl(
-      {required this.inviteCode, required final Map<String, dynamic>? group})
-      : _group = group;
+      {required this.isLoading, required this.inviteCode, required this.group});
 
   @override
-  final String? inviteCode;
-  final Map<String, dynamic>? _group;
+  final bool isLoading;
   @override
-  Map<String, dynamic>? get group {
-    final value = _group;
-    if (value == null) return null;
-    if (_group is EqualUnmodifiableMapView) return _group;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableMapView(value);
-  }
+  final String? inviteCode;
+  @override
+  final UserGroup? group;
 
   @override
   String toString() {
-    return 'UserGroupState(inviteCode: $inviteCode, group: $group)';
+    return 'UserGroupState(isLoading: $isLoading, inviteCode: $inviteCode, group: $group)';
   }
 
   @override
@@ -135,14 +145,15 @@ class _$UserGroupStateImpl implements _UserGroupState {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$UserGroupStateImpl &&
+            (identical(other.isLoading, isLoading) ||
+                other.isLoading == isLoading) &&
             (identical(other.inviteCode, inviteCode) ||
                 other.inviteCode == inviteCode) &&
-            const DeepCollectionEquality().equals(other._group, _group));
+            (identical(other.group, group) || other.group == group));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType, inviteCode, const DeepCollectionEquality().hash(_group));
+  int get hashCode => Object.hash(runtimeType, isLoading, inviteCode, group);
 
   /// Create a copy of UserGroupState
   /// with the given fields replaced by the non-null parameter values.
@@ -156,13 +167,18 @@ class _$UserGroupStateImpl implements _UserGroupState {
 
 abstract class _UserGroupState implements UserGroupState {
   factory _UserGroupState(
-      {required final String? inviteCode,
-      required final Map<String, dynamic>? group}) = _$UserGroupStateImpl;
+      {required final bool isLoading,
+      required final String? inviteCode,
+      required final UserGroup? group}) = _$UserGroupStateImpl;
+
+  @override
+  bool get isLoading;
 
   @override
   String? get inviteCode;
+
   @override
-  Map<String, dynamic>? get group;
+  UserGroup? get group;
 
   /// Create a copy of UserGroupState
   /// with the given fields replaced by the non-null parameter values.

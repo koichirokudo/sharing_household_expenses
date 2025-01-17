@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sharing_household_expenses/providers/auth_provider.dart';
+import 'package:sharing_household_expenses/screens/group/group_edit_page.dart';
 import 'package:sharing_household_expenses/screens/group/group_invite_page.dart';
 import 'package:sharing_household_expenses/screens/policy/privacy_policy_page.dart';
 import 'package:sharing_household_expenses/screens/policy/terms_of_service_page.dart';
@@ -40,8 +41,11 @@ class UserPageState extends ConsumerState {
                   minimumSize: Size(400, 50),
                 ),
                 onPressed: () {
-                  Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => const ProfileEditPage()));
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const ProfileEditPage(),
+                    ),
+                  );
                 },
                 child: const Text('プロフィール変更'),
               ),
@@ -55,8 +59,11 @@ class UserPageState extends ConsumerState {
                   minimumSize: Size(400, 50),
                 ),
                 onPressed: () {
-                  Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => const EmailChangePage()));
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const EmailChangePage(),
+                    ),
+                  );
                 },
                 child: const Text('メールアドレス変更'),
               ),
@@ -70,8 +77,11 @@ class UserPageState extends ConsumerState {
                   minimumSize: Size(400, 50),
                 ),
                 onPressed: () {
-                  Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => const PasswordResetPage()));
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const PasswordResetPage(),
+                    ),
+                  );
                 },
                 child: const Text('パスワード変更'),
               ),
@@ -85,8 +95,29 @@ class UserPageState extends ConsumerState {
                   minimumSize: Size(400, 50),
                 ),
                 onPressed: () {
-                  Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => const GroupInvitePage()));
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const GroupEditPage(),
+                    ),
+                  );
+                },
+                child: const Text('グループ名変更'),
+              ),
+              const SizedBox(height: 16.0),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  fixedSize: const Size(400, double.infinity),
+                  minimumSize: Size(400, 50),
+                ),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const GroupInvitePage(),
+                    ),
+                  );
                 },
                 child: const Text('グループ招待'),
               ),
@@ -100,8 +131,11 @@ class UserPageState extends ConsumerState {
                   minimumSize: Size(400, 50),
                 ),
                 onPressed: () {
-                  Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => const TermsOfServicePage()));
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const TermsOfServicePage(),
+                    ),
+                  );
                 },
                 child: const Text('利用規約'),
               ),
@@ -115,8 +149,11 @@ class UserPageState extends ConsumerState {
                   minimumSize: Size(400, 50),
                 ),
                 onPressed: () {
-                  Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => const PrivacyPolicyPage()));
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const PrivacyPolicyPage(),
+                    ),
+                  );
                 },
                 child: const Text('プライバシーポリシー'),
               ),
@@ -130,8 +167,11 @@ class UserPageState extends ConsumerState {
                   minimumSize: Size(400, 50),
                 ),
                 onPressed: () {
-                  Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => const AccountDeletePage()));
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const AccountDeletePage(),
+                    ),
+                  );
                 },
                 child: const Text('アカウント削除'),
               ),
@@ -148,7 +188,8 @@ class UserPageState extends ConsumerState {
                   ref.watch(authProvider.notifier).signOut();
                   Navigator.of(context).pushAndRemoveUntil(
                       MaterialPageRoute(
-                          builder: (context) => const SignInPage()),
+                        builder: (context) => const SignInPage(),
+                      ),
                       (route) => false);
                 },
                 child: const Text('ログアウト'),

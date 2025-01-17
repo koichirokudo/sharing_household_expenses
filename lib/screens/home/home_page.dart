@@ -31,6 +31,7 @@ class HomePageState extends ConsumerState<HomePage> {
         _isLoading = true;
       });
       await ref.authNotifier.fetchProfile();
+      await ref.authNotifier.fetchProfiles();
       final profileId = ref.profileId;
       final groupId = ref.groupId;
       if (profileId != null && groupId != null) {
@@ -100,19 +101,52 @@ class HomePageState extends ConsumerState<HomePage> {
   }
 
   Widget _buildTitleRow(bool isGroup) {
+    final profile = ref.authState.profile;
+    final profiles = ref.authState.profiles;
+    final avatarUrl = profile?.avatarUrl;
+    final username = profile?.username;
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          Icon(
-            isGroup ? Icons.group : Icons.account_circle,
-            color: Colors.blue,
-            size: 32,
-          ),
-          const SizedBox(width: 16),
+          if (isGroup) ...[
+            ...?profiles?.map((item) {
+              return Container(
+                width: 32,
+                height: 32,
+                margin: const EdgeInsets.only(right: 4.0),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  image: DecorationImage(
+                    fit: BoxFit.fill,
+                    image: item.avatarUrl != null
+                        ? NetworkImage(item.avatarUrl.toString())
+                        : AssetImage('assets/icons/user_icon.png'),
+                  ),
+                ),
+              );
+            }),
+          ] else ...[
+            Container(
+              width: 32,
+              height: 32,
+              margin: const EdgeInsets.only(right: 4.0),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                image: DecorationImage(
+                  fit: BoxFit.fill,
+                  image: avatarUrl != null
+                      ? NetworkImage(avatarUrl.toString())
+                      : AssetImage('assets/icons/user_icon.png'),
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(width: 8),
           Text(
-            isGroup ? 'グループ' : '個人',
+            isGroup ? 'グループ' : (username ?? '個人'),
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,

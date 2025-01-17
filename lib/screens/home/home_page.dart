@@ -6,7 +6,6 @@ import 'package:sharing_household_expenses/extensions/provider_ref_extensions.da
 import 'package:sharing_household_expenses/providers/auth_provider.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
 
-import '../../models/profile.dart';
 import '../../providers/auth_state.dart';
 import '../group/first_group_invite_page.dart';
 import '../profile/user_page.dart';
@@ -20,7 +19,6 @@ class HomePage extends ConsumerStatefulWidget {
 
 class HomePageState extends ConsumerState<HomePage> {
   bool _isLoading = false;
-  late Profile profile;
   late AuthState auth;
 
   @override

@@ -41,6 +41,8 @@ class TransactionListPageState extends ConsumerState<TransactionListPage> {
 
   Future<void> _initializeData() async {
     try {
+      await ref.authNotifier.fetchProfile();
+      profile = ref.authState.profile!;
       final groupId = ref.authState.profile?.groupId;
       final profileId = ref.authState.profile?.id;
       // トランザクションデータを取得

@@ -17,9 +17,7 @@ final _privateConstructorUsedError = UnsupportedError(
 /// @nodoc
 mixin _$UserGroupState {
   bool get isLoading => throw _privateConstructorUsedError;
-
   String? get inviteCode => throw _privateConstructorUsedError;
-
   UserGroup? get group => throw _privateConstructorUsedError;
 
   /// Create a copy of UserGroupState
@@ -34,7 +32,6 @@ abstract class $UserGroupStateCopyWith<$Res> {
   factory $UserGroupStateCopyWith(
           UserGroupState value, $Res Function(UserGroupState) then) =
       _$UserGroupStateCopyWithImpl<$Res, UserGroupState>;
-
   @useResult
   $Res call({bool isLoading, String? inviteCode, UserGroup? group});
 }
@@ -46,7 +43,6 @@ class _$UserGroupStateCopyWithImpl<$Res, $Val extends UserGroupState>
 
   // ignore: unused_field
   final $Val _value;
-
   // ignore: unused_field
   final $Res Function($Val) _then;
 
@@ -82,7 +78,6 @@ abstract class _$$UserGroupStateImplCopyWith<$Res>
   factory _$$UserGroupStateImplCopyWith(_$UserGroupStateImpl value,
           $Res Function(_$UserGroupStateImpl) then) =
       __$$UserGroupStateImplCopyWithImpl<$Res>;
-
   @override
   @useResult
   $Res call({bool isLoading, String? inviteCode, UserGroup? group});
@@ -173,10 +168,8 @@ abstract class _UserGroupState implements UserGroupState {
 
   @override
   bool get isLoading;
-
   @override
   String? get inviteCode;
-
   @override
   UserGroup? get group;
 

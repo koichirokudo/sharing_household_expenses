@@ -52,6 +52,10 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
               TransactionType.income: 0.0,
               TransactionType.expense: 0.0
             },
+            sharedExpenseSections: {},
+            sharedIncomeSections: {},
+            privateExpenseSections: {},
+            privateIncomeSections: {},
             months: [],
           ),
         );
@@ -322,6 +326,46 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
     );
   }
 
+  void generateBarChartData(profileId) {
+    Map<String, double> sharedExpenseSections = {};
+    Map<String, double> sharedIncomeSections = {};
+    Map<String, double> privateExpenseSections = {};
+    Map<String, double> privateIncomeSections = {};
+
+    for (var transaction in state.transactions) {
+      final categoryName = transaction.category?.name;
+      if (categoryName == null) {
+        return;
+      }
+
+      if (transaction.type == TransactionType.expense && transaction.share) {
+        sharedExpenseSections[categoryName] =
+            (sharedExpenseSections[categoryName] ?? 0) + transaction.amount;
+      } else if (transaction.type == TransactionType.expense &&
+          !transaction.share &&
+          transaction.profileId == profileId) {
+        privateExpenseSections[categoryName] =
+            (privateExpenseSections[categoryName] ?? 0) + transaction.amount;
+      } else if (transaction.type == TransactionType.income &&
+          transaction.share) {
+        sharedIncomeSections[categoryName] =
+            (sharedIncomeSections[categoryName] ?? 0) + transaction.amount;
+      } else if (transaction.type == TransactionType.income &&
+          !transaction.share &&
+          transaction.profileId == profileId) {
+        privateIncomeSections[categoryName] =
+            (privateIncomeSections[categoryName] ?? 0) + transaction.amount;
+      }
+    }
+
+    state = state.copyWith(
+      sharedExpenseSections: sortByDesc(sharedExpenseSections),
+      sharedIncomeSections: sortByDesc(sharedIncomeSections),
+      privateExpenseSections: sortByDesc(privateExpenseSections),
+      privateIncomeSections: sortByDesc(privateIncomeSections),
+    );
+  }
+
   // 現在の月から過去１年分(現在の月を含めた13ヶ月分)の月を取得する
   void generateMonths() {
     final currentMonth = DateTime.now();
@@ -331,5 +375,11 @@ class TransactionNotifier extends StateNotifier<TransactionState> {
       return DateFormat('yyyy/MM').format(month);
     });
     state = state.copyWith(months: months.reversed.toList());
+  }
+
+  Map<String, double> sortByDesc(Map<String, double> data) {
+    final sortedEntries = data.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    return Map.fromEntries(sortedEntries);
   }
 }

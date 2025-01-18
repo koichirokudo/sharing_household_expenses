@@ -62,6 +62,18 @@ mixin _$TransactionState {
   Map<TransactionType, double> get privatePrevYearTotals =>
       throw _privateConstructorUsedError;
 
+  Map<String, double> get sharedIncomeSections =>
+      throw _privateConstructorUsedError;
+
+  Map<String, double> get sharedExpenseSections =>
+      throw _privateConstructorUsedError;
+
+  Map<String, double> get privateIncomeSections =>
+      throw _privateConstructorUsedError;
+
+  Map<String, double> get privateExpenseSections =>
+      throw _privateConstructorUsedError;
+
   List<String> get months => throw _privateConstructorUsedError;
 
   /// Create a copy of TransactionState
@@ -95,6 +107,10 @@ abstract class $TransactionStateCopyWith<$Res> {
       Map<TransactionType, double> privatePrevMonthTotals,
       Map<TransactionType, double> sharedPrevYearTotals,
       Map<TransactionType, double> privatePrevYearTotals,
+      Map<String, double> sharedIncomeSections,
+      Map<String, double> sharedExpenseSections,
+      Map<String, double> privateIncomeSections,
+      Map<String, double> privateExpenseSections,
       List<String> months});
 }
 
@@ -130,6 +146,10 @@ class _$TransactionStateCopyWithImpl<$Res, $Val extends TransactionState>
     Object? privatePrevMonthTotals = null,
     Object? sharedPrevYearTotals = null,
     Object? privatePrevYearTotals = null,
+    Object? sharedIncomeSections = null,
+    Object? sharedExpenseSections = null,
+    Object? privateIncomeSections = null,
+    Object? privateExpenseSections = null,
     Object? months = null,
   }) {
     return _then(_value.copyWith(
@@ -197,6 +217,22 @@ class _$TransactionStateCopyWithImpl<$Res, $Val extends TransactionState>
           ? _value.privatePrevYearTotals
           : privatePrevYearTotals // ignore: cast_nullable_to_non_nullable
               as Map<TransactionType, double>,
+      sharedIncomeSections: null == sharedIncomeSections
+          ? _value.sharedIncomeSections
+          : sharedIncomeSections // ignore: cast_nullable_to_non_nullable
+              as Map<String, double>,
+      sharedExpenseSections: null == sharedExpenseSections
+          ? _value.sharedExpenseSections
+          : sharedExpenseSections // ignore: cast_nullable_to_non_nullable
+              as Map<String, double>,
+      privateIncomeSections: null == privateIncomeSections
+          ? _value.privateIncomeSections
+          : privateIncomeSections // ignore: cast_nullable_to_non_nullable
+              as Map<String, double>,
+      privateExpenseSections: null == privateExpenseSections
+          ? _value.privateExpenseSections
+          : privateExpenseSections // ignore: cast_nullable_to_non_nullable
+              as Map<String, double>,
       months: null == months
           ? _value.months
           : months // ignore: cast_nullable_to_non_nullable
@@ -231,6 +267,10 @@ abstract class _$$TransactionStateImplCopyWith<$Res>
       Map<TransactionType, double> privatePrevMonthTotals,
       Map<TransactionType, double> sharedPrevYearTotals,
       Map<TransactionType, double> privatePrevYearTotals,
+      Map<String, double> sharedIncomeSections,
+      Map<String, double> sharedExpenseSections,
+      Map<String, double> privateIncomeSections,
+      Map<String, double> privateExpenseSections,
       List<String> months});
 }
 
@@ -263,6 +303,10 @@ class __$$TransactionStateImplCopyWithImpl<$Res>
     Object? privatePrevMonthTotals = null,
     Object? sharedPrevYearTotals = null,
     Object? privatePrevYearTotals = null,
+    Object? sharedIncomeSections = null,
+    Object? sharedExpenseSections = null,
+    Object? privateIncomeSections = null,
+    Object? privateExpenseSections = null,
     Object? months = null,
   }) {
     return _then(_$TransactionStateImpl(
@@ -330,6 +374,22 @@ class __$$TransactionStateImplCopyWithImpl<$Res>
           ? _value._privatePrevYearTotals
           : privatePrevYearTotals // ignore: cast_nullable_to_non_nullable
               as Map<TransactionType, double>,
+      sharedIncomeSections: null == sharedIncomeSections
+          ? _value._sharedIncomeSections
+          : sharedIncomeSections // ignore: cast_nullable_to_non_nullable
+              as Map<String, double>,
+      sharedExpenseSections: null == sharedExpenseSections
+          ? _value._sharedExpenseSections
+          : sharedExpenseSections // ignore: cast_nullable_to_non_nullable
+              as Map<String, double>,
+      privateIncomeSections: null == privateIncomeSections
+          ? _value._privateIncomeSections
+          : privateIncomeSections // ignore: cast_nullable_to_non_nullable
+              as Map<String, double>,
+      privateExpenseSections: null == privateExpenseSections
+          ? _value._privateExpenseSections
+          : privateExpenseSections // ignore: cast_nullable_to_non_nullable
+              as Map<String, double>,
       months: null == months
           ? _value._months
           : months // ignore: cast_nullable_to_non_nullable
@@ -358,6 +418,10 @@ class _$TransactionStateImpl implements _TransactionState {
       required final Map<TransactionType, double> privatePrevMonthTotals,
       required final Map<TransactionType, double> sharedPrevYearTotals,
       required final Map<TransactionType, double> privatePrevYearTotals,
+      required final Map<String, double> sharedIncomeSections,
+      required final Map<String, double> sharedExpenseSections,
+      required final Map<String, double> privateIncomeSections,
+      required final Map<String, double> privateExpenseSections,
       required final List<String> months})
       : _transactions = transactions,
         _sharedTransactions = sharedTransactions,
@@ -374,6 +438,10 @@ class _$TransactionStateImpl implements _TransactionState {
         _privatePrevMonthTotals = privatePrevMonthTotals,
         _sharedPrevYearTotals = sharedPrevYearTotals,
         _privatePrevYearTotals = privatePrevYearTotals,
+        _sharedIncomeSections = sharedIncomeSections,
+        _sharedExpenseSections = sharedExpenseSections,
+        _privateIncomeSections = privateIncomeSections,
+        _privateExpenseSections = privateExpenseSections,
         _months = months;
 
   @override
@@ -527,6 +595,46 @@ class _$TransactionStateImpl implements _TransactionState {
     return EqualUnmodifiableMapView(_privatePrevYearTotals);
   }
 
+  final Map<String, double> _sharedIncomeSections;
+
+  @override
+  Map<String, double> get sharedIncomeSections {
+    if (_sharedIncomeSections is EqualUnmodifiableMapView)
+      return _sharedIncomeSections;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_sharedIncomeSections);
+  }
+
+  final Map<String, double> _sharedExpenseSections;
+
+  @override
+  Map<String, double> get sharedExpenseSections {
+    if (_sharedExpenseSections is EqualUnmodifiableMapView)
+      return _sharedExpenseSections;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_sharedExpenseSections);
+  }
+
+  final Map<String, double> _privateIncomeSections;
+
+  @override
+  Map<String, double> get privateIncomeSections {
+    if (_privateIncomeSections is EqualUnmodifiableMapView)
+      return _privateIncomeSections;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_privateIncomeSections);
+  }
+
+  final Map<String, double> _privateExpenseSections;
+
+  @override
+  Map<String, double> get privateExpenseSections {
+    if (_privateExpenseSections is EqualUnmodifiableMapView)
+      return _privateExpenseSections;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(_privateExpenseSections);
+  }
+
   final List<String> _months;
 
   @override
@@ -538,7 +646,7 @@ class _$TransactionStateImpl implements _TransactionState {
 
   @override
   String toString() {
-    return 'TransactionState(isLoading: $isLoading, transactions: $transactions, sharedTransactions: $sharedTransactions, privateTransactions: $privateTransactions, prevMonthTransactions: $prevMonthTransactions, sharedPrevMonthTransactions: $sharedPrevMonthTransactions, privatePrevMonthTransactions: $privatePrevMonthTransactions, prevYearTransactions: $prevYearTransactions, sharedPrevYearTransactions: $sharedPrevYearTransactions, privatePrevYearTransactions: $privatePrevYearTransactions, sharedCurrentTotals: $sharedCurrentTotals, privateCurrentTotals: $privateCurrentTotals, sharedPrevMonthTotals: $sharedPrevMonthTotals, privatePrevMonthTotals: $privatePrevMonthTotals, sharedPrevYearTotals: $sharedPrevYearTotals, privatePrevYearTotals: $privatePrevYearTotals, months: $months)';
+    return 'TransactionState(isLoading: $isLoading, transactions: $transactions, sharedTransactions: $sharedTransactions, privateTransactions: $privateTransactions, prevMonthTransactions: $prevMonthTransactions, sharedPrevMonthTransactions: $sharedPrevMonthTransactions, privatePrevMonthTransactions: $privatePrevMonthTransactions, prevYearTransactions: $prevYearTransactions, sharedPrevYearTransactions: $sharedPrevYearTransactions, privatePrevYearTransactions: $privatePrevYearTransactions, sharedCurrentTotals: $sharedCurrentTotals, privateCurrentTotals: $privateCurrentTotals, sharedPrevMonthTotals: $sharedPrevMonthTotals, privatePrevMonthTotals: $privatePrevMonthTotals, sharedPrevYearTotals: $sharedPrevYearTotals, privatePrevYearTotals: $privatePrevYearTotals, sharedIncomeSections: $sharedIncomeSections, sharedExpenseSections: $sharedExpenseSections, privateIncomeSections: $privateIncomeSections, privateExpenseSections: $privateExpenseSections, months: $months)';
   }
 
   @override
@@ -582,29 +690,42 @@ class _$TransactionStateImpl implements _TransactionState {
                 .equals(other._sharedPrevYearTotals, _sharedPrevYearTotals) &&
             const DeepCollectionEquality()
                 .equals(other._privatePrevYearTotals, _privatePrevYearTotals) &&
+            const DeepCollectionEquality()
+                .equals(other._sharedIncomeSections, _sharedIncomeSections) &&
+            const DeepCollectionEquality()
+                .equals(other._sharedExpenseSections, _sharedExpenseSections) &&
+            const DeepCollectionEquality()
+                .equals(other._privateIncomeSections, _privateIncomeSections) &&
+            const DeepCollectionEquality().equals(
+                other._privateExpenseSections, _privateExpenseSections) &&
             const DeepCollectionEquality().equals(other._months, _months));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      isLoading,
-      const DeepCollectionEquality().hash(_transactions),
-      const DeepCollectionEquality().hash(_sharedTransactions),
-      const DeepCollectionEquality().hash(_privateTransactions),
-      const DeepCollectionEquality().hash(_prevMonthTransactions),
-      const DeepCollectionEquality().hash(_sharedPrevMonthTransactions),
-      const DeepCollectionEquality().hash(_privatePrevMonthTransactions),
-      const DeepCollectionEquality().hash(_prevYearTransactions),
-      const DeepCollectionEquality().hash(_sharedPrevYearTransactions),
-      const DeepCollectionEquality().hash(_privatePrevYearTransactions),
-      const DeepCollectionEquality().hash(_sharedCurrentTotals),
-      const DeepCollectionEquality().hash(_privateCurrentTotals),
-      const DeepCollectionEquality().hash(_sharedPrevMonthTotals),
-      const DeepCollectionEquality().hash(_privatePrevMonthTotals),
-      const DeepCollectionEquality().hash(_sharedPrevYearTotals),
-      const DeepCollectionEquality().hash(_privatePrevYearTotals),
-      const DeepCollectionEquality().hash(_months));
+  int get hashCode => Object.hashAll([
+        runtimeType,
+        isLoading,
+        const DeepCollectionEquality().hash(_transactions),
+        const DeepCollectionEquality().hash(_sharedTransactions),
+        const DeepCollectionEquality().hash(_privateTransactions),
+        const DeepCollectionEquality().hash(_prevMonthTransactions),
+        const DeepCollectionEquality().hash(_sharedPrevMonthTransactions),
+        const DeepCollectionEquality().hash(_privatePrevMonthTransactions),
+        const DeepCollectionEquality().hash(_prevYearTransactions),
+        const DeepCollectionEquality().hash(_sharedPrevYearTransactions),
+        const DeepCollectionEquality().hash(_privatePrevYearTransactions),
+        const DeepCollectionEquality().hash(_sharedCurrentTotals),
+        const DeepCollectionEquality().hash(_privateCurrentTotals),
+        const DeepCollectionEquality().hash(_sharedPrevMonthTotals),
+        const DeepCollectionEquality().hash(_privatePrevMonthTotals),
+        const DeepCollectionEquality().hash(_sharedPrevYearTotals),
+        const DeepCollectionEquality().hash(_privatePrevYearTotals),
+        const DeepCollectionEquality().hash(_sharedIncomeSections),
+        const DeepCollectionEquality().hash(_sharedExpenseSections),
+        const DeepCollectionEquality().hash(_privateIncomeSections),
+        const DeepCollectionEquality().hash(_privateExpenseSections),
+        const DeepCollectionEquality().hash(_months)
+      ]);
 
   /// Create a copy of TransactionState
   /// with the given fields replaced by the non-null parameter values.
@@ -634,6 +755,10 @@ abstract class _TransactionState implements TransactionState {
       required final Map<TransactionType, double> privatePrevMonthTotals,
       required final Map<TransactionType, double> sharedPrevYearTotals,
       required final Map<TransactionType, double> privatePrevYearTotals,
+      required final Map<String, double> sharedIncomeSections,
+      required final Map<String, double> sharedExpenseSections,
+      required final Map<String, double> privateIncomeSections,
+      required final Map<String, double> privateExpenseSections,
       required final List<String> months}) = _$TransactionStateImpl;
 
   @override
@@ -683,6 +808,18 @@ abstract class _TransactionState implements TransactionState {
 
   @override
   Map<TransactionType, double> get privatePrevYearTotals;
+
+  @override
+  Map<String, double> get sharedIncomeSections;
+
+  @override
+  Map<String, double> get sharedExpenseSections;
+
+  @override
+  Map<String, double> get privateIncomeSections;
+
+  @override
+  Map<String, double> get privateExpenseSections;
 
   @override
   List<String> get months;

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:sharing_household_expenses/screens/home/home_page.dart';
+import 'package:sharing_household_expenses/screens/report/report_page.dart';
 import 'package:sharing_household_expenses/screens/settlement/settlement_list_page.dart';
 import 'package:sharing_household_expenses/screens/sign_in/sign_in.dart';
 import 'package:sharing_household_expenses/screens/transaction/transaction_list_page.dart';
@@ -44,6 +45,7 @@ class App extends StatefulWidget {
 class _App extends State<App> {
   static const _screens = [
     HomePage(),
+    ReportPage(),
     TransactionRegisterPage(),
     TransactionListPage(),
     SettlementListPage(),
@@ -66,6 +68,7 @@ class _App extends State<App> {
         onTap: _onItemTapped,
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'ホーム'),
+          BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'レポート'),
           BottomNavigationBarItem(icon: Icon(Icons.edit), label: '登録'),
           BottomNavigationBarItem(icon: Icon(Icons.list), label: '明細一覧'),
           BottomNavigationBarItem(icon: Icon(Icons.fact_check), label: '清算一覧'),

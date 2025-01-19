@@ -187,7 +187,7 @@ class HomePageState extends ConsumerState<HomePage> {
           Text(
             convertToYenFormat(amount: amount),
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 24,
               fontWeight: FontWeight.bold,
               color: Colors.black,
             ),
@@ -221,7 +221,7 @@ class HomePageState extends ConsumerState<HomePage> {
                 ? '+${convertToYenFormat(amount: amount)}'
                 : convertToYenFormat(amount: amount),
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
               color: _determineTextColor(amount, type),
             ),
@@ -262,23 +262,6 @@ class HomePageState extends ConsumerState<HomePage> {
       state.privatePrevMonthTotals[TransactionType.expense].toSafeInt(),
     );
 
-    final sharedPrevYearIncome = util.calcPrevTotalAmounts(
-      sharedCurrentIncome,
-      state.sharedPrevYearTotals[TransactionType.income].toSafeInt(),
-    );
-    final sharedPrevYearExpense = util.calcPrevTotalAmounts(
-      sharedCurrentExpense,
-      state.sharedPrevYearTotals[TransactionType.expense].toSafeInt(),
-    );
-    final privatePrevYearIncome = util.calcPrevTotalAmounts(
-      privateCurrentIncome,
-      state.privatePrevYearTotals[TransactionType.income].toSafeInt(),
-    );
-    final privatePrevYearExpense = util.calcPrevTotalAmounts(
-      privateCurrentExpense,
-      state.privatePrevYearTotals[TransactionType.expense].toSafeInt(),
-    );
-
     if (_isLoading) {
       return Scaffold(
         appBar: AppBar(
@@ -313,12 +296,11 @@ class HomePageState extends ConsumerState<HomePage> {
                 const Divider(height: 1, color: Colors.black12),
                 _buildCurrentTotalRow(sharedCurrentIncome, 'income'),
                 _buildPrevRow(sharedPrevMonthIncome, true, 'income'),
-                _buildPrevRow(sharedPrevYearIncome, false, 'income'),
                 _buildCurrentTotalRow(sharedCurrentExpense, 'expense'),
                 _buildPrevRow(sharedPrevMonthExpense, true, 'expense'),
-                _buildPrevRow(sharedPrevYearExpense, false, 'expense'),
               ],
             ),
+            const SizedBox(height: 46),
             // 個人の収支
             Column(
               children: [
@@ -326,10 +308,8 @@ class HomePageState extends ConsumerState<HomePage> {
                 const Divider(height: 1, color: Colors.black12),
                 _buildCurrentTotalRow(privateCurrentIncome, 'income'),
                 _buildPrevRow(privatePrevMonthIncome, true, 'income'),
-                _buildPrevRow(privatePrevYearIncome, false, 'income'),
                 _buildCurrentTotalRow(privateCurrentExpense, 'expense'),
                 _buildPrevRow(privatePrevMonthExpense, true, 'expense'),
-                _buildPrevRow(privatePrevYearExpense, false, 'expense'),
               ],
             ),
           ],

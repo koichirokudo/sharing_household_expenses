@@ -123,7 +123,7 @@ class TransactionRegisterPageState
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       };
 
-      await Future.delayed(Duration(milliseconds: 350));
+      await Future.delayed(Duration(milliseconds: 150));
 
       late Transaction? updatedTransaction;
       if (data['id'] != null) {

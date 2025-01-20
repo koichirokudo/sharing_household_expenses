@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sharing_household_expenses/providers/auth_provider.dart';
+import 'package:sharing_household_expenses/providers/category_provider.dart';
 import 'package:sharing_household_expenses/providers/user_group_provider.dart';
 import 'package:sharing_household_expenses/screens/home/home_page.dart';
 import 'package:sharing_household_expenses/screens/settlement/settlement_list_page.dart';
@@ -21,6 +22,7 @@ class MyApp extends ConsumerWidget {
           // 初回データ取得
           await ref.read(authProvider.notifier).fetchProfile();
           await ref.read(authProvider.notifier).fetchProfiles();
+          await ref.read(categoryProvider.notifier).fetchCategories();
           final groupId = ref.read(authProvider).profile?.groupId;
           if (groupId != null) {
             // ユーザーグループ取得

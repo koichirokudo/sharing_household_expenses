@@ -7,7 +7,12 @@ import 'package:sharing_household_expenses/utils/constants.dart';
 import '../../providers/auth_state.dart';
 
 class ReportPage extends ConsumerStatefulWidget {
-  const ReportPage({super.key});
+  final bool shared;
+
+  const ReportPage({
+    super.key,
+    required this.shared,
+  });
 
   @override
   ReportPageState createState() => ReportPageState();
@@ -16,10 +21,12 @@ class ReportPage extends ConsumerStatefulWidget {
 class ReportPageState extends ConsumerState<ReportPage> {
   bool _isLoading = false;
   late AuthState auth;
+  late bool shared;
 
   @override
   void initState() {
     super.initState();
+    shared = widget.shared;
     Future.microtask(() async {
       setState(() {
         _isLoading = true;
@@ -42,7 +49,8 @@ class ReportPageState extends ConsumerState<ReportPage> {
     });
   }
 
-  List<BarChartGroupData> _generateBarGroup(Map<String, double> data) {
+  List<BarChartGroupData> _generateBarGroup(
+      Map<String, double> data, String type) {
     final barGroup = data.entries.map((entry) {
       final categoryName = entry.key;
       final value = entry.value;
@@ -54,7 +62,7 @@ class ReportPageState extends ConsumerState<ReportPage> {
           BarChartRodData(
             toY: value,
             width: 20,
-            color: Theme.of(context).colorScheme.inversePrimary,
+            color: type == 'income' ? Colors.green : Colors.red,
           ),
         ],
         showingTooltipIndicators: [0],
@@ -84,13 +92,18 @@ class ReportPageState extends ConsumerState<ReportPage> {
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 24,
-          fontWeight: FontWeight.bold,
-          color: Colors.black,
-        ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -103,7 +116,7 @@ class ReportPageState extends ConsumerState<ReportPage> {
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: AspectRatio(
-        aspectRatio: 1.0,
+        aspectRatio: 1.2,
         child: BarChart(
           BarChartData(
             alignment: BarChartAlignment.spaceBetween,
@@ -133,7 +146,7 @@ class ReportPageState extends ConsumerState<ReportPage> {
                           data.keys.elementAt(index),
                           style: TextStyle(
                             fontSize: 12,
-                          ), // Adjust font size as needed
+                          ),
                         ),
                       );
                     }
@@ -188,16 +201,26 @@ class ReportPageState extends ConsumerState<ReportPage> {
     final sharedIncome = ref.transactionState.sharedIncomeSections;
     final privateExpense = ref.transactionState.privateExpenseSections;
     final privateIncome = ref.transactionState.privateIncomeSections;
+    List<BarChartGroupData> sharedExpenseBarGroup = [];
+    List<BarChartGroupData> sharedIncomeBarGroup = [];
+    List<BarChartGroupData> privateExpenseBarGroup = [];
+    List<BarChartGroupData> privateIncomeBarGroup = [];
+    double sharedExpenseMaxY = 0.0;
+    double sharedIncomeMaxY = 0.0;
+    double privateExpenseMaxY = 0.0;
+    double privateIncomeMaxY = 0.0;
 
-    final sharedExpenseBarGroup = _generateBarGroup(sharedExpense);
-    final sharedIncomeBarGroup = _generateBarGroup(sharedIncome);
-    final privateExpenseBarGroup = _generateBarGroup(privateExpense);
-    final privateIncomeBarGroup = _generateBarGroup(privateIncome);
-
-    final sharedExpenseMaxY = _getMaxValue(sharedExpense);
-    final sharedIncomeMaxY = _getMaxValue(sharedIncome);
-    final privateExpenseMaxY = _getMaxValue(privateExpense);
-    final privateIncomeMaxY = _getMaxValue(privateIncome);
+    if (shared) {
+      sharedExpenseBarGroup = _generateBarGroup(sharedExpense, 'expense');
+      sharedIncomeBarGroup = _generateBarGroup(sharedIncome, 'income');
+      sharedExpenseMaxY = _getMaxValue(sharedExpense);
+      sharedIncomeMaxY = _getMaxValue(sharedIncome);
+    } else {
+      privateExpenseBarGroup = _generateBarGroup(privateExpense, 'expense');
+      privateIncomeBarGroup = _generateBarGroup(privateIncome, 'income');
+      privateExpenseMaxY = _getMaxValue(privateExpense);
+      privateIncomeMaxY = _getMaxValue(privateIncome);
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -208,34 +231,38 @@ class ReportPageState extends ConsumerState<ReportPage> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            _buildTitleRow(true, 'income'),
-            const Divider(height: 1, color: Colors.black12),
-            _buildBarChart(
-              sharedIncome,
-              sharedIncomeBarGroup,
-              sharedIncomeMaxY,
-            ),
-            _buildTitleRow(true, 'expense'),
-            const Divider(height: 1, color: Colors.black12),
-            _buildBarChart(
-              sharedExpense,
-              sharedExpenseBarGroup,
-              sharedExpenseMaxY,
-            ),
-            _buildTitleRow(false, 'income'),
-            const Divider(height: 1, color: Colors.black12),
-            _buildBarChart(
-              privateIncome,
-              privateIncomeBarGroup,
-              privateIncomeMaxY,
-            ),
-            _buildTitleRow(false, 'expense'),
-            const Divider(height: 1, color: Colors.black12),
-            _buildBarChart(
-              privateExpense,
-              privateExpenseBarGroup,
-              privateExpenseMaxY,
-            ),
+            if (shared) ...[
+              _buildTitleRow(shared, 'income'),
+              const Divider(height: 1, color: Colors.black12),
+              _buildBarChart(
+                sharedIncome,
+                sharedIncomeBarGroup,
+                sharedIncomeMaxY,
+              ),
+              _buildTitleRow(shared, 'expense'),
+              const Divider(height: 1, color: Colors.black12),
+              _buildBarChart(
+                sharedExpense,
+                sharedExpenseBarGroup,
+                sharedExpenseMaxY,
+              ),
+            ] else ...[
+              _buildTitleRow(shared, 'income'),
+              const Divider(height: 1, color: Colors.black12),
+              _buildBarChart(
+                privateIncome,
+                privateIncomeBarGroup,
+                privateIncomeMaxY,
+              ),
+              _buildTitleRow(shared, 'expense'),
+              const Divider(height: 1, color: Colors.black12),
+              _buildBarChart(
+                privateExpense,
+                privateExpenseBarGroup,
+                privateExpenseMaxY,
+              ),
+            ],
+            const SizedBox(height: 46),
           ],
         ),
       ),

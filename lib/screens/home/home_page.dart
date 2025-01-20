@@ -9,6 +9,7 @@ import 'package:sharing_household_expenses/utils/constants.dart';
 import '../../providers/auth_state.dart';
 import '../group/first_group_invite_page.dart';
 import '../profile/user_page.dart';
+import '../report/report_page.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -95,7 +96,23 @@ class HomePageState extends ConsumerState<HomePage> {
     );
   }
 
-  Widget _buildTitleRow(bool isGroup) {
+  Widget _buildReportButtons(bool shared) {
+    return IconButton(
+      icon: const Icon(
+        Icons.bar_chart,
+        color: Colors.blue,
+      ),
+      onPressed: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => ReportPage(shared: shared),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTitleRow(bool shared) {
     final profile = ref.authState.profile;
     final profiles = ref.authState.profiles;
     final groupName = ref.userGroupState.group?.groupName;
@@ -107,7 +124,7 @@ class HomePageState extends ConsumerState<HomePage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          if (isGroup) ...[
+          if (shared) ...[
             ...?profiles?.map((item) {
               return Container(
                 width: 32,
@@ -142,13 +159,14 @@ class HomePageState extends ConsumerState<HomePage> {
           ],
           const SizedBox(width: 8),
           Text(
-            isGroup ? (groupName ?? 'グループ') : (username ?? '個人'),
+            shared ? (groupName ?? 'グループ') : (username ?? '個人'),
             style: TextStyle(
-              fontSize: 24,
+              fontSize: 22,
               fontWeight: FontWeight.bold,
               color: Colors.black,
             ),
           ),
+          _buildReportButtons(shared),
         ],
       ),
     );
@@ -205,7 +223,7 @@ class HomePageState extends ConsumerState<HomePage> {
         children: [
           Row(
             children: [
-              const SizedBox(width: 216),
+              const SizedBox(width: 180),
               Text(
                 isMonth ? '前月比' : '前年比',
                 style: TextStyle(

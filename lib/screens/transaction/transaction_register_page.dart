@@ -41,7 +41,6 @@ class TransactionRegisterPageState
         _isLoading = true;
       });
       final categoryNotifier = ref.watch(categoryProvider.notifier);
-      await categoryNotifier.fetchCategories();
       categoryNotifier.groupByType();
       _initializeData();
       setState(() {

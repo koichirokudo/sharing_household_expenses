@@ -488,7 +488,10 @@ class SettlementPageState extends ConsumerState<SettlementPage> {
                     style: ElevatedButton.styleFrom(
                       fixedSize: const Size(200, 50),
                     ),
-                    child: const Text('清算を確定する'),
+                    child: const Text(
+                      '清算を確定する',
+                      style: TextStyle(fontSize: 18),
+                    ),
                   ),
                 ),
               ),

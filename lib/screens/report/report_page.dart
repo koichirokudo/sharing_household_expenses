@@ -239,6 +239,7 @@ class ReportPageState extends ConsumerState<ReportPage> {
                 sharedIncomeBarGroup,
                 sharedIncomeMaxY,
               ),
+              const SizedBox(height: 50),
               _buildTitleRow(shared, 'expense'),
               const Divider(height: 1, color: Colors.black12),
               _buildBarChart(
@@ -254,6 +255,7 @@ class ReportPageState extends ConsumerState<ReportPage> {
                 privateIncomeBarGroup,
                 privateIncomeMaxY,
               ),
+              const SizedBox(height: 50),
               _buildTitleRow(shared, 'expense'),
               const Divider(height: 1, color: Colors.black12),
               _buildBarChart(
@@ -262,7 +264,7 @@ class ReportPageState extends ConsumerState<ReportPage> {
                 privateExpenseMaxY,
               ),
             ],
-            const SizedBox(height: 46),
+            const SizedBox(height: 50),
           ],
         ),
       ),

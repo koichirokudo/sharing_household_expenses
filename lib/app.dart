@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sharing_household_expenses/providers/auth_provider.dart';
+import 'package:sharing_household_expenses/providers/user_group_provider.dart';
 import 'package:sharing_household_expenses/screens/home/home_page.dart';
 import 'package:sharing_household_expenses/screens/settlement/settlement_list_page.dart';
 import 'package:sharing_household_expenses/screens/sign_in/sign_in.dart';
@@ -7,29 +10,55 @@ import 'package:sharing_household_expenses/screens/transaction/transaction_list_
 import 'package:sharing_household_expenses/screens/transaction/transaction_register_page.dart';
 import 'package:sharing_household_expenses/utils/constants.dart';
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'シェア家計簿',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0x00ff5500)),
-        useMaterial3: true,
-        fontFamily: 'MPLUS1p',
+  Widget build(BuildContext context, WidgetRef ref) {
+    return FutureBuilder(
+      future: Future(
+        () async {
+          // 初回データ取得
+          await ref.read(authProvider.notifier).fetchProfile();
+          await ref.read(authProvider.notifier).fetchProfiles();
+          final groupId = ref.read(authProvider).profile?.groupId;
+          if (groupId != null) {
+            // ユーザーグループ取得
+            await ref.read(userGroupProvider.notifier).fetchGroup(groupId);
+          }
+        },
       ),
-      home:
-          supabase.auth.currentUser == null ? const SignInPage() : const App(),
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [
-        Locale('ja', 'JP'),
-      ],
-      locale: const Locale('ja', 'JP'),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(
+              color: Color(0x00ff5500),
+            ),
+          );
+        }
+        return MaterialApp(
+          title: 'シェア家計簿',
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0x00ff5500),
+            ),
+            useMaterial3: true,
+            fontFamily: 'MPLUS1p',
+          ),
+          home: supabase.auth.currentUser == null
+              ? const SignInPage()
+              : const App(),
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('ja', 'JP'),
+          ],
+          locale: const Locale('ja', 'JP'),
+        );
+      },
     );
   }
 }

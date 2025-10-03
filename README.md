@@ -1,16 +1,74 @@
-# sharing_household_expenses
+# シェア家計簿（Flutter）
 
-A new Flutter Sharing household expenses project.
+## 概要
+シェア家計簿は、カップルや家族など2人で共同生活する際の家計簿モバイルアプリケーションです。
+共有する支出と個人の支出を分けて管理でき、月末の清算を自動で計算する機能があります。
 
-## Getting Started
+## 主な機能
 
-This project is a starting point for a Flutter application.
+### 収支管理
+- **収入・支出の登録**: 日々の収支を簡単に記録
+- **共有設定**: グループで共有する支出と個人の支出を選択可能
+- **カテゴリ分類**: 食費、日用品、医療費など16種類の支出カテゴリと6種類の収入カテゴリ
 
-A few resources to get you started if this is your first Flutter project:
+### 清算機能
+- **自動計算**: 共有支出を2人で割り勘した際の差額を自動算出
+- **月次清算**: 月ごとに清算を確定し、誰がいくら支払うか・受け取るかを明確化
+- **清算履歴**: 過去の清算記録を確認可能
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+### データ可視化
+- **月次レポート**: 収入・支出をカテゴリ別に棒グラフで表示
+- **前月比較**: 前月との増減を一目で確認
+- **共有/個人の切り替え**: グループと個人のデータを切り替えて表示
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### グループ管理
+- **招待コード**: 8桁のコードで簡単にグループに参加
+- **2人制限**: 1グループ最大2人までの制限で管理をシンプルに
+- **LINEでの共有**: LINE経由で招待コードを送信可能
+
+### アカウント管理
+- **プロフィール編集**: ユーザー名とアバター画像の設定
+- **メール・パスワード変更**: セキュアな認証情報の更新
+- **アカウント削除**: 関連データを完全に削除
+
+## 技術スタック
+
+### フロントエンド
+- **Flutter**: クロスプラットフォーム開発（iOS/Android対応）
+- **Riverpod**: 状態管理
+- **Freezed**: イミュータブルなデータクラス生成
+- **fl_chart**: データ可視化
+
+### バックエンド
+- **Supabase**: 
+  - 認証（メール認証、パスワードリセット）
+  - PostgreSQLデータベース
+  - ストレージ（アバター画像）
+  - Edge Functions（Deno/TypeScript）
+
+### データベース設計
+- profiles（ユーザー情報）
+- user_groups（グループ情報）
+- categories（収支カテゴリ）
+- transactions（収支記録）
+- settlements（清算情報）
+- settlement_items（清算明細）
+
+### Edge Functions
+- `join-group`: グループ参加処理
+- `make-user-group`: グループ作成
+- `generate-group-invite-code`: 招待コード生成（20分間有効）
+- `check-settlement`: 清算済みチェック
+- `update-transaction`: 収支更新処理
+- `delete-user`: アカウント削除処理
+
+## セキュリティ
+- Row Level Security（RLS）ポリシーによるデータアクセス制御
+- 認証済みユーザーのみがデータにアクセス可能
+- パスワードリセット機能（Deep Link対応）
+- メールアドレス変更時の確認機能
+
+## 開発環境
+- Flutter 3.5.4
+- Dart 3.5.4
+- Supabase
